@@ -5,6 +5,10 @@ jobs:
   - stage: deps
     name: Install Node Dependencies
     script: npm install
+  - name: Install Clojure Dependencies
+    script:
+      - git clone https://github.com/clojure/data.xml.git
+      - cd data.xml && lein install
   - stage: test
     name: Clojure Tests
     script: clojure -Adev:test

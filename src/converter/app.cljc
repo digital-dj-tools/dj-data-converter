@@ -12,21 +12,24 @@
   [obj f]
   (prn (f obj)))
 
+(s/def ::check-input boolean?)
+
 (s/fdef convert
-  :args (s/cat :nml-xml (spec/value-encoded-spec t/nml-xml-spec spec/string-transformer))
+  :args (s/cat :nml-xml (spec/value-encoded-spec t/nml-xml-spec spec/string-transformer)
+               :options (s/keys))
   :ret (spec/value-encoded-spec r/dj-playlists-xml-spec spec/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert
-  [xml]
-  ; (if
-  ;  (s/invalid? (st/conform t/nml-xml-spec xml spec/string-transformer))
-  ;  (let [explain (st/explain-data t/nml-xml-spec xml spec/string-transformer)
-  ;        data {:type ::convert
-  ;              :problems (st/+problems+ explain)
-  ;              :spec t/nml-xml-spec
-  ;              :value xml}]
-  ;    (throw (ex-info "Spec conform error:" data))))
+  [xml options]
+  (if
+   (and (:check-input options) (s/invalid? (st/conform t/nml-xml-spec xml spec/string-transformer)))
+   (let [explain (st/explain-data t/nml-xml-spec xml spec/string-transformer)
+         data {:type ::convert
+               :problems (st/+problems+ explain)
+               :spec t/nml-xml-spec
+               :value xml}]
+     (throw (ex-info "Spec conform error:" data))))
   (as-> xml $
     (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
     (spec/decode! t/nml-spec $ spec/xml-transformer)

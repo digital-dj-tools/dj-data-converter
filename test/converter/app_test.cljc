@@ -9,5 +9,8 @@
   `app/convert
   {:opts {:num-tests 10}})
 
+; TODO convert-conform-error-test
+
 (deftest convert-decode-error-test
-  (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs ExceptionInfo) (app/convert {}))))
+  ; TODO assert ex-data :type is ::spec/decode
+  (is (thrown? #?(:clj clojure.lang.ExceptionInfo :cljs ExceptionInfo) (app/convert {} {}))))

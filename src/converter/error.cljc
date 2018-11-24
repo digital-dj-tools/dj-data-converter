@@ -28,23 +28,23 @@
 
 (defn truncate-error
   [{{:keys [problems]} :data :as error}]
-  (cond-> 
+  (cond->
    (-> error
        (update-in [:via 0 :data] dissoc :value)
        (update-in [:data] dissoc :value))
-   problems (-> (update-in [:via 0 :data :problems] #(take 1 %))
-                (update-in [:via 0 :data :problems] (fn [problem] (map #(dissoc % :val) problem)))
-                (update-in [:data :problems] #(take 1 %))
-                (update-in [:data :problems] (fn [problem] (map #(dissoc % :val) problem)))))
-  )
+    problems (-> (update-in [:via 0 :data :problems] #(take 1 %))
+                 (update-in [:via 0 :data :problems] (fn [problem] (map #(dissoc % :val) problem)))
+                 (update-in [:data :problems] #(take 1 %))
+                 (update-in [:data :problems] (fn [problem] (map #(dissoc % :val) problem))))))
 
 (defn create-report
-  [args error]
-  {:args args
+  [arguments options error]
+  {:args arguments
+   :opts options
    :error (if (data-error? error)
             (truncate-error error)
             error)})
 
-(defn write-report! [report]
-  (prn "Problems converting, please provide error-report.edn file...")
+(defn write-report
+  [report]
   (spit "error-report.edn" (with-out-str (pprint/pprint report))))

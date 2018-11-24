@@ -130,9 +130,17 @@
           (= (count (->> traktor-nml ::t/collection (remove #(not (contains? % ::t/info)))))
              (count (->> dj-playlists ::r/collection))))))
 
+(defn print-progress
+  [f]
+  (fn [idx itm]
+    (when (= 0 (mod idx 1000))
+      (println ".")
+      #?(:clj (flush)))
+    (f itm)))
+
 (defn traktor->rekordbox
   [traktor-nml]
-  {::r/collection (map traktor-entry->rekordbox-track (remove #(not (contains? % ::t/info)) (::t/collection traktor-nml)))})
+  {::r/collection (map-indexed (print-progress traktor-entry->rekordbox-track) (remove #(not (contains? % ::t/info)) (::t/collection traktor-nml)))})
 
 (defn rekordbox->traktor
   [_ dj-playlists])

@@ -31,10 +31,11 @@
                :value xml}]
      (throw (ex-info "Spec conform error:" data))))
   (as-> xml $
-    (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
+    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
     (spec/decode! t/nml-spec $ spec/xml-transformer)
-    (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::t/collection)))
+    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::t/collection)))
     (c/traktor->rekordbox $)
-    (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::r/collection)))
+    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::r/collection)))
     (st/encode r/dj-playlists-xml-spec $ spec/xml-transformer)
-    (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first :content)))))
+    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first :content)))
+    ))

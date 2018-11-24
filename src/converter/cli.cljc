@@ -42,8 +42,9 @@
 
 (defn exit [status message]
   (println message)
-  #?(:clj (System/exit status)
-     :cljs (.exit nodejs/process status)))
+  (if (not= 0 status)
+    #?(:clj (System/exit status)
+       :cljs (.exit nodejs/process status))))
 
 #?(:clj
    (defn process
@@ -55,9 +56,10 @@
            (if (:check options) (xml/parse $ :skip-whitespace true) (xml/parse $))
            (app/convert $ options)
            (xml/emit $ writer)))
+       [0 "Conversion completed"]
        (catch Throwable t (do 
                             (err/write-report (err/create-report arguments options (Throwable->map t)))
-                            (exit 2 "Problems converting, please provide error-report.edn file..."))))))
+                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
 #?(:cljs
    (defn process
@@ -70,15 +72,16 @@
          (app/convert $ options)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))
+       [0 "Conversion completed"]
        (catch :default e (do 
                            (err/write-report (err/create-report arguments options (err/Error->map e)))
-                           (exit 2 "Problems converting, please provide error-report.edn file..."))))))
+                           [2 "Problems converting, please provide error-report.edn file..."])))))
 
 (defn -main
   [& args]
   (let [{:keys [arguments options exit-message ok?]} (validate-args args)]
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (process arguments options))))
+      (apply exit (process arguments options)))))
 
 #?(:cljs (set! *main-cli-fn* -main))

@@ -6,7 +6,7 @@ In addition to an automated test suite comprising specification-driven tests on 
 
 ## Features
 
-- Downloads available for Windows and Mac OS (TODO)
+- Downloads available for [Windows and Mac OS](https://github.com/digital-dj-tools/dj-data-converter/releases)
 - Convert data from Traktor to Rekordbox
 - Convert tempo (BPM), beat grid and cue point data, including loops
 - Convert multiple beat grid markers
@@ -55,7 +55,7 @@ None
 
 ## Install
 
-- Download the app from the releases page. (TODO)
+- Download the app from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page.
 
 ## Usage
 
@@ -63,20 +63,21 @@ None
 Open a command prompt and navigate to the directory where the app was downloaded.
 ```
 cd <download-dir>
-dj-data-converter-win.exe <traktor-collection-file>
+dj-data-converter-win.exe [options] <traktor-collection-file>
 ```
 ### Mac
 Open a terminal and navigate to the directory where the app was downloaded.
 ```
 cd <download-dir>
-dj-data-converter-macos <traktor-collection-file>
+dj-data-converter-macos [options] <traktor-collection-file>
 ```
 A converted `rekordbox.xml` file will be created in the current directory. If the conversion fails due to an error, a `error-report.edn` file will be generated.
 
 ### Options
-
-(TODO)
-
+```
+  -c, --check-input  Perform checks on the input file
+  -h, --help
+```
 ### Importing to Rekordbox
 
 - In the Rekordbox preferences, 

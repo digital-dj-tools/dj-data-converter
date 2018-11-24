@@ -8,7 +8,7 @@ jobs:
   - name: Install Clojure Dependencies
     script:
       - git clone https://github.com/clojure/data.xml.git
-      - cd data.xml && lein install
+      - cd data.xml && mvn install -Dmaven.test.skip=true -DskipTests
   - stage: test
     name: Clojure Tests
     script: clojure -Adev:test

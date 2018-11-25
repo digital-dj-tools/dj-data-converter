@@ -1,6 +1,6 @@
 # dj-data-converter [![Build Status](https://travis-ci.org/digital-dj-tools/dj-data-converter.svg?branch=master)](https://travis-ci.org/digital-dj-tools/dj-data-converter)
 
-An app for converting data files to and from different DJ software formats, such as [Traktor](https://www.native-instruments.com/en/products/traktor/dj-software/traktor-pro-3/), [Rekordbox](https://rekordbox.com/en/) and [Serato DJ](https://serato.com/dj).
+A command-line app for converting data files to and from different DJ software formats, such as [Traktor](https://www.native-instruments.com/en/products/traktor/dj-software/traktor-pro-3/), [Rekordbox](https://rekordbox.com/en/) and [Serato DJ](https://serato.com/dj).
 
 In addition to an automated test suite comprising specification-driven tests on expected input and output data, this app has been manually tested with Traktor Pro 2 and Rekordbox 5.3.0 on Windows 10.
 

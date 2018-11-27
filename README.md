@@ -47,7 +47,7 @@ Donations are most welcome! This will help me to support more DJ software format
 
 ## Roadmap
 
-To see planned and upcoming features, refer to the `Unreleased` section at the top of the [Changelog](CHANGELOG.md). (TODO)
+To see planned and upcoming features, refer to the `Unreleased` section at the top of the [Changelog](CHANGELOG.md).
 
 ## Dependencies
 

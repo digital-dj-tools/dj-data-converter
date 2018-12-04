@@ -42,6 +42,7 @@ Donations are most welcome! This will help me to support more DJ software format
 
 - Conversion is only possible from Traktor to Rekordbox.
 - Playlists are not converted.
+- Only track name, track number, track artist, album title and playtime metadata are copied over.
 - Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
 - Performance is limited, however a ~10,000 track Traktor collection should convert in under one minute.
 

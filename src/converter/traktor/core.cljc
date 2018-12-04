@@ -7,6 +7,7 @@
    [clojure.zip :as zip]
    [converter.map :as map]
    [converter.spec :as spec]
+   [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
    [converter.xml :as xml]
    [spec-tools.core :as st]
@@ -47,10 +48,6 @@
                      (reduce conj $ (map url/url-encode (str/split dir #"/:")))
                      (conj $ (url/url-encode file))))))
 
-(s/def ::TRACK string?)
-
-(s/def ::TITLE string?)
-
 (def entry-xml
   {:tag (s/spec #{:ENTRY})
    :attrs {(std/opt :TITLE) string?
@@ -59,7 +56,7 @@
                   :location-xml location-xml-spec
                   :album-xml (s/? (std/spec {:name ::album-xml
                                              :spec {:tag (s/spec #{:ALBUM})
-                                                    :attrs (s/keys :req-un [(or ::TRACK ::TITLE)])}}))
+                                                    :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
                   :modification-info (s/? (std/spec {:name ::modification-info-xml
                                                      :spec {:tag (s/spec #{:MODIFICATION_INFO})}}))
                   :info-xml (s/? (std/spec {:name ::info-xml
@@ -81,20 +78,16 @@
    {:name ::entry-xml
     :spec entry-xml}))
 
-(s/def ::track string?)
-
-(s/def ::album-title string?)
-
 (def entry
   {::location ::spec/url
    (std/opt ::title) string?
    (std/opt ::artist) string?
-   (std/opt ::album) (s/keys :req [(or ::track ::album-title)]) ; std/or doesn't work like s/or..
+   (std/opt ::album) (s/keys :req [(or ::ta/track ::ta/title)]) ; std/or doesn't work like s/or..
    (std/opt ::info) {::playtime string?}
    (std/opt ::bpm) string?
    (std/opt ::cues) [tc/cue-spec] ; how can I say, coll must not be empty?
       ;  (std/opt ::cues) (s/cat :cues (s/+ tc/cue-spec)) ; this avoids an empty coll, but st/decode & st/coerce don't work :(
-})
+   })
 
 (def entry-spec
   (-> (std/spec
@@ -108,7 +101,7 @@
 
 (defn entry->xml
   [{:keys [::location ::title ::artist ::album ::info ::bpm ::cues]
-    {:keys [::track ::album-title]} ::album {:keys [::playtime]} ::info}]
+    {:keys [::ta/track] album-title ::ta/title} ::album {:keys [::playtime]} ::info}]
   {:tag :ENTRY
    :attrs (cond-> {}
             title (assoc :TITLE title)
@@ -145,8 +138,8 @@
       title (assoc ::title title)
       artist (assoc ::artist artist)
       (or track album-title) (assoc ::album (cond-> {}
-                                              track (assoc ::track track)
-                                              album-title (assoc ::album-title album-title)))
+                                              track (assoc ::ta/track track)
+                                              album-title (assoc ::ta/title album-title)))
       playtime (assoc ::info {::playtime playtime})
       bpm (assoc ::bpm bpm)
       (not (empty? cues-z)) (assoc ::cues (map tc/xml->cue cues-z)))))
@@ -184,7 +177,6 @@
                                             :spec {:tag (s/spec #{:PLAYLISTS})}}))
              :sorting-order-xml (s/* (std/spec {:name ::sorting-order-xml
                                                 :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
-
 
 (def nml-xml-spec
   (->

@@ -4,7 +4,6 @@
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [clojure.string :as str]
-   [clojure.test]
    [clojure.zip :as zip]
    [converter.map :as map]
    [converter.spec :as spec]

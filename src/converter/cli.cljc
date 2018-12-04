@@ -53,7 +53,7 @@
        (with-open [reader (io/reader (:input-file arguments))
                    writer (io/writer (:output-file arguments))]
          (as-> reader $
-           (if (:check options) (xml/parse $ :skip-whitespace true) (xml/parse $))
+           (if (:check-input options) (xml/parse $ :skip-whitespace true) (xml/parse $))
            (app/convert $ options)
            (xml/emit $ writer)))
        [0 "Conversion completed"]
@@ -68,7 +68,7 @@
        (as-> (:input-file arguments) $
          (io/slurp $)
          (xml/parse-str $)
-         (if (:check options) (converter.xml/strip-whitespace $) (identity $))
+         (if (:check-input options) (converter.xml/strip-whitespace $) (identity $))
          (app/convert $ options)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))

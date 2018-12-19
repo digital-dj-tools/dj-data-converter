@@ -47,7 +47,7 @@
    m))
 
 ; https://stackoverflow.com/questions/19150172/deep-reverse-clojure
-(defn reverse
+(defn reverse-all-seq
   [m & ks]
   (clojure.walk/postwalk
    #(if (and (not (record? %)) (map? %))

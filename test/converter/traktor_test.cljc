@@ -70,8 +70,6 @@
                  (xml/encode $)
                  (xml/decode $)
                  (spec/decode! t/nml-spec $ spec/xml-transformer)
-                 ; for reasons unknown st/decode reverses the order of collections
-                ;  (map/reverse $ ::t/cues ::t/collection)
                  (is (= nml $)))))
 
 (defspec nml-spec-round-trip-xml-equality
@@ -82,8 +80,6 @@
                  (xml/encode $)
                  (xml/decode $)
                  (spec/decode! t/nml-spec $ spec/xml-transformer)
-                 ; for reasons unknown st/decode reverses the order of collections
-                ;  (map/reverse $ ::t/cues ::t/collection)
                  (st/encode t/nml-xml-spec $ spec/xml-transformer)
                  (xml/encode $)
                  (is (= (xml/encode (st/encode t/nml-xml-spec nml spec/xml-transformer)) $)))))

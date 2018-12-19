@@ -19,6 +19,14 @@
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.2.0"}}
                        :main-opts ["-m" "cljs-test-runner.main"]}
            :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
+           :jar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
+                 :main-opts ["-m" "cambada.jar"
+                             "-m" "converter.cli"
+                             "-a" "converter.cli"
+                             "--app-group-id" "com.digitaldjtools"
+                             "--app-version" "0.2.0-SNAPSHOT"]}
+           :install {:extra-deps {deps-deploy {:mvn/version "RELEASE"}}
+                     :main-opts ["-m" "deps-deploy.deps-deploy" "install" "target/dj-data-converter-0.2.0-SNAPSHOT.jar"]}
            :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
                      :main-opts ["-m" "cambada.uberjar"
                                  "-m" "converter.cli"]}

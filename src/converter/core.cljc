@@ -140,7 +140,9 @@
 
 (defn traktor->rekordbox
   [traktor-nml]
-  {::r/collection (map-indexed (print-progress traktor-entry->rekordbox-track) (remove #(not (contains? % ::t/info)) (::t/collection traktor-nml)))})
+  {::r/collection (map-indexed 
+                   (print-progress traktor-entry->rekordbox-track) 
+                   (remove #(not (contains? % ::t/info)) (::t/collection traktor-nml)))})
 
 (defn rekordbox->traktor
   [_ dj-playlists])

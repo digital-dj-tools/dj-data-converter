@@ -25,6 +25,21 @@
     (s/and string? drive-letter?)
     (fn [] (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)))))
 
+(s/def ::nml-dir
+  (s/with-gen
+    string? ; TODO and with regex
+    (fn [] (gen/fmap #(->> % (interleave (repeat "/:")) (apply str)) (gen/vector (gen/string-alphanumeric))))))
+
+(s/def ::nml-path
+  (s/with-gen 
+    string? ; TODO and with regex
+    (fn [] (gen/fmap (partial apply str)
+                     (gen/tuple 
+                      (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)) ; drive letter
+                      (gen/fmap #(->> % (interleave (repeat "/:")) (apply str)) (gen/vector (gen/string-alphanumeric))) ; path
+                      (gen/string-alphanumeric) ; filename
+                      )))))
+
 (defn string->url
   [_ str]
   (if (string? str)
@@ -34,6 +49,7 @@
     str))
 
 ; TODO proper generator, rename to indicate file urls?
+; http://conan.is/blogging/a-spec-for-urls-in-clojure.html
 (s/def ::url (st/spec #(instance? cemerick.url.URL %) {:type :url
                                                        :gen #(s/gen #{(url/url "file://localhost/foo/bar")})}))
 

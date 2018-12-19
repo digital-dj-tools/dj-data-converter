@@ -48,13 +48,13 @@
 
 #?(:clj
    (defn process
-     [arguments options]
+     [arguments config options]
      (try
        (with-open [reader (io/reader (:input-file arguments))
                    writer (io/writer (:output-file arguments))]
          (as-> reader $
            (if (:check-input options) (xml/parse $ :skip-whitespace true) (xml/parse $))
-           (app/convert $ options)
+           (app/convert-data $ config options)
            (xml/emit $ writer)))
        [0 "Conversion completed"]
        (catch Throwable t (do 
@@ -63,13 +63,13 @@
 
 #?(:cljs
    (defn process
-     [arguments options]
+     [arguments config options]
      (try
        (as-> (:input-file arguments) $
          (io/slurp $)
          (xml/parse-str $)
          (if (:check-input options) (converter.xml/strip-whitespace $) (identity $))
-         (app/convert $ options)
+         (app/convert-data $ config options)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))
        [0 "Conversion completed"]
@@ -79,9 +79,10 @@
 
 (defn -main
   [& args]
-  (let [{:keys [arguments options exit-message ok?]} (validate-args args)]
+  (let [{:keys [arguments options exit-message ok?]} (validate-args args)
+        config {:converter app/traktor->rekordbox}]
     (if exit-message
       (exit (if ok? 0 1) exit-message)
-      (apply exit (process arguments options)))))
+      (apply exit (process arguments config options)))))
 
 #?(:cljs (set! *main-cli-fn* -main))

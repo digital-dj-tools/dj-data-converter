@@ -9,7 +9,7 @@
   org.clojure/tools.cli {:mvn/version "0.4.1"}
   metosin/spec-tools {:mvn/version "0.8.2"}
   com.cemerick/url {:mvn/version "0.1.1"}}
- :aliases {:dev {:extra-paths ["dev" "test"]
+ :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {org.clojure/tools.namespace {:mvn/version "0.3.0-alpha4"}
                               org.clojure/test.check {:mvn/version "0.9.0"}
                               plumula/mimolette {:mvn/version "0.2.1"}}}
@@ -21,10 +21,10 @@
            :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
            :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
                      :main-opts ["-m" "cambada.uberjar"
-                                 "-m" "converter.main"]}
+                                 "-m" "converter.cli"]}
            :native-image {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
                           :main-opts ["-m" "cambada.native-image"
-                                      "-m" "converter.main"]}
+                                      "-m" "converter.cli"]}
            :nrepl-server {:extra-deps {cider/cider-nrepl {:mvn/version "0.18.0"}
                                        cider/piggieback {:mvn/version "0.3.9"}}
                           :main-opts ["-m" "nrepl.cmdline" "--middleware"

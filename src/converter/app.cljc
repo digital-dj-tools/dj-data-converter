@@ -17,7 +17,7 @@
     TraktorRekordboxConverter
     (xml-nml-spec
       [this]
-      t/nml-xml-spec)
+      t/nml-spec)
     (convert
       [this traktor-nml]
       (c/traktor->rekordbox traktor-nml))))
@@ -29,7 +29,7 @@
 (s/def ::check-input boolean?)
 
 (s/fdef convert-data
-  :args (s/cat :nml-xml (spec/value-encoded-spec t/nml-xml-spec spec/string-transformer)
+  :args (s/cat :nml-xml (spec/value-encoded-spec t/nml-spec spec/string-transformer)
                :config #{{:converter traktor->rekordbox}}
                :options (s/keys))
   :ret (spec/value-encoded-spec r/dj-playlists-xml-spec spec/string-transformer))

@@ -11,9 +11,9 @@ jobs:
       - cd data.xml && mvn install -Dmaven.test.skip=true -DskipTests
   - stage: test
     name: Clojure Tests
-    script: clojure -Adev:test
+    script: clojure -Adev:test -n converter.traktor-test
   - name: Clojurescript Tests
-    script: clojure -Adev:test-cljs
+    script: clojure -Adev:test-cljs -n converter.traktor-test
   - stage: deploy
     name: GitHub Release
     script:

@@ -85,26 +85,22 @@
    {:name ::entry
     :spec entry}))
 
-; (def entry
-;   {::location ::spec/url
-;    (std/opt ::title) string?
-;    (std/opt ::artist) string?
-;    (std/opt ::album) (s/keys :req [(or ::ta/track ::ta/title)]) ; std/or doesn't work like s/or..
-;    (std/opt ::info) {::playtime string?}
-;    (std/opt ::bpm) string?
-;    (std/opt ::cues) [tc/cue-spec] ; how can I say, coll must not be empty?
-;       ;  (std/opt ::cues) (s/cat :cues (s/+ tc/cue-spec)) ; this avoids an empty coll, but st/decode & st/coerce don't work :(
-;    })
-
-; (def entry-spec
-;   (-> (std/spec
-;        {:name ::entry
-;         :spec entry})
-;       (spec/remove-empty-spec ::cues)))
+(defn equiv-bpm?
+  [{:keys [::u/tempos] :as item} entry-z]
+  (let [tempo-z (zx/xml1-> entry-z :TEMPO)
+        bpm (and tempo-z (zx/attr tempo-z :BPM))]
+    (if (empty? tempos)
+      (= (::u/bpm item) bpm)
+      (= (::ut/bpm (first tempos)) bpm))))
 
 (s/fdef item->entry
   :args (s/cat :item u/item-spec)
-  ; :fn TODO if item has tempos, entry bpm matches first tempo 
+  :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
+        (let [item (s/unform u/item-spec conformed-item)
+              entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))]
+          (and
+           (= (::u/title item) (zx/attr entry-z :TITLE))
+           (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
 (defn item->entry
@@ -122,7 +118,7 @@
               time (conj {:tag :INFO
                           :attrs {:PLAYTIME time}})
               bpm (conj {:tag :TEMPO
-                         :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there's tempos take the first tempo as bpm, otherwise take item bpm since item bpm will be an average
+                         :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)))})
 
 (defn grid-markers->tempos
@@ -142,9 +138,8 @@
     (map/remove-nil $ ::u/tempos)))
 
 (defn equiv-tempo?
-  [entry item _]
-  (let [entry-z (zip/xml-zip entry)
-        tempo-z (zx/xml1-> entry-z :TEMPO)
+  [entry-z item]
+  (let [tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
         grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
     (for [grid-cue-z grid-cues-z
@@ -153,10 +148,14 @@
            (= bpm (::ut/bpm tempo))))))
 
 (s/fdef entry->item
-  :args (s/cat :entry-z (spec/xml-zip-spec entry-spec))
-  ; :fn TODO if entry has bpm, item has a tempo with matching bpm
-  :fn (fn equiv-item? [{:keys [] item :ret {:keys [entry-z]} :args}]
-        (equiv-tempo? (s/unform entry-spec entry-z) item nil))
+  :args (s/cat :entry (spec/xml-zip-spec entry-spec))
+  :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
+        (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
+              item (s/unform u/item-spec conformed-item)]
+          (and
+           (= (zx/attr entry-z :TITLE) (::u/title item))
+           (= (zx/attr entry-z :ARTIST) (::u/artist item))
+           (equiv-tempo? entry-z item))))
   :ret u/item-spec)
 
 (defn entry->item

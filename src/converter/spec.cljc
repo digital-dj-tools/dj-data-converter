@@ -53,19 +53,6 @@
 (s/def ::url (st/spec #(instance? cemerick.url.URL %) {:type :url
                                                        :gen #(s/gen #{(url/url "file://localhost/foo/bar")})}))
 
-(s/def ::pos-double
-  (st/spec (s/and double? #(not= ##NaN %) #(not= ##Inf %) pos?) 
-{:gen (fn [] (->> (gen/double)
-                  (gen/such-that #(and (== % %) (not= ##Inf %) (not= 0 %)))
-                  (gen/fmap #(Math/abs %))))}))
-
-; s/with-gen doesn't work with spec tools coercion in cljs, so I use st/spec and :gen
-(s/def ::not-neg-double
-  (st/spec (s/and double? #(not= ##NaN %) #(not= ##Inf %) #(not (neg? %))) 
-{:gen (fn [] (->> (gen/double)
-                  (gen/such-that #(and (== % %) (not= ##Inf %)))
-                  (gen/fmap #(Math/abs %))))}))
-
 ; TODO can't be implemented yet, if encoded value is invalid, 
 ; there's no way to coerce using encoder rather than decoder
 ; (defn encode!

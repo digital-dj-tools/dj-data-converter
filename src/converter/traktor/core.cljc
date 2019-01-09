@@ -147,6 +147,13 @@
       (and (= (zx/attr grid-cue-z :START) (::ut/inizio tempo))
            (= bpm (::ut/bpm tempo))))))
 
+(defn equiv-markers?
+  [entry-z item]
+  (let [cues-z (zx/xml-> entry-z :CUE_V2)]
+    (for [cue-z cues-z
+          marker (::u/markers item)]
+      (= (zx/attr cue-z :START) (::um/start marker)))))
+
 (s/fdef entry->item
   :args (s/cat :entry (spec/xml-zip-spec entry-spec))
   :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
@@ -155,7 +162,9 @@
           (and
            (= (zx/attr entry-z :TITLE) (::u/title item))
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
-           (equiv-tempo? entry-z item))))
+           (equiv-tempo? entry-z item)
+           
+           )))
   :ret u/item-spec)
 
 (defn entry->item

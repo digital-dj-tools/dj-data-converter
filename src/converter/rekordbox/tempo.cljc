@@ -10,7 +10,7 @@
   (std/spec
    {:name ::tempo-xml
     :spec {:tag (s/spec #{:TEMPO})
-           :attrs {:Inizio ::spec/not-neg-double
+           :attrs {:Inizio (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
                    :Bpm string?
                    :Metro string?
                    :Battito string?}}}))
@@ -18,7 +18,7 @@
 (def tempo-spec
   (std/spec
    {:name ::tempo
-    :spec {::inizio ::spec/not-neg-double
+    :spec {::inizio (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
            ::bpm string?
            ::metro string?
            ::battito string?}}))

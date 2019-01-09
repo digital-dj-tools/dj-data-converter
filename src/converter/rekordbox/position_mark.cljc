@@ -12,8 +12,8 @@
     :spec {:tag (s/spec #{:POSITION_MARK})
            :attrs {:Name string?
                    :Type string?
-                   :Start ::spec/not-neg-double
-                   :End ::spec/not-neg-double
+                   :Start (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
+                   :End (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
                    :Num string?
                    :Red int?
                    :Green int?
@@ -30,8 +30,8 @@
    {:name ::position-mark
     :spec {::name string?
            ::type ::type-kw
-           ::start ::spec/not-neg-double
-           ::end ::spec/not-neg-double 
+           ::start (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
+           ::end (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) 
            ::num string?
            ::red int?
            ::green int?

@@ -27,9 +27,8 @@
 (s/def ::hotcue
   (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"}))
 
-(defn len-capped
+(defn start-plus-len-not-greater-than-max
   [{{:keys [:START :LEN]} :attrs :as cue}]
-  ; (or START LEN (println "cue was: " cue))
   (if (< 3600000 (+ START LEN))
     (assoc-in cue [:attrs :LEN] 0)
     cue))
@@ -49,7 +48,7 @@
     {:name ::cue
      :spec cue})
    $
-    (assoc $ :gen (fn [] (gen/fmap #((comp len-capped) %) (s/gen $))))))
+    (assoc $ :gen (fn [] (gen/fmap #(start-plus-len-not-greater-than-max %) (s/gen $))))))
 
 (defn xml->type
   [{:keys [:TYPE]} marker _]

@@ -15,9 +15,10 @@
             ::type-grid
             ::type-loop}))
 
-(defn end-capped
+(defn end-for-loop-markers
   [marker]
-  (update marker ::end (fn [end start] (if (< 3600 (+ start end)) 3600 (+ start end))) (::start marker)))
+  (if (= ::type-loop (::type marker))
+    (update marker ::end (fn [end start] (if (< 3600 (+ start end)) 3600 (+ start end))) (::start marker))))
 
 (defn only-grid-markers-have-num-minus-one
   [marker]
@@ -25,7 +26,7 @@
     (assoc marker ::type ::type-grid)
     marker))
 
-(defn end-equals-start-except-for-loop-markers
+(defn end-for-other-markers
   [marker]
   (if (not= ::type-loop (::type marker))
     (assoc marker ::end (::start marker))
@@ -43,6 +44,6 @@
     {:name ::marker
      :spec marker})
    $
-    (assoc $ :gen (fn [] (gen/fmap #((comp end-equals-start-except-for-loop-markers
+    (assoc $ :gen (fn [] (gen/fmap #((comp end-for-other-markers
                                            only-grid-markers-have-num-minus-one
-                                           end-capped) %) (s/gen $))))))
+                                           end-for-loop-markers) %) (s/gen $))))))

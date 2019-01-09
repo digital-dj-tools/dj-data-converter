@@ -61,7 +61,7 @@
            (std/opt :ARTIST) string?}
    :content      (s/cat
                   :location location-spec
-                  :album-xml (s/? (std/spec {:name ::album
+                  :album (s/? (std/spec {:name ::album
                                              :spec {:tag (s/spec #{:ALBUM})
                                                     :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
                   :modification-info (s/? (std/spec {:name ::modification-info

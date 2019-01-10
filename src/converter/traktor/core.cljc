@@ -104,7 +104,7 @@
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/title ::u/artist ::u/track ::u/album ::u/time ::u/bpm ::u/tempos ::u/markers]}]
+  [{:keys [::u/location ::u/title ::u/artist ::u/track ::u/album ::u/total-time ::u/bpm ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    :attrs (cond-> {}
             title (assoc :TITLE title)
@@ -115,8 +115,8 @@
                                       :attrs (cond-> {}
                                                track (assoc :TRACK track)
                                                album (assoc :TITLE album))})
-              time (conj {:tag :INFO
-                          :attrs {:PLAYTIME time}})
+              total-time (conj {:tag :INFO
+                          :attrs {:PLAYTIME total-time}})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)))})
@@ -158,13 +158,13 @@
   :args (s/cat :entry (spec/xml-zip-spec entry-spec))
   :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
         (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
+              info-z (zx/xml1-> entry-z :INFO)
               item (s/unform u/item-spec conformed-item)]
           (and
            (= (zx/attr entry-z :TITLE) (::u/title item))
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
-           (equiv-tempo? entry-z item)
-           
-           )))
+           (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
+           (equiv-tempo? entry-z item))))
   :ret u/item-spec)
 
 (defn entry->item
@@ -185,7 +185,7 @@
        artist (assoc ::u/artist artist)
        track (assoc ::u/track track)
        album-title (assoc ::u/album album-title)
-       playtime (assoc ::u/time playtime)
+       playtime (assoc ::u/total-time playtime)
        bpm (assoc ::u/bpm bpm)
        (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z)))
      u/sorted-markers

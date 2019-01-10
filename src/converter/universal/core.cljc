@@ -17,7 +17,7 @@
    (std/opt ::artist) string?
    (std/opt ::track) string?
    (std/opt ::album) string?
-   (std/opt ::time) string?
+   (std/opt ::total-time) string?
    (std/opt ::bpm) string?
    (std/opt ::tempos) [ut/tempo-spec]
    (std/opt ::markers) [um/marker-spec]})

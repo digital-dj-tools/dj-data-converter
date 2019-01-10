@@ -12,3 +12,7 @@
   `r/item->track
   {:opts {:num-tests 100}})
 
+(defspec-test
+  library->dj-playlists
+  `r/library->dj-playlists
+  {:opts {:num-tests 10}})

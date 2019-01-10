@@ -233,6 +233,16 @@
    (assoc
     :encode/xml library->nml)))
 
+(s/fdef library->nml
+  :args (s/cat :library-spec any? :library u/library-spec)
+  :ret nml-spec
+  :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-nml :ret}]
+        (let [library (s/unform u/library-spec conformed-library)
+              nml-z (zip/xml-zip (s/unform nml-spec conformed-nml))
+              collection-z (zx/xml1-> nml-z :COLLECTION)]
+          (= (count (->> library ::u/collection))
+             (count (zx/xml-> collection-z :ENTRY))))))
+
 (def library-spec
   (-> u/library-spec
       (assoc :decode/xml nml->library)))

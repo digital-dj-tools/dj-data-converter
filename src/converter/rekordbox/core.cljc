@@ -27,43 +27,34 @@
                      :position-mark (s/* (std/spec {:name ::position-mark
                                                     :spec rp/position-mark-spec})))}}))
 
-; (def track
-;   {::location ::spec/url
-;    ::total-time string?
-;    (std/opt ::name) string?
-;    (std/opt ::artist) string?
-;    (std/opt ::album) string?
-;    (std/opt ::average-bpm) string?
-;    (std/opt ::tempos) [rt/tempo-spec]  ; how can I say, coll must not be empty?
-;    (std/opt ::position-marks) [rp/position-mark-spec]  ; how can I say, coll must not be empty?
-;    })
-
-; (def track-spec
-;   (std/spec
-;    {:name ::track
-;     :spec track}))
-
-; TODO implement :fn check
 (s/fdef item->track
-  :args (s/cat :entry (spec/such-that-spec u/item-spec #(contains? % ::u/total-time) 100))
+  :args (s/cat :item (spec/such-that-spec u/item-spec #(contains? % ::u/total-time) 100))
+  :fn (fn equiv-track? [{{conformed-item :item} :args conformed-track :ret}]
+        (let [item (s/unform u/item-spec conformed-item)
+              track (s/unform track-spec conformed-track)]
+          (and
+           (= (::u/title item) (-> track :attrs :Name))
+           (= (::u/artist item) (-> track :attrs :Artist))))) ; TODO tempos and position marks
   :ret track-spec)
 
 (defn item->track
-  [{:keys [::u/bpm ::u/tempos ::u/markers] :as item}]
+  [{:keys [::u/title ::u/bpm ::u/tempos ::u/markers] :as item}]
   {:tag :TRACK
    :attrs
    (cond-> item
-     true (-> (dissoc ::u/bpm ::u/tempos ::u/markers) (map/transform-keys csk/->PascalCaseKeyword))
+     true (-> (dissoc ::u/title ::u/bpm ::u/tempos ::u/markers) (map/transform-keys csk/->PascalCaseKeyword))
+     title (assoc :Name title)
      bpm (assoc :AverageBpm bpm))
    :content (cond-> []
               tempos (concat (map rt/item-tempo->tempo tempos))
               markers (concat (map rp/marker->position-mark markers)))})
 
 (defn library->dj-playlists
-  [_ library]
+  [_ {:keys [::u/collection]}]
   {:tag :DJ_PLAYLISTS
    :attrs {:Version "1.0.0"}
-   :content [{:tag :COLLECTION :content (map item->track (::u/collection library))}]}) ; TODO items without playtime should be removed
+   :content [{:tag :COLLECTION
+              :content (map item->track (remove #(not (contains? % ::u/total-time)) collection))}]})
 
 (defn dj-playlists->library
   [_ dj-playlists])
@@ -84,3 +75,12 @@
      :spec dj-playlists})
    (assoc
     :encode/xml library->dj-playlists)))
+
+(s/fdef library->dj-playlists
+  :args (s/cat :library-spec any? :library u/library-spec)
+  :ret dj-playlists-spec
+  :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-dj-playlists :ret}]
+        (let [library (s/unform u/library-spec conformed-library)
+              dj-playlists (s/unform dj-playlists-spec conformed-dj-playlists)]
+          (= (count (->> library ::u/collection (remove #(not (contains? % ::u/total-time)))))
+             (count (->> dj-playlists :content first :content))))))

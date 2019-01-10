@@ -45,6 +45,11 @@
   `t/item->entry
   {:opts {:num-tests 100}})
 
+(defspec-test
+  library->nml
+  `t/library->nml
+  {:opts {:num-tests 10}})
+
 (defspec cue-spec-encode-decode-equality
   100
   (tcp/for-all [cue (s/gen tc/cue-spec)]

@@ -70,11 +70,12 @@
                                                 pos-num-markers))))})
 
 (defn library->dj-playlists
-  [_ {:keys [::u/collection]}]
+  [progress _ {:keys [::u/collection]}]
   {:tag :DJ_PLAYLISTS
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
-              :content (map item->track (remove #(not (contains? % ::u/total-time)) collection))}]})
+              :content (map (if progress (progress item->track) item->track) 
+                            (remove #(not (contains? % ::u/total-time)) collection))}]})
 
 (defn dj-playlists->library
   [_ dj-playlists])
@@ -88,16 +89,17 @@
                            :spec {:tag (s/spec #{:COLLECTION})
                                   :content (s/cat :tracks (s/* track-spec))}}))})
 
-(def dj-playlists-spec
+(defn dj-playlists-spec
+  [progress]
   (->
    (std/spec
     {:name ::dj-playlists
      :spec dj-playlists})
    (assoc
-    :encode/xml library->dj-playlists)))
+    :encode/xml (partial library->dj-playlists progress))))
 
 (s/fdef library->dj-playlists
-  :args (s/cat :library-spec any? :library u/library-spec)
+  :args (s/cat :config nil? :library-spec any? :library u/library-spec)
   :ret dj-playlists-spec
   :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-dj-playlists :ret}]
         (let [library (s/unform u/library-spec conformed-library)

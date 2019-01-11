@@ -1,7 +1,6 @@
 (ns converter.app
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   [converter.core :as c]
    [converter.rekordbox.core :as r]
    [converter.traktor.core :as t]
    [converter.spec :as spec]
@@ -10,7 +9,7 @@
 
 (defprotocol TraktorRekordboxConverter
   (input-spec [this])
-  (output-spec [this]))
+  (output-spec [this config]))
 
 (def traktor->rekordbox
   (reify
@@ -19,8 +18,8 @@
       [this]
       t/nml-spec)
     (output-spec
-      [this]
-      r/dj-playlists-spec)))
+      [this progress]
+      (r/dj-playlists-spec progress))))
 
 (defn doto-prn
   [obj f]
@@ -35,7 +34,7 @@
 (defn convert-data
   [xml config]
   (let [input-spec (input-spec (:converter config))
-        output-spec (output-spec (:converter config))]
+        output-spec (output-spec (:converter config) (:progress config))]
     (as-> xml $
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
       (spec/decode! input-spec $ spec/string-transformer)

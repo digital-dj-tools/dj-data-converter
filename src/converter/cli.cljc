@@ -77,10 +77,21 @@
                            (err/write-report (err/create-report arguments options (err/Error->map e)))
                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
+(defn print-progress
+  [f]
+  (let [item-count (atom 1)]
+    (fn [item]
+      (when (= 0 (mod @item-count 1000))
+        (println ".")
+        #?(:clj (flush)))
+      (swap! item-count inc)
+      (f item))))
+
 (defn -main
   [& args]
   (let [{:keys [arguments options exit-message ok?]} (validate-args args)
-        config {:converter app/traktor->rekordbox}]
+        config {:converter app/traktor->rekordbox
+                :progress print-progress}]
     (if exit-message
       (exit (if ok? 0 1) exit-message)
       (apply exit (process arguments config options)))))

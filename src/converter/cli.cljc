@@ -12,8 +12,7 @@
   #?(:clj (:gen-class)))
 
 (def cli-options
-  [["-c" "--check-input" "Perform checks on the input file " :default false]
-   ["-h" "--help"]])
+  [["-h" "--help"]])
 
 (defn usage
   [options-summary]
@@ -40,7 +39,8 @@
       :else
       {:exit-message (usage summary)})))
 
-(defn exit [status message]
+(defn exit
+  [status message]
   (println message)
   (if (not= 0 status)
     #?(:clj (System/exit status)
@@ -53,8 +53,8 @@
        (with-open [reader (io/reader (:input-file arguments))
                    writer (io/writer (:output-file arguments))]
          (as-> reader $
-           (if (:check-input options) (xml/parse $ :skip-whitespace true) (xml/parse $))
-           (app/convert-data $ config options)
+           (xml/parse $ :skip-whitespace true)
+           (app/convert-data $ config)
            (xml/emit $ writer)))
        [0 "Conversion completed"]
        (catch Throwable t (do 
@@ -68,8 +68,8 @@
        (as-> (:input-file arguments) $
          (io/slurp $)
          (xml/parse-str $)
-         (if (:check-input options) (converter.xml/strip-whitespace $) (identity $))
-         (app/convert-data $ config options)
+         (converter.xml/strip-whitespace $)
+         (app/convert-data $ config)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))
        [0 "Conversion completed"]

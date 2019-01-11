@@ -26,33 +26,22 @@
   [obj f]
   (prn (f obj)))
 
-(s/def ::check-input boolean?)
-
 (s/fdef convert-data
   :args (s/cat :xml (spec/value-encoded-spec t/nml-spec spec/string-transformer)
-               :config #{{:converter traktor->rekordbox}}
-               :options (s/keys))
+               :config #{{:converter traktor->rekordbox}})
   :ret (spec/value-encoded-spec r/dj-playlists-spec spec/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert-data
-  [xml config options]
+  [xml config]
   (let [input-spec (input-spec (:converter config))
         output-spec (output-spec (:converter config))]
-    (if (and (:check-input options)
-             (s/invalid? (st/conform input-spec xml spec/string-transformer)))
-      (let [explain (st/explain-data input-spec xml spec/string-transformer)
-            data {:type ::convert
-                  :problems (st/+problems+ explain)
-                  :spec input-spec
-                  :value xml}]
-        (throw (ex-info "Spec conform error:" data)))
-      (as-> xml $
+    (as-> xml $
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
-        (spec/decode! input-spec $ spec/string-transformer)
+      (spec/decode! input-spec $ spec/string-transformer)
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
-        (spec/decode! t/library-spec $ spec/xml-transformer)
+      (spec/decode! t/library-spec $ spec/xml-transformer)
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::u/collection)))        
-        (st/encode output-spec $ spec/xml-transformer)
+      (st/encode output-spec $ spec/xml-transformer)
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first :content)))
-        ))))
+      )))

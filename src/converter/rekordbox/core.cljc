@@ -2,8 +2,11 @@
   (:require
    [camel-snake-kebab.core :as csk]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
+   [clojure.data.zip.xml :as zx]
+   [clojure.zip :as zip]
    [converter.map :as map]
    [converter.universal.core :as u]
+   [converter.universal.marker :as um]
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
    [converter.spec :as spec]
@@ -22,32 +25,49 @@
                    (std/opt :Album) string?
                    (std/opt :AverageBpm) string?}
            :content (s/cat
-                     :tempo (s/* (std/spec {:name ::tempo
-                                            :spec rt/tempo-spec}))
-                     :position-mark (s/* (std/spec {:name ::position-mark
-                                                    :spec rp/position-mark-spec})))}}))
+                     :tempos (s/* (std/spec {:name ::tempo
+                                             :spec rt/tempo-spec}))
+                     :position-marks (s/* (std/spec {:name ::position-mark
+                                                     :spec rp/position-mark-spec})))}}))
+
+(defn equiv-position-marks?
+  [{:keys [::u/markers]} track-z]
+  (let [pos-num-markers (remove #(= "-1" (::um/num %)) markers)]
+    (every? identity
+            (map
+             #(and
+               (= (::um/num %1) (zx/attr (first %2) :Num))
+               (= "-1" (zx/attr (second %2) :Num)))
+             pos-num-markers
+             (partition 2 (zx/xml-> track-z :POSITION_MARK))))))
 
 (s/fdef item->track
   :args (s/cat :item (spec/such-that-spec u/item-spec #(contains? % ::u/total-time) 100))
+  :ret track-spec
   :fn (fn equiv-track? [{{conformed-item :item} :args conformed-track :ret}]
         (let [item (s/unform u/item-spec conformed-item)
-              track (s/unform track-spec conformed-track)]
+              track-z (zip/xml-zip (s/unform track-spec conformed-track))]
           (and
-           (= (::u/title item) (-> track :attrs :Name))
-           (= (::u/artist item) (-> track :attrs :Artist))))) ; TODO tempos and position marks
-  :ret track-spec)
+           (= (::u/title item) (zx/attr track-z :Name))
+           (= (::u/artist item) (zx/attr track-z :Artist))
+           (equiv-position-marks? item track-z))))) ; TODO tempos
 
 (defn item->track
-  [{:keys [::u/title ::u/bpm ::u/tempos ::u/markers] :as item}]
+  [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
   {:tag :TRACK
    :attrs
    (cond-> item
-     true (-> (dissoc ::u/title ::u/bpm ::u/tempos ::u/markers) (map/transform-keys csk/->PascalCaseKeyword))
+     true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
      title (assoc :Name title)
      bpm (assoc :AverageBpm bpm))
-   :content (cond-> []
-              tempos (concat (map rt/item-tempo->tempo tempos))
-              markers (concat (map rp/marker->position-mark markers)))})
+   :content (let [pos-num-markers (remove #(= "-1" (::um/num %)) markers)]
+              (cond-> []
+                tempos (concat (map rt/item-tempo->tempo tempos))
+                pos-num-markers (concat (reduce #(conj %1
+                                                       (rp/marker->position-mark %2 false)
+                                                       (rp/marker->position-mark %2 true))
+                                                []
+                                                pos-num-markers))))})
 
 (defn library->dj-playlists
   [_ {:keys [::u/collection]}]

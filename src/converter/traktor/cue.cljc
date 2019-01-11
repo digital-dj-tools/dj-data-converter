@@ -48,7 +48,7 @@
     {:name ::cue
      :spec cue})
    $
-    (assoc $ :gen (fn [] (gen/fmap #(start-plus-len-not-greater-than-max %) (s/gen $))))))
+    (assoc $ :gen (fn [] (gen/fmap #(start-plus-len-not-greater-than-max %) (s/gen $)))))) ; TODO set len to zero unless loop
 
 (defn xml->type
   [{:keys [:TYPE]} marker _]

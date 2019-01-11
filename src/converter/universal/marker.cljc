@@ -18,7 +18,8 @@
 (defn end-for-loop-markers
   [marker]
   (if (= ::type-loop (::type marker))
-    (update marker ::end (fn [end start] (if (< 3600 (+ start end)) 3600 (+ start end))) (::start marker))))
+    (update marker ::end (fn [end start] (if (< 3600 (+ start end)) 3600 (+ start end))) (::start marker))
+    marker))
 
 (defn only-grid-markers-have-num-minus-one
   [marker]

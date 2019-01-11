@@ -9,18 +9,18 @@
    [spec-tools.core :as st]))
 
 (defprotocol TraktorRekordboxConverter
-  (xml-nml-spec [this])
-  (convert [this traktor-nml]))
+  (input-spec [this])
+  (output-spec [this]))
 
 (def traktor->rekordbox
   (reify
     TraktorRekordboxConverter
-    (xml-nml-spec
+    (input-spec
       [this]
       t/nml-spec)
-    (convert
-      [this traktor-nml]
-      (c/traktor->rekordbox traktor-nml))))
+    (output-spec
+      [this]
+      r/dj-playlists-spec)))
 
 (defn doto-prn
   [obj f]
@@ -29,29 +29,30 @@
 (s/def ::check-input boolean?)
 
 (s/fdef convert-data
-  :args (s/cat :nml-xml (spec/value-encoded-spec t/nml-spec spec/string-transformer)
+  :args (s/cat :xml (spec/value-encoded-spec t/nml-spec spec/string-transformer)
                :config #{{:converter traktor->rekordbox}}
                :options (s/keys))
-  :ret (spec/value-encoded-spec r/dj-playlists-xml-spec spec/string-transformer))
+  :ret (spec/value-encoded-spec r/dj-playlists-spec spec/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert-data
   [xml config options]
-  (let [nml-xml-spec (xml-nml-spec (:converter config))]
-    (if
-     (and (:check-input options) (s/invalid? (st/conform nml-xml-spec xml spec/string-transformer)))
-      (let [explain (st/explain-data nml-xml-spec xml spec/string-transformer)
+  (let [input-spec (input-spec (:converter config))
+        output-spec (output-spec (:converter config))]
+    (if (and (:check-input options)
+             (s/invalid? (st/conform input-spec xml spec/string-transformer)))
+      (let [explain (st/explain-data input-spec xml spec/string-transformer)
             data {:type ::convert
                   :problems (st/+problems+ explain)
-                  :spec nml-xml-spec
+                  :spec input-spec
                   :value xml}]
         (throw (ex-info "Spec conform error:" data)))
       (as-> xml $
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
-        (spec/decode! t/nml-spec $ spec/xml-transformer)
-    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::t/collection)))
-        (convert (:converter config) $)
-    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::r/collection)))
-        (st/encode r/dj-playlists-xml-spec $ spec/xml-transformer)
+        (spec/decode! input-spec $ spec/string-transformer)
+    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
+        (spec/decode! t/library-spec $ spec/xml-transformer)
+    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::u/collection)))        
+        (st/encode output-spec $ spec/xml-transformer)
     ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first :content)))
         ))))

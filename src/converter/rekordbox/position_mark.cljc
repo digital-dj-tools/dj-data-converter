@@ -49,8 +49,9 @@
                               [:Red :Green :Blue]))))
 
 (defn marker->position-mark
-  [marker]
+  [marker hotcue?]
   {:tag :POSITION_MARK
    :attrs (map/transform marker
                          (partial map/transform-key csk/->PascalCaseKeyword)
-                         {::um/type marker-type->position-mark})})
+                         {::um/type marker-type->position-mark
+                          ::um/num #(assoc %2 :Num (if hotcue? "-1" (%3 %1)))})})

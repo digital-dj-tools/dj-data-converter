@@ -62,8 +62,8 @@
    :content      (s/cat
                   :location location-spec
                   :album (s/? (std/spec {:name ::album
-                                             :spec {:tag (s/spec #{:ALBUM})
-                                                    :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
+                                         :spec {:tag (s/spec #{:ALBUM})
+                                                :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
                   :modification-info (s/? (std/spec {:name ::modification-info
                                                      :spec {:tag (s/spec #{:MODIFICATION_INFO})}}))
                   :info (s/? (std/spec {:name ::info
@@ -116,7 +116,7 @@
                                                track (assoc :TRACK track)
                                                album (assoc :TITLE album))})
               total-time (conj {:tag :INFO
-                          :attrs {:PLAYTIME total-time}})
+                                :attrs {:PLAYTIME total-time}})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)))})
@@ -128,10 +128,10 @@
                      (fn [tempos marker] (if (and
                                               bpm
                                               (= ::um/type-grid (::um/type marker)))
-                                           (conj tempos {::ut/inizio (::um/start marker)
-                                                         ::ut/bpm bpm ; only one tempo/bpm value for the whole track, in traktor
-                                                         ::ut/metro "4/4"
-                                                         ::ut/battito "1"})
+                                           (vec (conj tempos {::ut/inizio (::um/start marker)
+                                                              ::ut/bpm bpm ; only one tempo/bpm value for the whole track, in traktor
+                                                              ::ut/metro "4/4"
+                                                              ::ut/battito "1"}))
                                            tempos)) %2)
             $
             markers)
@@ -142,17 +142,20 @@
   (let [tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
         grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
-    (for [grid-cue-z grid-cues-z
-          tempo (::u/tempos item)]
-      (and (= (zx/attr grid-cue-z :START) (::ut/inizio tempo))
-           (= bpm (::ut/bpm tempo))))))
+    (every? identity
+            (map #(and
+                   (= (tc/millis->seconds (zx/attr %1 :START)) (::ut/inizio %2))
+                   (= bpm (::ut/bpm %2)))
+                 grid-cues-z
+                 (::u/tempos item)))))
 
 (defn equiv-markers?
   [entry-z item]
   (let [cues-z (zx/xml-> entry-z :CUE_V2)]
-    (for [cue-z cues-z
-          marker (::u/markers item)]
-      (= (zx/attr cue-z :START) (::um/start marker)))))
+    (every? identity
+            (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
+                 cues-z
+                 (::u/markers item)))))
 
 (s/fdef entry->item
   :args (s/cat :entry (spec/xml-zip-spec entry-spec))
@@ -164,6 +167,7 @@
            (= (zx/attr entry-z :TITLE) (::u/title item))
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
+           (equiv-markers? entry-z item)
            (equiv-tempo? entry-z item))))
   :ret u/item-spec)
 
@@ -188,9 +192,7 @@
        playtime (assoc ::u/total-time playtime)
        bpm (assoc ::u/bpm bpm)
        (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z)))
-     u/sorted-markers
-     grid-markers->tempos
-     u/sorted-tempos)))
+     grid-markers->tempos)))
 
 (defn library->nml
   [_ library]

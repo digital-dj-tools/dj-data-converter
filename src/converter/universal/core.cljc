@@ -1,6 +1,5 @@
 (ns converter.universal.core
   (:require
-   #?(:clj [clojure.pprint :as pprint] :cljs [cljs.pprint :as pprint])
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [converter.map :as map]
@@ -65,10 +64,10 @@
                                               (not= "-1" (::um/num marker))
                                               bpm
                                               (= ::um/type-grid (::um/type marker)))
-                                           (conj tempos {::ut/inizio (::um/start marker)
+                                           (vec (conj tempos {::ut/inizio (::um/start marker)
                                                          ::ut/bpm bpm
                                                          ::ut/metro "4/4"
-                                                         ::ut/battito "1"})
+                                                         ::ut/battito "1"}))
                                            tempos)) %2)
             $
             markers)

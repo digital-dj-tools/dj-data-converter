@@ -6,24 +6,16 @@
    [converter.spec :as spec]
    [spec-tools.data-spec :as std]))
 
-(def tempo-xml-spec
+(def tempo-spec
   (std/spec
-   {:name ::tempo-xml
+   {:name ::tempo
     :spec {:tag (s/spec #{:TEMPO})
-           :attrs {:Inizio ::spec/not-neg-double
+           :attrs {:Inizio (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
                    :Bpm string?
                    :Metro string?
                    :Battito string?}}}))
 
-(def tempo-spec
-  (std/spec
-   {:name ::tempo
-    :spec {::inizio ::spec/not-neg-double
-           ::bpm string?
-           ::metro string?
-           ::battito string?}}))
-
-(defn tempo->xml
-  [tempo]
+(defn item-tempo->tempo
+  [item-tempo]
   {:tag :TEMPO
-   :attrs (map/transform-keys tempo csk/->PascalCaseKeyword)})
+   :attrs (map/transform-keys item-tempo csk/->PascalCaseKeyword)})

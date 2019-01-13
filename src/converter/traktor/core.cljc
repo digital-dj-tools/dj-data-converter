@@ -195,10 +195,11 @@
      grid-markers->tempos)))
 
 (defn library->nml
-  [_ library]
+  [progress _ {:keys [::u/collection]}]
   {:tag :NML
    :attrs {:VERSION 19}
-   :content [{:tag :COLLECTION :content (map item->entry (::u/collection library))}]})
+   :content [{:tag :COLLECTION 
+              :content (map (if progress (progress item->entry) item->entry) collection)}]})
 
 (defn nml->library
   [_ nml]
@@ -227,20 +228,22 @@
              :sorting-order (s/* (std/spec {:name ::sorting-order
                                             :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
 
-(def nml-spec
-  (->
-   (std/spec
-    {:name ::nml
-     :spec nml})
-   (assoc
-    :encode/xml library->nml)))
+(defn nml-spec
+  ([]
+   (nml-spec nil))
+  ([progress] 
+   (->
+    (std/spec
+     {:name ::nml
+      :spec nml})
+    (assoc :encode/xml (partial library->nml progress)))))
 
 (s/fdef library->nml
-  :args (s/cat :library-spec any? :library u/library-spec)
-  :ret nml-spec
+  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
+  :ret (nml-spec)
   :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-nml :ret}]
         (let [library (s/unform u/library-spec conformed-library)
-              nml-z (zip/xml-zip (s/unform nml-spec conformed-nml))
+              nml-z (zip/xml-zip (s/unform (nml-spec) conformed-nml))
               collection-z (zx/xml1-> nml-z :COLLECTION)]
           (= (count (->> library ::u/collection))
              (count (zx/xml-> collection-z :ENTRY))))))

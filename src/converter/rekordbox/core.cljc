@@ -80,26 +80,30 @@
 (defn dj-playlists->library
   [_ dj-playlists])
 
+(def collection-spec
+  (std/spec
+   {:name ::collection
+    :spec {:tag (s/spec #{:COLLECTION})
+           :content (s/cat :tracks (s/* track-spec))}}))
+
 (def dj-playlists
   {:tag (s/spec #{:DJ_PLAYLISTS})
    :attrs {:Version string?}
    :content (s/cat
-             :collection (std/spec
-                          {:name ::collection
-                           :spec {:tag (s/spec #{:COLLECTION})
-                                  :content (s/cat :tracks (s/* track-spec))}}))})
+             :collection collection-spec)})
 
 (defn dj-playlists-spec
-  [progress]
-  (->
-   (std/spec
-    {:name ::dj-playlists
-     :spec dj-playlists})
-   (assoc
-    :encode/xml (partial library->dj-playlists progress))))
+  ([]
+   (dj-playlists-spec nil))
+  ([progress]
+   (->
+    (std/spec
+     {:name ::dj-playlists
+      :spec dj-playlists})
+    (assoc :encode/xml (partial library->dj-playlists progress)))))
 
 (s/fdef library->dj-playlists
-  :args (s/cat :config nil? :library-spec any? :library u/library-spec)
+  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
   :ret dj-playlists-spec
   :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-dj-playlists :ret}]
         (let [library (s/unform u/library-spec conformed-library)

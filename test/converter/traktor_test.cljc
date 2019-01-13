@@ -68,10 +68,10 @@
 
 (defspec nml-spec-encode-decode-equality
   10
-  (tcp/for-all [nml (s/gen t/nml-spec)]
+  (tcp/for-all [nml (s/gen (t/nml-spec))]
                (as-> nml $
-                 (st/encode t/nml-spec $ st/string-transformer)
-                 (spec/decode! t/nml-spec $ st/string-transformer)
+                 (st/encode (t/nml-spec) $ st/string-transformer)
+                 (spec/decode! (t/nml-spec) $ st/string-transformer)
                  (is (= nml $)))))
 
 (defn doto-println
@@ -99,10 +99,10 @@
   10
   (tcp/for-all [library (s/gen u/library-spec)]
                (as-> library $
-                 (st/encode t/nml-spec $ spec/xml-transformer)
+                 (st/encode (t/nml-spec) $ spec/xml-transformer)
                  (xml/encode $)
                  (xml/decode $)
-                 (spec/decode! t/nml-spec $ spec/string-transformer)
+                 (spec/decode! (t/nml-spec) $ spec/string-transformer)
                  (spec/decode! t/library-spec $ spec/xml-transformer)
                  ; TODO for the first tempo of each item, assert bpm's are equal (in addition to inizio being equal)
                  (is (= (dissoc-all-tempos-bpm-metro-battito library) (dissoc-all-tempos-bpm-metro-battito $))))))
@@ -111,11 +111,11 @@
   10
   (tcp/for-all [library (s/gen u/library-spec)]
                (as-> library $
-                 (st/encode t/nml-spec $ spec/xml-transformer)
+                 (st/encode (t/nml-spec) $ spec/xml-transformer)
                  (xml/encode $)
                  (xml/decode $)
-                 (spec/decode! t/nml-spec $ spec/string-transformer)
+                 (spec/decode! (t/nml-spec) $ spec/string-transformer)
                  (spec/decode! t/library-spec $ spec/xml-transformer)
-                 (st/encode t/nml-spec $ spec/xml-transformer)
+                 (st/encode (t/nml-spec) $ spec/xml-transformer)
                  (xml/encode $)
-                 (is (= (xml/encode (st/encode t/nml-spec library spec/xml-transformer)) $)))))
+                 (is (= (xml/encode (st/encode (t/nml-spec) library spec/xml-transformer)) $)))))

@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting (Traktor to Rekordbox)
 - System abstraction for reloading code in the REPL (and removal of def's)
 
+## 0.2.0 (2019-01-14)
+### Changed
+- Internal changes to simplify data conversions 
+- Internal changes allowing this project to be used as a library and extended by other projects.
+### Removed
+- The -c/--check-input command line option (no longer required since the input is now always checked).
+
 ## 0.1.0 (2018-11-24)
 ### Added
 - Initial release.

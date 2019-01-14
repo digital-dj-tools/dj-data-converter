@@ -76,7 +76,6 @@ A converted `rekordbox.xml` file will be created in the current directory. If th
 
 ### Options
 ```
-  -c, --check-input  Perform checks on the input file
   -h, --help
 ```
 ### Importing to Rekordbox

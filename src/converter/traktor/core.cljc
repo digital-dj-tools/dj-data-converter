@@ -19,11 +19,11 @@
 
 (def location
   {:tag (s/spec #{:LOCATION})
-   :attrs {:DIR ::spec/not-blank ; TODO use ::spec/nml-dir
-           :FILE ::spec/not-blank
+   :attrs {:DIR ::spec/nml-dir
+           :FILE ::spec/not-blank-string
            (std/opt :VOLUME) (std/or {:drive-letter ::spec/drive-letter ; how can I say, if no volume also no volumeid?
-                                      :not-drive-letter ::spec/not-blank})
-           (std/opt :VOLUMEID) ::spec/not-blank}})
+                                      :not-drive-letter ::spec/not-blank-string})
+           (std/opt :VOLUMEID) ::spec/not-blank-string}})
 
 (def location-spec
   (std/spec {:name ::location
@@ -198,7 +198,7 @@
   [progress _ {:keys [::u/collection]}]
   {:tag :NML
    :attrs {:VERSION 19}
-   :content [{:tag :COLLECTION 
+   :content [{:tag :COLLECTION
               :content (map (if progress (progress item->entry) item->entry) collection)}]})
 
 (defn nml->library
@@ -231,7 +231,7 @@
 (defn nml-spec
   ([]
    (nml-spec nil))
-  ([progress] 
+  ([progress]
    (->
     (std/spec
      {:name ::nml

@@ -9,8 +9,15 @@
    [spec-tools.core :as st]
    [spec-tools.transform :as stt]))
 
-(s/def ::not-blank
-  (s/and string? #(not (str/blank? %))))
+(defn not-blank-string-gen
+  []
+  (gen/such-that #(not (str/blank? %))
+                  (gen/string-alphanumeric)))
+
+(s/def ::not-blank-string
+  (s/with-gen 
+    (s/and string? #(not (str/blank? %)))
+    (fn [] (not-blank-string-gen))))
 
 (def drive-letter-regex #"[A-Z]:")
 
@@ -25,19 +32,23 @@
     (s/and string? drive-letter?)
     (fn [] (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)))))
 
+(defn nml-dir-gen
+  []
+  (gen/fmap #(->> % (interleave (repeat "/:")) (apply str)) (gen/vector (not-blank-string-gen))))
+
 (s/def ::nml-dir
   (s/with-gen
-    string? ; TODO and with regex
-    (fn [] (gen/fmap #(->> % (interleave (repeat "/:")) (apply str)) (gen/vector (gen/string-alphanumeric))))))
+    string? ; TODO and with cat+regex specs
+    (fn [] (nml-dir-gen))))
 
 (s/def ::nml-path
-  (s/with-gen 
-    string? ; TODO and with regex
+  (s/with-gen
+    string? ; TODO and with cat+regex specs
     (fn [] (gen/fmap (partial apply str)
-                     (gen/tuple 
+                     (gen/tuple
                       (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)) ; drive letter
-                      (gen/fmap #(->> % (interleave (repeat "/:")) (apply str)) (gen/vector (gen/string-alphanumeric))) ; path
-                      (gen/string-alphanumeric) ; filename
+                      (nml-dir-gen) ; dir
+                      (gen/fmap #(str "/:" %) (not-blank-string-gen)) ; filename
                       )))))
 
 (defn string->url

@@ -12,7 +12,7 @@ jobs:
   - stage: test
     name: Clojure Tests
     script: clojure -Adev:test
-  - name: Clojurescript Tests
+  - name: ClojureScript Tests
     script: clojure -Adev:test-cljs
   - stage: deploy
     name: GitHub Release

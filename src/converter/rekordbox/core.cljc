@@ -2,7 +2,11 @@
   (:require
    [camel-snake-kebab.core :as csk]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
+   [clojure.data.zip.xml :as zx]
+   [clojure.zip :as zip]
    [converter.map :as map]
+   [converter.universal.core :as u]
+   [converter.universal.marker :as um]
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
    [converter.spec :as spec]
@@ -10,9 +14,9 @@
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]))
 
-(def track-xml-spec
+(def track-spec
   (std/spec
-   {:name ::track-xml
+   {:name ::track
     :spec {:tag (s/spec #{:TRACK})
            :attrs {:Location ::spec/url
                    :TotalTime string?
@@ -20,71 +24,89 @@
                    (std/opt :Artist) string?
                    (std/opt :Album) string?
                    (std/opt :AverageBpm) string?}
-           :content (s/cat 
-                     :tempo-xml (s/* (std/spec {:name ::tempo-xml
-                                                :spec rt/tempo-xml-spec}))
-                     :position-mark-xml (s/* (std/spec {:name ::position-mark-xml
-                                                        :spec rp/position-mark-xml-spec})))}}))
+           :content (s/cat
+                     :tempos (s/* (std/spec {:name ::tempo
+                                             :spec rt/tempo-spec}))
+                     :position-marks (s/* (std/spec {:name ::position-mark
+                                                     :spec rp/position-mark-spec})))}}))
 
-(def track
-  {::location ::spec/url
-   ::total-time string?
-   (std/opt ::name) string?
-   (std/opt ::artist) string?
-   (std/opt ::album) string?
-   (std/opt ::average-bpm) string?
-   (std/opt ::tempos) [rt/tempo-spec]  ; how can I say, coll must not be empty?
-   (std/opt ::position-marks) [rp/position-mark-spec]  ; how can I say, coll must not be empty?
-   })
+(defn equiv-position-marks?
+  [{:keys [::u/markers]} track-z]
+  (let [pos-num-markers (remove #(= "-1" (::um/num %)) markers)]
+    (every? identity
+            (map
+             #(and
+               (= (::um/num %1) (zx/attr (first %2) :Num))
+               (= "-1" (zx/attr (second %2) :Num)))
+             pos-num-markers
+             (partition 2 (zx/xml-> track-z :POSITION_MARK))))))
 
-(def track-spec
-  (std/spec
-   {:name ::track
-    :spec track}))
+(s/fdef item->track
+  :args (s/cat :item (spec/such-that-spec u/item-spec #(contains? % ::u/total-time) 100))
+  :ret track-spec
+  :fn (fn equiv-track? [{{conformed-item :item} :args conformed-track :ret}]
+        (let [item (s/unform u/item-spec conformed-item)
+              track-z (zip/xml-zip (s/unform track-spec conformed-track))]
+          (and
+           (= (::u/title item) (zx/attr track-z :Name))
+           (= (::u/artist item) (zx/attr track-z :Artist))
+           (equiv-position-marks? item track-z))))) ; TODO tempos
 
-; TODO implement :fn check
-(s/fdef track->xml
-  :args (s/cat :entry track-spec)
-  :ret track-xml-spec)
-
-(defn track->xml
-  [{:keys [::tempos ::position-marks] :as track}]
+(defn item->track
+  [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
   {:tag :TRACK
-   :attrs (map/transform-keys (dissoc track ::tempos ::position-marks) csk/->PascalCaseKeyword)
-   :content (cond-> []
-              tempos (concat (map rt/tempo->xml tempos))
-              position-marks (concat (map rp/position-mark->xml position-marks)))})
+   :attrs
+   (cond-> item
+     true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
+     title (assoc :Name title)
+     bpm (assoc :AverageBpm bpm))
+   :content (let [pos-num-markers (remove #(= "-1" (::um/num %)) markers)]
+              (cond-> []
+                tempos (concat (map rt/item-tempo->tempo tempos))
+                pos-num-markers (concat (reduce #(conj %1
+                                                       (rp/marker->position-mark %2 false)
+                                                       (rp/marker->position-mark %2 true))
+                                                []
+                                                pos-num-markers))))})
 
-(defn dj-playlists->xml
-  [_ dj-playlists]
+(defn library->dj-playlists
+  [progress _ {:keys [::u/collection]}]
   {:tag :DJ_PLAYLISTS
    :attrs {:Version "1.0.0"}
-   :content [{:tag :COLLECTION :content (map track->xml (::collection dj-playlists))}]})
+   :content [{:tag :COLLECTION
+              :content (map (if progress (progress item->track) item->track) 
+                            (remove #(not (contains? % ::u/total-time)) collection))}]})
 
-(defn xml->dj-playlists
-  [_ xml])
+(defn dj-playlists->library
+  [_ dj-playlists])
 
-(def dj-playlists-xml-spec
-  (->
-   (std/spec
-    {:name ::dj-playlists-xml
-     :spec {:tag (s/spec #{:DJ_PLAYLISTS})
-            :attrs {:Version string?}
-            :content (s/cat
-                      :collection-xml (std/spec
-                                       {:name ::collection-xml
-                                        :spec {:tag (s/spec #{:COLLECTION})
-                                               :content (s/cat :tracks-xml (s/* track-xml-spec))}}))}})
-   (assoc
-    :encode/xml dj-playlists->xml)))
+(def collection-spec
+  (std/spec
+   {:name ::collection
+    :spec {:tag (s/spec #{:COLLECTION})
+           :content (s/cat :tracks (s/* track-spec))}}))
 
 (def dj-playlists
-  {::collection (s/cat :tracks (s/* track-spec))})
+  {:tag (s/spec #{:DJ_PLAYLISTS})
+   :attrs {:Version string?}
+   :content (s/cat
+             :collection collection-spec)})
 
-(def dj-playlists-spec
-  (->
-   (std/spec
-    {:name ::dj-playlists
-     :spec dj-playlists})
-   (assoc
-    :decode/xml xml->dj-playlists)))
+(defn dj-playlists-spec
+  ([]
+   (dj-playlists-spec nil))
+  ([progress]
+   (->
+    (std/spec
+     {:name ::dj-playlists
+      :spec dj-playlists})
+    (assoc :encode/xml (partial library->dj-playlists progress)))))
+
+(s/fdef library->dj-playlists
+  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
+  :ret dj-playlists-spec
+  :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-dj-playlists :ret}]
+        (let [library (s/unform u/library-spec conformed-library)
+              dj-playlists (s/unform dj-playlists-spec conformed-dj-playlists)]
+          (= (count (->> library ::u/collection (remove #(not (contains? % ::u/total-time)))))
+             (count (->> dj-playlists :content first :content))))))

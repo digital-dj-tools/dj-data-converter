@@ -9,35 +9,42 @@
    [converter.spec :as spec]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
+   [converter.universal.core :as u]
+   [converter.universal.marker :as um]
+   [converter.universal.tempo :as ut]
    [converter.xml :as xml]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]))
 
-(def location-xml
+(def location
   {:tag (s/spec #{:LOCATION})
-   :attrs {:DIR ::spec/not-blank
+   :attrs {:DIR ::spec/not-blank ; TODO use ::spec/nml-dir
            :FILE ::spec/not-blank
            (std/opt :VOLUME) (std/or {:drive-letter ::spec/drive-letter ; how can I say, if no volume also no volumeid?
                                       :not-drive-letter ::spec/not-blank})
            (std/opt :VOLUMEID) ::spec/not-blank}})
 
-(def location-xml-spec
-  (std/spec {:name ::location-xml
-             :spec location-xml}))
+(def location-spec
+  (std/spec {:name ::location
+             :spec location}))
 
-(defn location->xml
+(s/fdef url->location
+  :args (s/cat :location ::spec/url)
+  :ret location-spec)
+
+(defn url->location
   [{:keys [:path]}]
   (let [path (str/split path #"/")]
     {:tag :LOCATION
      :attrs {:DIR (str (str/join "/:" (drop-last path)) "/:")
              :FILE (last path)}}))
 
-(s/fdef xml->location
-  :args (s/cat :location-z (spec/xml-zip-spec location-xml-spec))
+(s/fdef location->url
+  :args (s/cat :location-z (spec/xml-zip-spec location-spec))
   :ret ::spec/url)
 
-(defn xml->location
+(defn location->url
   [location-z]
   (let [dir (zx/attr location-z :DIR)
         file (zx/attr location-z :FILE)
@@ -48,81 +55,123 @@
                      (reduce conj $ (map url/url-encode (str/split dir #"/:")))
                      (conj $ (url/url-encode file))))))
 
-(def entry-xml
+(def entry
   {:tag (s/spec #{:ENTRY})
    :attrs {(std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
-                  :location-xml location-xml-spec
-                  :album-xml (s/? (std/spec {:name ::album-xml
-                                             :spec {:tag (s/spec #{:ALBUM})
-                                                    :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
-                  :modification-info (s/? (std/spec {:name ::modification-info-xml
+                  :location location-spec
+                  :album (s/? (std/spec {:name ::album
+                                         :spec {:tag (s/spec #{:ALBUM})
+                                                :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
+                  :modification-info (s/? (std/spec {:name ::modification-info
                                                      :spec {:tag (s/spec #{:MODIFICATION_INFO})}}))
-                  :info-xml (s/? (std/spec {:name ::info-xml
-                                            :spec {:tag (s/spec #{:INFO})
-                                                   :attrs {(std/opt :PLAYTIME) string?}}}))
-                  :tempo-xml (s/? (std/spec {:name ::tempo-xml
-                                             :spec {:tag (s/spec #{:TEMPO})
-                                                    :attrs {(std/opt :BPM) string?}}}))
-                  :loudness-xml (s/? (std/spec {:name ::loudness-xml
-                                                :spec {:tag (s/spec #{:LOUDNESS})}}))
-                  :musical-key-xml (s/? (std/spec {:name ::musical-key-xml
-                                                   :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
-                  :loopinfo-xml (s/? (std/spec {:name ::loopinfo-xml
-                                                :spec {:tag (s/spec #{:LOOPINFO})}}))
-                  :cue-xml (s/* tc/cue-xml-spec))})
-
-(def entry-xml-spec
-  (std/spec
-   {:name ::entry-xml
-    :spec entry-xml}))
-
-(def entry
-  {::location ::spec/url
-   (std/opt ::title) string?
-   (std/opt ::artist) string?
-   (std/opt ::album) (s/keys :req [(or ::ta/track ::ta/title)]) ; std/or doesn't work like s/or..
-   (std/opt ::info) {::playtime string?}
-   (std/opt ::bpm) string?
-   (std/opt ::cues) [tc/cue-spec] ; how can I say, coll must not be empty?
-      ;  (std/opt ::cues) (s/cat :cues (s/+ tc/cue-spec)) ; this avoids an empty coll, but st/decode & st/coerce don't work :(
-   })
+                  :info (s/? (std/spec {:name ::info
+                                        :spec {:tag (s/spec #{:INFO})
+                                               :attrs {(std/opt :PLAYTIME) string?}}}))
+                  :tempo (s/? (std/spec {:name ::tempo
+                                         :spec {:tag (s/spec #{:TEMPO})
+                                                :attrs {(std/opt :BPM) string?}}}))
+                  :loudness (s/? (std/spec {:name ::loudness
+                                            :spec {:tag (s/spec #{:LOUDNESS})}}))
+                  :musical-key (s/? (std/spec {:name ::musical-key
+                                               :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
+                  :loopinfo (s/? (std/spec {:name ::loopinfo
+                                            :spec {:tag (s/spec #{:LOOPINFO})}}))
+                  :cue (s/* tc/cue-spec))})
 
 (def entry-spec
-  (-> (std/spec
-       {:name ::entry
-        :spec entry})
-      (spec/remove-empty-spec ::cues)))
+  (std/spec
+   {:name ::entry
+    :spec entry}))
 
-(s/fdef entry->xml
-  :args (s/cat :entry entry-spec)
-  :ret entry-xml-spec)
+(defn equiv-bpm?
+  [{:keys [::u/tempos] :as item} entry-z]
+  (let [tempo-z (zx/xml1-> entry-z :TEMPO)
+        bpm (and tempo-z (zx/attr tempo-z :BPM))]
+    (if (empty? tempos)
+      (= (::u/bpm item) bpm)
+      (= (::ut/bpm (first tempos)) bpm))))
 
-(defn entry->xml
-  [{:keys [::location ::title ::artist ::album ::info ::bpm ::cues]
-    {:keys [::ta/track] album-title ::ta/title} ::album {:keys [::playtime]} ::info}]
+(s/fdef item->entry
+  :args (s/cat :item u/item-spec)
+  :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
+        (let [item (s/unform u/item-spec conformed-item)
+              entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))]
+          (and
+           (= (::u/title item) (zx/attr entry-z :TITLE))
+           (equiv-bpm? item entry-z))))
+  :ret entry-spec)
+
+(defn item->entry
+  [{:keys [::u/location ::u/title ::u/artist ::u/track ::u/album ::u/total-time ::u/bpm ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    :attrs (cond-> {}
             title (assoc :TITLE title)
             artist (assoc :ARTIST artist))
    :content (cond-> []
-              true (conj (location->xml location))
-              (or track album-title) (conj {:tag :ALBUM
-                                            :attrs (cond-> {}
-                                                     track (assoc :TRACK track)
-                                                     album-title (assoc :TITLE album-title))})
-              playtime (conj {:tag :INFO
-                              :attrs {:PLAYTIME playtime}})
+              true (conj (url->location location))
+              (or track album) (conj {:tag :ALBUM
+                                      :attrs (cond-> {}
+                                               track (assoc :TRACK track)
+                                               album (assoc :TITLE album))})
+              total-time (conj {:tag :INFO
+                                :attrs {:PLAYTIME total-time}})
               bpm (conj {:tag :TEMPO
-                         :attrs {:BPM bpm}})
-              cues (concat (map tc/cue->xml cues)))})
+                         :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
+              markers (concat (map tc/marker->cue markers)))})
 
-(s/fdef xml->entry
-  :args (s/cat :entry-z (spec/xml-zip-spec entry-xml-spec))
-  :ret entry-spec)
+(defn grid-markers->tempos
+  [{:keys [::u/bpm ::u/markers] :as item}]
+  (as-> item $
+    (reduce #(update %1 ::u/tempos
+                     (fn [tempos marker] (if (and
+                                              bpm
+                                              (= ::um/type-grid (::um/type marker)))
+                                           (vec (conj tempos {::ut/inizio (::um/start marker)
+                                                              ::ut/bpm bpm ; only one tempo/bpm value for the whole track, in traktor
+                                                              ::ut/metro "4/4"
+                                                              ::ut/battito "1"}))
+                                           tempos)) %2)
+            $
+            markers)
+    (map/remove-nil $ ::u/tempos)))
 
-(defn xml->entry
+(defn equiv-tempo?
+  [entry-z item]
+  (let [tempo-z (zx/xml1-> entry-z :TEMPO)
+        bpm (and tempo-z (zx/attr tempo-z :BPM))
+        grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
+    (every? identity
+            (map #(and
+                   (= (tc/millis->seconds (zx/attr %1 :START)) (::ut/inizio %2))
+                   (= bpm (::ut/bpm %2)))
+                 grid-cues-z
+                 (::u/tempos item)))))
+
+(defn equiv-markers?
+  [entry-z item]
+  (let [cues-z (zx/xml-> entry-z :CUE_V2)]
+    (every? identity
+            (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
+                 cues-z
+                 (::u/markers item)))))
+
+(s/fdef entry->item
+  :args (s/cat :entry (spec/xml-zip-spec entry-spec))
+  :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
+        (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
+              info-z (zx/xml1-> entry-z :INFO)
+              item (s/unform u/item-spec conformed-item)]
+          (and
+           (= (zx/attr entry-z :TITLE) (::u/title item))
+           (= (zx/attr entry-z :ARTIST) (::u/artist item))
+           (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
+           (equiv-markers? entry-z item)
+           (equiv-tempo? entry-z item))))
+  :ret u/item-spec)
+
+(defn entry->item
   [entry-z]
   (let [title (zx/attr entry-z :TITLE)
         artist (zx/attr entry-z :ARTIST)
@@ -134,65 +183,71 @@
         tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
         cues-z (zx/xml-> entry-z :CUE_V2)]
-    (cond-> {::location (xml->location (zx/xml1-> entry-z :LOCATION))}
-      title (assoc ::title title)
-      artist (assoc ::artist artist)
-      (or track album-title) (assoc ::album (cond-> {}
-                                              track (assoc ::ta/track track)
-                                              album-title (assoc ::ta/title album-title)))
-      playtime (assoc ::info {::playtime playtime})
-      bpm (assoc ::bpm bpm)
-      (not (empty? cues-z)) (assoc ::cues (map tc/xml->cue cues-z)))))
+    (->
+     (cond-> {::u/location (location->url (zx/xml1-> entry-z :LOCATION))}
+       title (assoc ::u/title title)
+       artist (assoc ::u/artist artist)
+       track (assoc ::u/track track)
+       album-title (assoc ::u/album album-title)
+       playtime (assoc ::u/total-time playtime)
+       bpm (assoc ::u/bpm bpm)
+       (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z)))
+     grid-markers->tempos)))
 
-(defn nml->xml
-  [_ nml]
+(defn library->nml
+  [progress _ {:keys [::u/collection]}]
   {:tag :NML
-   :attrs {:VERSION (::version nml)}
-   :content [{:tag :COLLECTION :content (map entry->xml (::collection nml))}]})
+   :attrs {:VERSION 19}
+   :content [{:tag :COLLECTION 
+              :content (map (if progress (progress item->entry) item->entry) collection)}]})
 
-(defn xml->nml
-  [_ nml-xml]
-  (if (xml/xml? nml-xml)
-    (let [nml-z (zip/xml-zip nml-xml)
+(defn nml->library
+  [_ nml]
+  (if (xml/xml? nml)
+    (let [nml-z (zip/xml-zip nml)
           collection-z (zx/xml1-> nml-z :COLLECTION)]
-      {::version (zx/attr nml-z :VERSION)
-       ::collection (map xml->entry (zx/xml-> collection-z :ENTRY))})
-    nml-xml))
+      {::u/collection (map entry->item (zx/xml-> collection-z :ENTRY))})
+    nml))
 
-(def nml-xml
+(def nml
   {:tag (s/spec #{:NML})
    :attrs {:VERSION (st/spec #{19} {:type :long})}
    :content (s/cat
-             :head-xml (s/? (std/spec {:name ::head-xml
-                                       :spec {:tag (s/spec #{:HEAD})}}))
-             :musicfolders-xml (s/? (std/spec {:name ::musicfolders-xml
-                                               :spec {:tag (s/spec #{:MUSICFOLDERS})}}))
-             :collection-xml (std/spec
-                              {:name ::collection-xml
-                               :spec {:tag (s/spec #{:COLLECTION})
-                                      :content (s/cat :entries-xml (s/* entry-xml-spec))}})
-             :sets-xml (s/? (std/spec {:name ::sets-xml
-                                       :spec {:tag (s/spec #{:SETS})}}))
-             :playlists-xml (s/? (std/spec {:name ::playlists-xml
-                                            :spec {:tag (s/spec #{:PLAYLISTS})}}))
-             :sorting-order-xml (s/* (std/spec {:name ::sorting-order-xml
-                                                :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
+             :head (s/? (std/spec {:name ::head
+                                   :spec {:tag (s/spec #{:HEAD})}}))
+             :musicfolders (s/? (std/spec {:name ::musicfolders
+                                           :spec {:tag (s/spec #{:MUSICFOLDERS})}}))
+             :collection (std/spec
+                          {:name ::collection
+                           :spec {:tag (s/spec #{:COLLECTION})
+                                  :content (s/cat :entries (s/* entry-spec))}})
+             :sets (s/? (std/spec {:name ::sets
+                                   :spec {:tag (s/spec #{:SETS})}}))
+             :playlists (s/? (std/spec {:name ::playlists
+                                        :spec {:tag (s/spec #{:PLAYLISTS})}}))
+             :sorting-order (s/* (std/spec {:name ::sorting-order
+                                            :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
 
-(def nml-xml-spec
-  (->
-   (std/spec
-    {:name ::nml-xml
-     :spec nml-xml})
-   (assoc :encode/xml nml->xml)))
+(defn nml-spec
+  ([]
+   (nml-spec nil))
+  ([progress] 
+   (->
+    (std/spec
+     {:name ::nml
+      :spec nml})
+    (assoc :encode/xml (partial library->nml progress)))))
 
-(def nml
-  {::version pos-int?
-   ::collection (s/cat :entries (s/* entry-spec))})
+(s/fdef library->nml
+  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
+  :ret (nml-spec)
+  :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-nml :ret}]
+        (let [library (s/unform u/library-spec conformed-library)
+              nml-z (zip/xml-zip (s/unform (nml-spec) conformed-nml))
+              collection-z (zx/xml1-> nml-z :COLLECTION)]
+          (= (count (->> library ::u/collection))
+             (count (zx/xml-> collection-z :ENTRY))))))
 
-(def nml-spec
-  (->
-   (std/spec
-    {:name ::nml
-     :spec nml})
-   (assoc
-    :decode/xml xml->nml)))
+(def library-spec
+  (-> u/library-spec
+      (assoc :decode/xml nml->library)))

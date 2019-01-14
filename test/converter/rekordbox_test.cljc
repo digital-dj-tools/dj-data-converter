@@ -5,12 +5,14 @@
    [clojure.test.check.clojure-test :refer [defspec] #?@(:cljs [:include-macros true])]
    [clojure.test.check.properties :as tcp #?@(:cljs [:include-macros true])]
    [converter.rekordbox.core :as r]
-   [converter.xml :as xml]
-   [plumula.mimolette.alpha :refer [defspec-test]]
-   [spec-tools.core :as st]))
+   [plumula.mimolette.alpha :refer [defspec-test]]))
 
 (defspec-test
-  track->xml
-  `r/track->xml
+  item->track
+  `r/item->track
   {:opts {:num-tests 100}})
 
+(defspec-test
+  library->dj-playlists
+  `r/library->dj-playlists
+  {:opts {:num-tests 10}})

@@ -11,33 +11,37 @@
    [converter.xml])
   #?(:clj (:gen-class)))
 
-(def cli-options
+(def default-arguments
+  {:output-file "rekordbox.xml"})
+
+(def option-specs
   [["-h" "--help"]])
 
-(defn usage
-  [options-summary]
+(defn usage-message
+  [summary]
   (->> ["Usage: dj-data-converter [options] <input-file>"
         ""
         "Options:"
-        options-summary]
+        summary]
        (str/join \newline)))
 
-(defn error
+(defn error-message
   [errors]
   (as-> ["The following errors occurred while parsing the command:"
          ""] $
     (concat $ errors)
     (str/join \newline $)))
 
-(defn validate-args
+(defn parse-args
   [args]
-  (let [{:keys [options arguments errors summary]} (cli/parse-opts args cli-options)]
+  (let [{:keys [options arguments errors summary]} (cli/parse-opts args option-specs)]
     (cond
-      (:help options) {:exit-message (usage summary) :ok? true}
-      errors {:exit-message (error errors)}
-      (= 1 (count arguments)) {:arguments {:input-file (first arguments) :output-file "rekordbox.xml"} :options options}
+      (:help options) {:exit-message (usage-message summary) :help? true}
+      errors {:exit-message (error-message errors)}
+      (= 1 (count arguments)) {:arguments {:input-file (first arguments)}
+                               :options options}
       :else
-      {:exit-message (usage summary)})))
+      {:exit-message (usage-message summary)})))
 
 (defn exit
   [status message]
@@ -48,32 +52,32 @@
 
 #?(:clj
    (defn process
-     [arguments config options]
+     [config arguments options]
      (try
        (with-open [reader (io/reader (:input-file arguments))
                    writer (io/writer (:output-file arguments))]
          (as-> reader $
            (xml/parse $ :skip-whitespace true)
-           (app/convert-data $ config)
+           (app/convert config $)
            (xml/emit $ writer)))
        [0 "Conversion completed"]
-       (catch Throwable t (do 
+       (catch Throwable t (do
                             (err/write-report (err/create-report arguments options (Throwable->map t)))
                             [2 "Problems converting, please provide error-report.edn file..."])))))
 
 #?(:cljs
    (defn process
-     [arguments config options]
+     [config arguments options]
      (try
        (as-> (:input-file arguments) $
          (io/slurp $)
          (xml/parse-str $)
          (converter.xml/strip-whitespace $)
-         (app/convert-data $ config)
+         (app/convert config $)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))
        [0 "Conversion completed"]
-       (catch :default e (do 
+       (catch :default e (do
                            (err/write-report (err/create-report arguments options (err/Error->map e)))
                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
@@ -87,13 +91,17 @@
       (swap! item-count inc)
       (f item))))
 
+(defn process-args
+  [config args]
+  (let [{:keys [arguments options exit-message help?]} (parse-args args)]
+    (if exit-message
+      (exit (if help? 0 1) exit-message)
+      (apply exit (process config (merge default-arguments arguments) options)))))
+
 (defn -main
   [& args]
-  (let [{:keys [arguments options exit-message ok?]} (validate-args args)
-        config {:converter app/traktor->rekordbox
+  (let [config {:converter app/traktor->rekordbox
                 :progress print-progress}]
-    (if exit-message
-      (exit (if ok? 0 1) exit-message)
-      (apply exit (process arguments config options)))))
+    (process-args config args)))
 
 #?(:cljs (set! *main-cli-fn* -main))

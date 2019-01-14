@@ -29,14 +29,14 @@
   [obj f]
   (prn (f obj)))
 
-(s/fdef convert-data
-  :args (s/cat :xml (spec/value-encoded-spec (t/nml-spec) spec/string-transformer)
-               :config #{{:converter traktor->rekordbox}})
+(s/fdef convert
+  :args (s/cat :config #{{:converter traktor->rekordbox}}
+               :xml (spec/value-encoded-spec (t/nml-spec) spec/string-transformer))
   :ret (spec/value-encoded-spec r/dj-playlists-spec spec/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
-(defn convert-data
-  [xml config]
+(defn convert
+  [config xml]
   (let [input-spec (input-spec (:converter config))
         library-spec (library-spec (:converter config))
         output-spec (output-spec (:converter config) (:progress config))]

@@ -5,16 +5,13 @@ jobs:
   - stage: deps
     name: Install Node Dependencies
     script: npm install
-  - name: Install Clojure Dependencies
-    script:
-      - git clone https://github.com/clojure/data.xml.git
-      - cd data.xml && mvn install -Dmaven.test.skip=true -DskipTests
   - stage: test
     name: Clojure Tests
     script: clojure -Adev:test
   - name: ClojureScript Tests
     script: clojure -Adev:test-cljs
   - stage: deploy
+    if: tag IS present
     name: GitHub Release
     script:
     - clojure -Sverbose -A:dev:compile-cljs

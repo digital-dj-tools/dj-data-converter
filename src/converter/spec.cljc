@@ -9,48 +9,6 @@
    [spec-tools.core :as st]
    [spec-tools.transform :as stt]))
 
-(defn not-blank-string-gen
-  []
-  (gen/such-that #(not (str/blank? %))
-                  (gen/string-alphanumeric)))
-
-(s/def ::not-blank-string
-  (s/with-gen 
-    (s/and string? #(not (str/blank? %)))
-    (fn [] (not-blank-string-gen))))
-
-(def drive-letter-regex #"[A-Z]:")
-
-(defn drive-letter?
-  [str]
-  (if (string? str)
-    (boolean (re-matches drive-letter-regex str))
-    false))
-
-(s/def ::drive-letter
-  (s/with-gen
-    (s/and string? drive-letter?)
-    (fn [] (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)))))
-
-(defn nml-dir-gen
-  []
-  (gen/fmap #(->> % (interleave (repeat "/:")) (apply str)) (gen/vector (not-blank-string-gen))))
-
-(s/def ::nml-dir
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (nml-dir-gen))))
-
-(s/def ::nml-path
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (gen/fmap (partial apply str)
-                     (gen/tuple
-                      (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)) ; drive letter
-                      (nml-dir-gen) ; dir
-                      (gen/fmap #(str "/:" %) (not-blank-string-gen)) ; filename
-                      )))))
-
 (defn string->url
   [_ str]
   (if (string? str)

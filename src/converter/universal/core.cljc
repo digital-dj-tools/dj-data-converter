@@ -6,12 +6,13 @@
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
    [converter.spec :as spec]
+   [converter.url :as url]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]))
 
 (def item
-  {::location ::spec/url
+  {::location ::url/url
    (std/opt ::title) string?
    (std/opt ::artist) string?
    (std/opt ::track) string?

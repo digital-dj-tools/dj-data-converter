@@ -1,26 +1,13 @@
 (ns converter.spec
   (:require
-   [cemerick.url :as url]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as str]
    [clojure.zip :as zip]
    [converter.map :as map]
+   [converter.url :as url]
    [spec-tools.core :as st]
    [spec-tools.transform :as stt]))
-
-(defn string->url
-  [_ str]
-  (if (string? str)
-    (try
-      (url/url str)
-      (catch #?(:clj Exception, :cljs js/Error) _ str))
-    str))
-
-; TODO proper generator, rename to indicate file urls?
-; http://conan.is/blogging/a-spec-for-urls-in-clojure.html
-(s/def ::url (st/spec #(instance? cemerick.url.URL %) {:type :url
-                                                       :gen #(s/gen #{(url/url "file://localhost/foo/bar")})}))
 
 ; TODO can't be implemented yet, if encoded value is invalid, 
 ; there's no way to coerce using encoder rather than decoder
@@ -45,14 +32,14 @@
 (def xml-transformer
   (st/type-transformer
    {:name :xml
-    :decoders (merge stt/string-type-decoders {:url string->url})
+    :decoders (merge stt/string-type-decoders {:url url/string->url})
     :encoders (merge stt/string-type-encoders {:url stt/any->string})
     :default-encoder stt/any->any}))
 
 (def string-transformer
   (st/type-transformer
    {:name :string
-    :decoders (merge stt/string-type-decoders {:url string->url})
+    :decoders (merge stt/string-type-decoders {:url url/string->url})
     :encoders (merge stt/string-type-encoders {:url stt/any->string})
     :default-encoder stt/any->any}))
 

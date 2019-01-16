@@ -1,6 +1,6 @@
 (ns converter.traktor.core
   (:require
-   [cemerick.url :as url]
+   [cemerick.url :refer [url url-encode url-decode]]
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
@@ -14,6 +14,7 @@
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
+   [converter.url :as url]
    [converter.xml :as xml]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
@@ -39,48 +40,58 @@
     string? ; TODO and with cat+regex specs
     (fn [] (gen/fmap (partial apply str)
                      (gen/tuple
-                      (str/drive-letter-gen) ; drive letter
-                      (nml-dir-gen) ; dir
-                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-gen)) ; filename
-                      )))))
+                      ; drive letter
+                      (str/drive-letter-gen)
+                      ; dir
+                      (nml-dir-gen)
+                      ; filename
+                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-gen)))))))
 
 (def location
   {:tag (s/spec #{:LOCATION})
    :attrs {:DIR ::nml-dir
            :FILE ::str/not-blank-string
-           (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter ; how can I say, if no volume also no volumeid?
+           (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter
                                       :not-drive-letter ::str/not-blank-string})
            (std/opt :VOLUMEID) ::str/not-blank-string}})
 
 (def location-spec
-  (std/spec {:name ::location
-             :spec location}))
+  (spec/such-that-spec
+   (std/spec {:name ::location
+              :spec location})
+   #(or (and (-> % :attrs :VOLUME) (-> % :attrs :VOLUMEID))
+        (and (not (-> % :attrs :VOLUME)) (not (-> % :attrs :VOLUMEID))))
+   10))
 
 (s/fdef url->location
-  :args (s/cat :location ::spec/url)
+  :args (s/cat :location ::url/url)
   :ret location-spec)
 
 (defn url->location
   [{:keys [:path]}]
-  (let [path (split path #"/")]
+  (let [paths (rest (split path #"/"))
+        dirs (if (str/drive-letter? (first paths)) (rest (drop-last paths)) (drop-last paths))
+        file (last paths)
+        volume (if (str/drive-letter? (first paths)) (first paths))]
     {:tag :LOCATION
-     :attrs {:DIR (str (join nml-path-sep (drop-last path)) nml-path-sep)
-             :FILE (last path)}}))
+     :attrs (cond-> {:DIR (str nml-path-sep (join nml-path-sep (map url-decode dirs)))
+                     :FILE (url-decode file)}
+              volume (assoc :VOLUME volume))}))
 
 (s/fdef location->url
   :args (s/cat :location-z (spec/xml-zip-spec location-spec))
-  :ret ::spec/url)
+  :ret ::url/url)
 
 (defn location->url
   [location-z]
   (let [dir (zx/attr location-z :DIR)
         file (zx/attr location-z :FILE)
         volume (zx/attr location-z :VOLUME)]
-    (apply url/url (as-> [] $
-                     (conj $ "file://localhost")
-                     (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
-                     (reduce conj $ (map url/url-encode (split dir nml-path-sep-regex)))
-                     (conj $ (url/url-encode file))))))
+    (apply url (as-> [] $
+                 (conj $ "file://localhost")
+                 (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
+                 (reduce conj $ (map url-encode (split dir nml-path-sep-regex)))
+                 (conj $ (url-encode file))))))
 
 (def entry
   {:tag (s/spec #{:ENTRY})

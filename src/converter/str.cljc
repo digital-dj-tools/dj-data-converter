@@ -6,8 +6,17 @@
 
 (defn not-blank-string-gen
   []
-  (gen/such-that #(not (str/blank? %))
-                 (gen/string-alphanumeric)))
+  (gen/such-that #(not (str/blank? %)) (gen/string-alphanumeric)))
+
+(defn not-blank-string-with-whitespace-gen
+  []
+  (->> (gen/string-alphanumeric)
+       (gen/such-that #(not (str/blank? %)))
+       (gen/fmap (fn [s] (apply str
+                                (map-indexed #(if (and (< 0 %1) (< %1 (dec (count s))))
+                                                (rand-nth (conj (repeat 9 %2) " "))
+                                                (identity %2))
+                                             s))))))
 
 (s/def ::not-blank-string
   (s/with-gen

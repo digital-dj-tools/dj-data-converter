@@ -10,6 +10,7 @@
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
    [converter.spec :as spec]
+   [converter.url :as url]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]))
@@ -18,7 +19,7 @@
   (std/spec
    {:name ::track
     :spec {:tag (s/spec #{:TRACK})
-           :attrs {:Location ::spec/url
+           :attrs {:Location ::url/url
                    :TotalTime string?
                    (std/opt :Name) string?
                    (std/opt :Artist) string?

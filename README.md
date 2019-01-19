@@ -46,10 +46,6 @@ Donations are most welcome! This will help me to support more DJ software format
 - Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
 - Performance is limited, however a ~10,000 track Traktor collection should convert in under one minute.
 
-## Roadmap
-
-To see planned and upcoming features, refer to the `Unreleased` section at the top of the [Changelog](CHANGELOG.md).
-
 ## Dependencies
 
 None
@@ -61,18 +57,36 @@ None
 ## Usage
 
 ### Windows
-Open a command prompt and navigate to the directory where the app was downloaded.
+Open a command prompt and navigate to the directory where the app was downloaded:
 ```
 cd <download-dir>
+```
+Now execute the app, providing the location of the Traktor collection file:
+```
 dj-data-converter-win.exe [options] <traktor-collection-file>
 ```
+For example, assuming Traktor is installed in the default location on Windows:
+```
+dj-data-converter-win.exe "C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml"
+```
+
 ### Mac
-Open a terminal and navigate to the directory where the app was downloaded.
+Open a terminal and navigate to the directory where the app was downloaded:
 ```
 cd <download-dir>
+```
+Now execute the app, providing the location of the Traktor collection file:
+```
 dj-data-converter-macos [options] <traktor-collection-file>
 ```
-A converted `rekordbox.xml` file will be created in the current directory. If the conversion fails due to an error, a `error-report.edn` file will be generated.
+For example, assuming Traktor is installed in the default location on Mac OS X:
+```
+dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
+```
+
+A converted `rekordbox.xml` file will be created in the current directory.
+
+If the conversion fails due to an error, an `error-report.edn` file will be created (also in the current directory).
 
 ### Options
 ```
@@ -92,6 +106,10 @@ A converted `rekordbox.xml` file will be created in the current directory. If th
 ## Bug Reports
 
 Please report any possible bugs as GitHub issues in this project, and remember to include the steps performed, what was expected and the actual result. If an error occurred during the conversion, please attach the generated `error-report.edn` file.
+
+## Roadmap
+
+To see planned and upcoming features, refer to the `Unreleased` section at the top of the [Changelog](CHANGELOG.md).
 
 ## Feature Requests
 

@@ -1,6 +1,5 @@
 {
   "name": "dj-data-converter",
-  "version": "0.1.0",
   "description": "",
   "bin": "out/cli.js",
   "scripts": {

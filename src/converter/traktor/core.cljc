@@ -28,7 +28,7 @@
 
 (defn nml-dir-gen
   []
-  (gen/fmap #(->> % (interleave (repeat nml-path-sep)) (apply str)) (gen/vector (str/not-blank-string-gen))))
+  (gen/fmap #(->> % (interleave (repeat nml-path-sep)) (apply str)) (gen/vector (str/not-blank-string-with-whitespace-gen))))
 
 (s/def ::nml-dir
   (s/with-gen
@@ -40,12 +40,12 @@
     string? ; TODO and with cat+regex specs
     (fn [] (gen/fmap (partial apply str)
                      (gen/tuple
-                      ; drive letter
-                      (str/drive-letter-gen)
+                      ; drive letter (optional)
+                      (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
                       ; dir
                       (nml-dir-gen)
                       ; filename
-                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-gen)))))))
+                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-with-whitespace-gen)))))))
 
 (def location
   {:tag (s/spec #{:LOCATION})

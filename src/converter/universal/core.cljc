@@ -8,8 +8,7 @@
    [converter.spec :as spec]
    [converter.url :as url]
    [spec-tools.core :as st]
-   [spec-tools.data-spec :as std]
-   [spec-tools.spec :as sts]))
+   [spec-tools.data-spec :as std]))
 
 (def item
   {::location ::url/url

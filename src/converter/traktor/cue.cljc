@@ -50,13 +50,13 @@
    $
     (assoc $ :gen (fn [] (gen/fmap #(start-plus-len-not-greater-than-max %) (s/gen $)))))) ; TODO set len to zero unless loop
 
-(defn xml->type
+(defn cue->marker-type
   [{:keys [:TYPE]} marker _]
   (assoc marker ::um/type (type-num->type-kw TYPE)))
 
-(defn type->xml
-  [{:keys [::um/type]} cue-xml _]
-  (assoc cue-xml :TYPE (type-kw->type-num type)))
+(defn marker-type->cue
+  [{:keys [::um/type]} cue _]
+  (assoc cue :TYPE (type-kw->type-num type)))
 
 (defn millis->seconds
   [millis]
@@ -66,27 +66,35 @@
   [seconds]
   (* seconds 1000))
 
-(defn xml->end
+(defn cue->marker-end
   [{:keys [:START :LEN]} marker _]
   (assoc marker ::um/end (millis->seconds (+ START LEN))))
 
-(defn end->xml
-  [{:keys [::um/start ::um/end] :as marker} cue-xml _]
-  (assoc cue-xml :LEN (seconds->millis (- end start))))
+(defn marker-end->cue
+  [{:keys [::um/start ::um/end] :as marker} cue _]
+   (assoc cue :LEN (seconds->millis (- end start))))
 
 (s/fdef cue->marker
-  :args (s/cat :cue-z (spec/xml-zip-spec cue-spec))
-  :ret um/marker-spec)
+  :args (s/cat :cue (spec/xml-zip-spec cue-spec))
+  :ret um/marker-spec
+  :fn (fn equiv-marker? [{{conformed-cue :cue} :args conformed-marker :ret}]
+        (let [cue (s/unform cue-spec conformed-cue)
+              marker (s/unform um/marker-spec conformed-marker)
+              START (-> cue :attrs :START)
+              LEN (-> cue :attrs :LEN)]
+          (= (millis->seconds (+ START LEN)) (::um/end marker)))))
 
 (defn cue->marker
   [cue-z]
-  (-> (:attrs (zip/node cue-z))
-      (dissoc :DISPL_ORDER :REPEATS)
-      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
-                     {:TYPE xml->type
-                      :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
-                      :LEN xml->end
-                      :HOTCUE ::um/num})))
+  (-> cue-z
+   zip/node 
+   :attrs
+   (dissoc :DISPL_ORDER :REPEATS)
+   (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
+                  {:TYPE cue->marker-type
+                   :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
+                   :LEN cue->marker-end
+                   :HOTCUE ::um/num})))
 
 (s/fdef marker->cue
   :args (s/cat :marker um/marker-spec)
@@ -96,8 +104,8 @@
   [marker]
   {:tag :CUE_V2
    :attrs (map/transform marker
-                         (partial map/transform-key (comp keyword str/upper-case name))
-                         {::um/type type->xml
-                          ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
-                          ::um/end end->xml
-                          ::um/num :HOTCUE})})
+           (partial map/transform-key (comp keyword str/upper-case name))
+           {::um/type marker-type->cue
+            ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
+            ::um/end marker-end->cue
+            ::um/num :HOTCUE})})

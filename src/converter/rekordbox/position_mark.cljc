@@ -14,7 +14,7 @@
            :attrs {:Name string?
                    :Type string?
                    :Start (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
-                   :End (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
+                   (std/opt :End) (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
                    :Num string?
                    :Red int?
                    :Green int?
@@ -48,10 +48,17 @@
                               []
                               [:Red :Green :Blue]))))
 
+(defn marker-end->position-mark
+  [{:keys [::um/type ::um/end]} position-mark _]
+  (if (= ::um/type-loop type)
+    (assoc position-mark :End end)
+    position-mark))
+
 (defn marker->position-mark
   [marker hotcue?]
   {:tag :POSITION_MARK
    :attrs (map/transform marker
                          (partial map/transform-key csk/->PascalCaseKeyword)
                          {::um/type marker-type->position-mark
+                          ::um/end marker-end->position-mark
                           ::um/num #(assoc %2 :Num (if hotcue? "-1" (%3 %1)))})})

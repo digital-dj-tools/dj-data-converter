@@ -18,25 +18,14 @@
                   :main-opts ["-m" "cognitect.test-runner"]}
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.2.0"}}
                        :main-opts ["-m" "cljs-test-runner.main"]}
-           :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
-           :jar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
-                 :main-opts ["-m" "cambada.jar"
-                             "-m" "converter.cli"
-                             "-a" "converter.cli"
-                             "--app-group-id" "com.digitaldjtools"
-                             "--app-version" "0.3.0-SNAPSHOT"]}
-           :install {:extra-deps {deps-deploy {:mvn/version "RELEASE"}}
-                     :main-opts ["-m" "deps-deploy.deps-deploy" "install" "target/dj-data-converter-0.3.0-SNAPSHOT.jar"]}
-           :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
-                     :main-opts ["-m" "cambada.uberjar"
-                                 "-m" "converter.cli"]}
            :native-image {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
                           :main-opts ["-m" "cambada.native-image"
                                       "-m" "converter.cli"]}
+           :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
            :nrepl-server {:extra-deps {cider/cider-nrepl {:mvn/version "0.18.0"}
                                        cider/piggieback {:mvn/version "0.3.9"}}
-                          :main-opts ["-m" "nrepl.cmdline" "--middleware"
-                                      "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}}
+                          :main-opts ["-m" "nrepl.cmdline"
+                                      "--middleware" "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}}
  ; workaround for https://github.com/luchiniatwork/cambada/issues/19
  :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
              "clojars" {:url "https://repo.clojars.org/"}}}

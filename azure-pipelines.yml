@@ -1,0 +1,9 @@
+
+trigger:
+  - master
+jobs:
+  - job: Build
+    pool:
+      vmImage: ubuntu-16.04
+    steps:
+      - script: echo Hello, world!

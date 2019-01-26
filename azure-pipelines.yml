@@ -35,7 +35,7 @@ jobs:
     inputs:
       artifactName: dj-data-converter-pkg
       targetPath: $(System.DefaultWorkingDirectory)\pkg
-  - script: pkg\dj-data-converter-win.exe
+  - script: pkg\dj-data-converter-win.exe -h
     displayName: Smoke Test
 - job: Test_Mac
   dependsOn: Build
@@ -48,7 +48,7 @@ jobs:
       targetPath: $(System.DefaultWorkingDirectory)/pkg
   - script: |
       chmod +x pkg/dj-data-converter-macos
-      pkg/dj-data-converter-macos
+      pkg/dj-data-converter-macos -h
     displayName: Smoke Test
 - job: Release
   dependsOn:

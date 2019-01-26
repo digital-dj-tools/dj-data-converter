@@ -2,8 +2,8 @@
 trigger:
   branches:
     include:
-      - refs/heads/*
-      - refs/tags/*
+    - refs/heads/*
+    - refs/tags/*
 jobs:
 - job: Build
   pool:

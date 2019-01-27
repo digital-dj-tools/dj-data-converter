@@ -1,4 +1,4 @@
-# dj-data-converter [![Build Status](https://travis-ci.org/digital-dj-tools/dj-data-converter.svg?branch=master)](https://travis-ci.org/digital-dj-tools/dj-data-converter)
+# dj-data-converter [![Build Status](https://dev.azure.com/digital-dj-tools/dj-data-converter-pro/_apis/build/status/alzadude.dj-data-converter-pro?branchName=master)](https://dev.azure.com/digital-dj-tools/dj-data-converter-pro/_build/latest?definitionId=4?branchName=master)
 
 A command-line app for converting data files to and from different DJ software formats, such as [Traktor](https://www.native-instruments.com/en/products/traktor/dj-software/traktor-pro-3/), [Rekordbox](https://rekordbox.com/en/) and [Serato DJ](https://serato.com/dj).
 

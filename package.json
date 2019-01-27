@@ -4,7 +4,7 @@
   "bin": "out/cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "pkg . --out-path pkg"
+    "build": "pkg . --targets node10-win-x64,node10-macos-x64 --out-path pkg"
   },
   "keywords": [],
   "author": "",

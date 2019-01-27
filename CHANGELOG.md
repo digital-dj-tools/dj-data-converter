@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting (Traktor to Rekordbox)
 - System abstraction for reloading code in the REPL (and removal of def's)
 
+## 0.2.1 (2019-01-26)
+### Changed
+- End attr of position marks is now optional, it's only included when the marker is a loop. This avoids "zero-length" position marks, which Rekordbox accepts but DJ hardware e.g. CDJ does not
+
 ## 0.2.0 (2019-01-14)
 ### Changed
 - Internal changes to simplify data conversions 

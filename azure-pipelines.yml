@@ -24,7 +24,7 @@ jobs:
     displayName: Package
   - task: PublishPipelineArtifact@0
     inputs:
-      artifactName: dj-data-converter-pkg
+      artifactName: dj-data-converter
       targetPath: pkg
 - job: Test_Windows
   dependsOn: Build
@@ -33,7 +33,7 @@ jobs:
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: dj-data-converter-pkg
+      artifactName: dj-data-converter
       targetPath: $(System.DefaultWorkingDirectory)\pkg
   - script: pkg\dj-data-converter-win.exe -h
     displayName: Smoke Test
@@ -44,7 +44,7 @@ jobs:
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: dj-data-converter-pkg
+      artifactName: dj-data-converter
       targetPath: $(System.DefaultWorkingDirectory)/pkg
   - script: |
       chmod +x pkg/dj-data-converter-macos
@@ -61,7 +61,7 @@ jobs:
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: dj-data-converter-pkg
+      artifactName: dj-data-converter
       targetPath: $(System.DefaultWorkingDirectory)/pkg
   - task: GithubRelease@0
     inputs:

@@ -142,16 +142,16 @@
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/title ::u/artist ::u/track ::u/album ::u/total-time ::u/bpm ::u/tempos ::u/markers]}]
+  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    :attrs (cond-> {}
             title (assoc :TITLE title)
             artist (assoc :ARTIST artist))
    :content (cond-> []
               true (conj (url->location location))
-              (or track album) (conj {:tag :ALBUM
+              (or track-number album) (conj {:tag :ALBUM
                                       :attrs (cond-> {}
-                                               track (assoc :TRACK track)
+                                               track-number (assoc :TRACK track-number)
                                                album (assoc :TITLE album))})
               total-time (conj {:tag :INFO
                                 :attrs {:PLAYTIME total-time}})
@@ -225,7 +225,7 @@
      (cond-> {::u/location (location->url (zx/xml1-> entry-z :LOCATION))}
        title (assoc ::u/title title)
        artist (assoc ::u/artist artist)
-       track (assoc ::u/track track)
+       track (assoc ::u/track-number track)
        album-title (assoc ::u/album album-title)
        playtime (assoc ::u/total-time playtime)
        bpm (assoc ::u/bpm bpm)

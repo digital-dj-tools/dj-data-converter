@@ -14,7 +14,7 @@
   {::location ::url/url
    (std/opt ::title) string?
    (std/opt ::artist) string?
-   (std/opt ::track) string?
+   (std/opt ::track-number) string?
    (std/opt ::album) string?
    (std/opt ::total-time) string?
    (std/opt ::bpm) string?

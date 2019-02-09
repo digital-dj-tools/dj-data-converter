@@ -16,10 +16,10 @@ jobs:
     displayName: Install Clojure
   - script: npm install
     displayName: Install Node Dependencies
-  - script: clojure -Adev:test-cljs
+  - script: clojure -Adev:cljs:test-cljs
     displayName: ClojureScript Tests
   - script: |
-      clojure -A:dev:compile-cljs
+      clojure -A:dev:cljs:compile-cljs
       npm run build
     displayName: Package
   - task: PublishPipelineArtifact@0

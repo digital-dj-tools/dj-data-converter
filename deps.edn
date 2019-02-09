@@ -8,16 +8,21 @@
   org.clojure/data.zip {:mvn/version "0.1.2"}
   org.clojure/tools.cli {:mvn/version "0.4.1"}
   metosin/spec-tools {:mvn/version "0.8.2"}
-  com.cemerick/url {:mvn/version "0.1.1"}}
+  com.cemerick/url {:mvn/version "0.1.1" :exclusions [com.cemerick/clojurescript.test]}}
  :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {org.clojure/tools.namespace {:mvn/version "0.3.0-alpha4"}
                               org.clojure/test.check {:mvn/version "0.9.0"}
                               plumula/mimolette {:mvn/version "0.2.1"}}}
+           :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.439"}
+                               cljs-node-io {:mvn/version "1.1.2"}}}
            :test {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                           :sha "028a6d41ac9ac5d5c405dfc38e4da6b4cc1255d5"}}
                   :main-opts ["-m" "cognitect.test-runner"]}
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.2.0"}}
                        :main-opts ["-m" "cljs-test-runner.main"]}
+           :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
+                     :main-opts ["-m" "cambada.uberjar"
+                                 "-m" "converter.cli"]}
            :native-image {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
                           :main-opts ["-m" "cambada.native-image"
                                       "-m" "converter.cli"]}

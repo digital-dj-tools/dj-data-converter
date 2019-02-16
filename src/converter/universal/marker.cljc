@@ -18,7 +18,7 @@
 (defn end-for-loop-markers
   [marker]
   (if (= ::type-loop (::type marker))
-    (update marker ::end (fn [end start] (if (< 3600 (+ start end)) 3600 (+ start end))) (::start marker))
+    (update marker ::end (fn [end start] (if (< 7200 (+ start end)) 7200 (+ start end))) (::start marker))
     marker))
 
 (defn only-grid-markers-have-num-minus-one
@@ -35,8 +35,8 @@
 
 (def marker {::name string?
              ::type ::type-kw
-             ::start (s/double-in :min 0 :max 3600 :NaN? false :infinite? false) ; seconds
-             ::end (s/double-in :min 0 :max 3600 :NaN? false :infinite? false) ; seconds
+             ::start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) ; seconds
+             ::end (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) ; seconds
              ::num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})})
 
 (def marker-spec

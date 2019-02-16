@@ -11,6 +11,7 @@
    [converter.rekordbox.tempo :as rt]
    [converter.spec :as spec]
    [converter.url :as url]
+   [converter.xml :as xml]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]))
@@ -24,7 +25,7 @@
                    (std/opt :Name) string?
                    (std/opt :Artist) string?
                    (std/opt :Album) string?
-                   (std/opt :AverageBpm) string?}
+                   (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)}
            :content (s/cat
                      :tempos (s/* (std/spec {:name ::tempo
                                              :spec rt/tempo-spec}))
@@ -70,6 +71,19 @@
                                                 []
                                                 pos-num-markers))))})
 
+(s/fdef track->item
+  :args (s/cat :track (spec/xml-zip-spec track-spec))
+  :ret u/item-spec)
+
+(defn track->item
+  [track-z]
+  (let [tempo-z (zx/xml-> track-z :TEMPO)]
+    (cond-> {::u/location (zx/attr track-z :Location)}
+      (not-empty tempo-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempo-z))
+      )
+    )
+  )
+
 (defn library->dj-playlists
   [progress _ {:keys [::u/collection]}]
   {:tag :DJ_PLAYLISTS
@@ -79,7 +93,12 @@
                             (remove #(not (contains? % ::u/total-time)) collection))}]})
 
 (defn dj-playlists->library
-  [_ dj-playlists])
+  [_ dj-playlists]
+  (if (xml/xml? dj-playlists)
+    (let [dj-playlists-z (zip/xml-zip dj-playlists)
+          collection-z (zx/xml1-> dj-playlists-z :COLLECTION)]
+      {::u/collection (map track->item (zx/xml-> collection-z :TRACK))})
+    dj-playlists))
 
 (def collection-spec
   (std/spec
@@ -91,7 +110,11 @@
   {:tag (s/spec #{:DJ_PLAYLISTS})
    :attrs {:Version string?}
    :content (s/cat
-             :collection collection-spec)})
+             :product (s/? (std/spec {:name ::product
+                                      :spec {:tag (s/spec #{:PRODUCT})}}))
+             :collection collection-spec
+             :playlists (s/? (std/spec {:name ::playlists
+                                        :spec {:tag (s/spec #{:PLAYLISTS})}})))})
 
 (defn dj-playlists-spec
   ([]
@@ -111,3 +134,7 @@
               dj-playlists (s/unform dj-playlists-spec conformed-dj-playlists)]
           (= (count (->> library ::u/collection (remove #(not (contains? % ::u/total-time)))))
              (count (->> dj-playlists :content first :content))))))
+
+(def library-spec
+  (-> u/library-spec
+      (assoc :decode/xml dj-playlists->library)))

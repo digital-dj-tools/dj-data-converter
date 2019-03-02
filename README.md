@@ -27,16 +27,16 @@ Donations are most welcome! This will help me to support more DJ software format
 - For each cue point in Traktor, both a memory cue and a hot cue are created.
 - No limit on the number of cue points.
 - The cue point names are copied over as-is.
-- The colour mapping for cue point types is as follows:
+- The default cue point colours are used where possible, except when there is a conflict between Traktor and Rekordbox:
 
-    Traktor | Rekordbox | Colour
-    -|-|-
-    Cue | Cue | Green
-    Fade-in | Cue | Pink
-    Fade-out | Cue | Pink
-    Load | Cue | Blue
-    Grid | Cue | Red
-    Loop | Loop | Gold
+    Traktor | Traktor Colour | Rekordbox | Rekordbox Colour
+    -|-|-|-
+    Cue | Blue | Cue | Green (default)
+    Fade-in | Orange | Cue | Pink
+    Fade-out | Orange | Cue | Pink
+    Load | Yellow | Cue | Yellow (unchanged)
+    Grid | White | Cue | White (unchanged)
+    Loop | Green | Loop | Orange (default)
 
 ## Current Limitations
 

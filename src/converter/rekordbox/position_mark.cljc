@@ -27,18 +27,18 @@
                                       ::um/type-grid "0"
                                       ::um/type-loop "4"})
 
-(def red [230 40 40])
-(def green [60 235 80])
-(def gold [255 140 0])
-(def blue [48 90 255])
-(def pink [222 68 207])
+(def rekordbox-colours {::white [255 255 255]
+                        ::green [60 235 80]
+                        ::orange [255 140 0]
+                        ::yellow [195 175 4]
+                        ::pink [222 68 207]})
 
-(def marker-type->rekordbox-colours {::um/type-cue green
-                                     ::um/type-fade-in pink
-                                     ::um/type-fade-out pink
-                                     ::um/type-load blue
-                                     ::um/type-grid red
-                                     ::um/type-loop gold})
+(def marker-type->rekordbox-colours {::um/type-cue (rekordbox-colours ::green)
+                                     ::um/type-fade-in (rekordbox-colours ::pink)
+                                     ::um/type-fade-out (rekordbox-colours ::pink)
+                                     ::um/type-load (rekordbox-colours ::yellow)
+                                     ::um/type-grid (rekordbox-colours ::white)
+                                     ::um/type-loop (rekordbox-colours ::orange)})
 
 (defn marker-type->position-mark
   [{:keys [::um/type]} position-mark _]

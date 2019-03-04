@@ -69,6 +69,9 @@ For example, assuming Traktor is installed in the default location on Windows:
 ```
 dj-data-converter-win.exe "C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml"
 ```
+A converted `rekordbox.xml` file will be created in the current directory.
+
+If the conversion fails due to an error, an `error-report.edn` file will be created (also in the current directory).
 
 ### Mac
 Open a terminal and navigate to the directory where the app was downloaded:
@@ -83,7 +86,6 @@ For example, assuming Traktor is installed in the default location on Mac OS X:
 ```
 dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
 ```
-
 A converted `rekordbox.xml` file will be created in the current directory.
 
 If the conversion fails due to an error, an `error-report.edn` file will be created (also in the current directory).

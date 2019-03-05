@@ -17,7 +17,7 @@
    (std/opt ::track-number) string?
    (std/opt ::album) string?
    (std/opt ::total-time) string?
-   (std/opt ::bpm) string?
+   (std/opt ::bpm) (s/double-in :min 0 :NaN? false :infinite? false)
    (std/opt ::tempos) [ut/tempo-spec]
    (std/opt ::markers) [um/marker-spec]})
 

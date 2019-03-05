@@ -109,7 +109,7 @@
                                                :attrs {(std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
-                                                :attrs {(std/opt :BPM) string?}}}))
+                                                :attrs {(std/opt :BPM) (s/double-in :min 0 :NaN? false :infinite? false)}}}))
                   :loudness (s/? (std/spec {:name ::loudness
                                             :spec {:tag (s/spec #{:LOUDNESS})}}))
                   :musical-key (s/? (std/spec {:name ::musical-key

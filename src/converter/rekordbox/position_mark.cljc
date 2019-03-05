@@ -13,8 +13,8 @@
     :spec {:tag (s/spec #{:POSITION_MARK})
            :attrs {:Name string?
                    :Type string?
-                   :Start (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
-                   (std/opt :End) (s/double-in :min 0 :max 3600 :NaN? false :infinite? false)
+                   :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
+                   (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
                    :Num string?
                    :Red int?
                    :Green int?

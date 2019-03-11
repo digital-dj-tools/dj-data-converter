@@ -4,7 +4,6 @@
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [clojure.data.zip.xml :as zx]
    [clojure.zip :as zip]
-   [converter.map :as map]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.rekordbox.position-mark :as rp]
@@ -14,7 +13,8 @@
    [converter.xml :as xml]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
-   [spec-tools.spec :as sts]))
+   [spec-tools.spec :as sts]
+   [utils.map :as map]))
 
 (def track-spec
   (std/spec

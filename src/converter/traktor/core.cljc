@@ -6,7 +6,6 @@
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :refer [split join]]
    [clojure.zip :as zip]
-   [converter.map :as map]
    [converter.spec :as spec]
    [converter.str :as str]
    [converter.traktor.album :as ta]
@@ -18,7 +17,8 @@
    [converter.xml :as xml]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
-   [spec-tools.spec :as sts]))
+   [spec-tools.spec :as sts]
+   [utils.map :as map]))
 
 (def nml-path-sep
   "/:")

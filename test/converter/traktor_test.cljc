@@ -5,7 +5,6 @@
    [clojure.test :refer [is] #?@(:cljs [:include-macros true])]
    [clojure.test.check.clojure-test :refer [defspec] #?@(:cljs [:include-macros true])]
    [clojure.test.check.properties :as tcp #?@(:cljs [:include-macros true])]
-   [converter.map :as map]
    [converter.spec :as spec]
    [converter.traktor.core :as t]
    [converter.traktor.cue :as tc]

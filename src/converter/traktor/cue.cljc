@@ -5,11 +5,11 @@
    [clojure.set :as set]
    [clojure.string :as str]
    [clojure.zip :as zip]
-   [converter.map :as map]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
    [spec-tools.data-spec :as std]
-   [spec-tools.spec :as sts]))
+   [spec-tools.spec :as sts]
+   [utils.map :as map]))
 
 (def type-kw->type-num {::um/type-cue "0"
                         ::um/type-fade-in "1"

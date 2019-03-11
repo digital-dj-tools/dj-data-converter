@@ -2,10 +2,10 @@
   (:require
    [camel-snake-kebab.core :as csk]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   [converter.map :as map]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
-   [spec-tools.data-spec :as std]))
+   [spec-tools.data-spec :as std]
+   [utils.map :as map]))
 
 (def position-mark-spec
   (std/spec

@@ -2,13 +2,13 @@
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [converter.map :as map]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
    [converter.spec :as spec]
    [converter.url :as url]
    [spec-tools.core :as st]
-   [spec-tools.data-spec :as std]))
+   [spec-tools.data-spec :as std]
+   [utils.map :as map]))
 
 (def item
   {::location ::url/url

@@ -3,10 +3,10 @@
    [camel-snake-kebab.core :as csk]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [clojure.zip :as zip]
-   [converter.map :as map]
    [converter.spec :as spec]
    [converter.universal.tempo :as ut]
-   [spec-tools.data-spec :as std]))
+   [spec-tools.data-spec :as std]
+   [utils.map :as map]))
 
 (def tempo-spec
   (std/spec

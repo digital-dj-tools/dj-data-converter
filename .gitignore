@@ -13,3 +13,5 @@ node_modules
 /pkg/
 /out/
 /cljs-test-runner-out/
+*.xml
+*.nml

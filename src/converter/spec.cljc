@@ -4,10 +4,10 @@
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as str]
    [clojure.zip :as zip]
-   [converter.map :as map]
    [converter.url :as url]
    [spec-tools.core :as st]
-   [spec-tools.transform :as stt]))
+   [spec-tools.transform :as stt]
+   [utils.map :as map]))
 
 ; TODO can't be implemented yet, if encoded value is invalid, 
 ; there's no way to coerce using encoder rather than decoder

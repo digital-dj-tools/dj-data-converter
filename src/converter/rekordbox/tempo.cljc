@@ -17,11 +17,6 @@
                    :Metro string?
                    :Battito string?}}}))
 
-(defn item-tempo-inizio->tempo-inizio
-  [{:keys [::ut/inizio]} tempo _]
-  (let [inizio-shift (+ inizio -0.000)]
-    (assoc tempo :Inizio (if (neg? inizio-shift) 0 inizio-shift))))
-
 (s/fdef tempo->item-tempo
   :args (s/cat :tempo (spec/xml-zip-spec tempo-spec))
   :ret ut/tempo-spec)
@@ -36,6 +31,4 @@
 (defn item-tempo->tempo
   [item-tempo]
   {:tag :TEMPO
-   :attrs (map/transform item-tempo
-                         (partial map/transform-key csk/->PascalCaseKeyword)
-                         {::ut/inizio item-tempo-inizio->tempo-inizio})})
+   :attrs (map/transform-keys item-tempo csk/->PascalCaseKeyword)})

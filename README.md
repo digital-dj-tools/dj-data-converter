@@ -6,11 +6,17 @@ In addition to an automated test suite comprising specification-driven tests on 
 
 ## Features
 
-- Downloads available for [Windows and Mac OS](https://github.com/digital-dj-tools/dj-data-converter/releases)
-- Convert data from Traktor to Rekordbox
-- Convert tempo (BPM), beat grid and cue point data, including loops
-- Convert multiple beat grid markers
-- Convert unsupported Traktor cue point types using a colour mapping
+Feature | Basic Edition | Pro Edition
+-|-|-
+Convert from Traktor to Rekordbox | Yes | Yes
+Convert tempo (BPM) and beat grid | Yes | Yes
+Convert cue points and loops | Yes | Yes
+Convert multiple beat grid markers | Yes | Yes
+Convert unsupported Traktor cue types using a colour mapping | Yes | Yes
+Convert playlists | - | Yes
+Runs on Windows | Yes, [download here](https://github.com/digital-dj-tools/dj-data-converter/releases) | Yes
+Runs on Mac | Yes, [download here](https://github.com/digital-dj-tools/dj-data-converter/releases) | Yes
+Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing 
 
 ## Motivation
 
@@ -18,7 +24,7 @@ Although there are other tools available for handling this task, none are open s
 
 ## Donations
 
-Donations are most welcome! This will help me to support more DJ software formats, add new features, improve performance and fix bugs.
+Donations for the Basic Edition are most welcome! This will help me to support more DJ software formats, add new features, improve performance and fix bugs.
 
 ## Conversion Rules
 
@@ -41,7 +47,6 @@ Donations are most welcome! This will help me to support more DJ software format
 ## Current Limitations
 
 - Conversion is only possible from Traktor to Rekordbox.
-- Playlists are not converted.
 - Only track name, track number, track artist, album title and playtime metadata are copied over.
 - Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
 - Performance is limited, however a ~10,000 track Traktor collection should convert in under one minute.
@@ -52,7 +57,7 @@ None
 
 ## Install
 
-- Download the app from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page.
+Download the Basic Edition from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page. To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for pricing.
 
 ## Usage
 

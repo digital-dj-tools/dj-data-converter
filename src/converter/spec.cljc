@@ -16,11 +16,18 @@
 
 (defn decode!
   [spec value transformer]
-  ; st/conform! is used instead of st/decode, because currently st/coerce 
+  ; st/conform + s/unform is used instead of st/decode, because currently st/coerce 
   ; (and therefore also st/decode) can't coerce for specs that use s/cat and regex ops
   ; https://github.com/metosin/spec-tools/issues/149
-  (let [conformed (st/conform! spec value transformer)]
-    (s/unform spec conformed)))
+  (let [conformed (st/conform spec value transformer)]
+    (if-not (s/invalid? conformed)
+      (s/unform spec conformed)
+      (let [explain (st/explain-data spec value transformer)
+            data {:type ::decode
+                  :problems (st/+problems+ explain)
+                  :spec spec
+                  :value value}]
+        (throw (ex-info "Spec decode error:" data))))))
 
 (def xml-transformer
   (st/type-transformer

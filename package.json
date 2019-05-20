@@ -11,7 +11,7 @@
   "keywords": [],
   "author": "",
   "devDependencies": {
-    "pkg": "^4.3.4"
+    "pkg": "~4.3.4"
   },
   "pkg": {
     "scripts": "out/**/*.js"

@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting (Traktor to Rekordbox)
 - System abstraction for reloading code in the REPL (and removal of def's)
 
+## 0.3.1 (2019-06-24)
+### Changed
+- Add digital-dj-tools/utils dependency
+- All bpm values are now type double
+- The max tempo inizio and marker start/end is now 7200 seconds
+
 ## 0.3.0 (2019-03-02)
 ### Changed
 - Revised colour mapping for markers (cue points). The default cue point colours are used where possible, except when there is a conflict between Traktor and Rekordbox

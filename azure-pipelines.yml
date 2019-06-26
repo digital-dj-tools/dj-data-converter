@@ -21,34 +21,47 @@ jobs:
   - script: |
       clojure -A:dev:compile-cljs
       npm run build
+      zip -j pkg/dj-data-converter-win.zip pkg/dj-data-converter-win.exe
+      chmod +x pkg/dj-data-converter-macos
+      tar -czvf pkg/dj-data-converter-macos.tar.gz -C pkg dj-data-converter-macos
     displayName: Package
-  - task: PublishPipelineArtifact@0
+  - task: CopyFiles@2
     inputs:
+      sourceFolder: pkg
+      contents: '**'
+      targetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathtoPublish: $(Build.ArtifactStagingDirectory)
       artifactName: dj-data-converter
-      targetPath: pkg
+      publishLocation: Container
 - job: Test_Windows
   dependsOn: Build
   pool:
     vmImage: win1803
   steps:
-  - task: DownloadPipelineArtifact@0
+  - task: DownloadBuildArtifacts@0
     inputs:
+      buildType: current
+      downloadType: single
       artifactName: dj-data-converter
-      targetPath: $(System.DefaultWorkingDirectory)\pkg
-  - script: pkg\dj-data-converter-win.exe -h
+      downloadPath: $(System.DefaultWorkingDirectory)
+  - script: dj-data-converter\dj-data-converter-win.exe -h
     displayName: Smoke Test
 - job: Test_Mac
   dependsOn: Build
   pool:
     vmImage: macOS-10.13
   steps:
-  - task: DownloadPipelineArtifact@0
+  - task: DownloadBuildArtifacts@0
     inputs:
+      buildType: current
+      downloadType: single
       artifactName: dj-data-converter
-      targetPath: $(System.DefaultWorkingDirectory)/pkg
+      downloadPath: $(System.DefaultWorkingDirectory)
   - script: |
-      chmod +x pkg/dj-data-converter-macos
-      pkg/dj-data-converter-macos -h
+      chmod +x dj-data-converter/dj-data-converter-macos
+      dj-data-converter/dj-data-converter-macos -h
     displayName: Smoke Test
 - job: Release
   dependsOn:
@@ -59,10 +72,12 @@ jobs:
   pool:
     vmImage: ubuntu-16.04
   steps:
-  - task: DownloadPipelineArtifact@0
+  - task: DownloadBuildArtifacts@0
     inputs:
+      buildType: current
+      downloadType: single
       artifactName: dj-data-converter
-      targetPath: $(System.DefaultWorkingDirectory)/pkg
+      downloadPath: $(System.DefaultWorkingDirectory)
   - task: GithubRelease@0
     inputs:
       gitHubConnection: digital-dj-tools-bot
@@ -72,6 +87,8 @@ jobs:
       tagSource: manual
       tag: $(Build.SourceBranchName)
       title: $(Build.SourceBranchName)
-      assets: pkg/*
+      assets: |
+        dj-data-converter/*.zip
+        dj-data-converter/*.tar.gz
       isDraft: true
       addChangeLog: false

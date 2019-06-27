@@ -57,12 +57,14 @@ None
 
 ## Install
 
-Download the Basic Edition from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page. To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for pricing.
+Download the Basic Edition from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page as a zip or tar.gz archive, and then extract the archive into a directory.
+
+To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for pricing.
 
 ## Usage
 
 ### Windows
-Open a command prompt and navigate to the directory where the app was downloaded:
+Open a command prompt and change to the directory where the archive was extracted:
 ```
 cd <download-dir>
 ```
@@ -79,7 +81,7 @@ A converted `rekordbox.xml` file will be created in the current directory.
 If the conversion fails due to an error, an `error-report.edn` file will be created (also in the current directory).
 
 ### Mac
-Open a terminal and navigate to the directory where the app was downloaded:
+Open a terminal and change to the directory where the archive was extracted:
 ```
 cd <download-dir>
 ```

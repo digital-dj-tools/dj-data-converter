@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting (Traktor to Rekordbox)
 - System abstraction for reloading code in the REPL (and removal of def's)
 
+## 0.3.2 (2019-06-27)
+### Changed
+- Packages for Windows and Mac are now made available as archives: zip for Windows and tar.gz for Mac, to preserve execute permissions
+
 ## 0.3.1 (2019-06-24)
 ### Changed
 - Add digital-dj-tools/utils dependency

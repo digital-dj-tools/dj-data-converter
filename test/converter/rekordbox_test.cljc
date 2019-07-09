@@ -15,6 +15,11 @@
   {:opts {:num-tests 100}})
 
 (defspec-test
+  item-tempo->tempo
+  `rt/item-tempo->tempo
+  {:opts {:num-tests 100}})
+
+(defspec-test
   track->item
   `t/track->item
   {:opts {:num-tests 100}})

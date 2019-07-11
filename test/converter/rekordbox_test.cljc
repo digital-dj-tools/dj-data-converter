@@ -6,6 +6,7 @@
    [clojure.test.check.clojure-test :refer [defspec] #?@(:cljs [:include-macros true])]
    [clojure.test.check.properties :as tcp #?@(:cljs [:include-macros true])]
    [converter.rekordbox.core :as r]
+   [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
    [plumula.mimolette.alpha :refer [defspec-test]]))
 
@@ -17,6 +18,16 @@
 (defspec-test
   item-tempo->tempo
   `rt/item-tempo->tempo
+  {:opts {:num-tests 100}})
+
+(defspec-test
+  position-mark->marker
+  `rp/position-mark->marker
+  {:opts {:num-tests 100}})
+
+(defspec-test
+  marker->position-mark
+  `rp/marker->position-mark
   {:opts {:num-tests 100}})
 
 (defspec-test

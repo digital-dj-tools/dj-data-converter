@@ -1,24 +1,16 @@
 (ns converter.rekordbox.position-mark
   (:require
    [camel-snake-kebab.core :as csk]
+   [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
+   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
+   [clojure.set :as set]
+   [clojure.string :as str]
+   [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
    [spec-tools.data-spec :as std]
    [utils.map :as map]))
-
-(def position-mark-spec
-  (std/spec
-   {:name ::position-mark
-    :spec {:tag (s/spec #{:POSITION_MARK})
-           :attrs {:Name string?
-                   :Type string?
-                   :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
-                   (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
-                   :Num string?
-                   :Red int?
-                   :Green int?
-                   :Blue int?}}}))
 
 (def marker-type->position-mark-type {::um/type-cue "0"
                                       ::um/type-fade-in "0"
@@ -26,6 +18,45 @@
                                       ::um/type-load "0"
                                       ::um/type-grid "0"
                                       ::um/type-loop "4"})
+
+(def position-mark-type->marker-type
+  {"0" ::um/type-cue
+   "4" ::um/type-loop})
+
+(s/def ::position-mark-type
+  (s/spec (set (keys position-mark-type->marker-type))))
+
+(defn end-not-before-start
+  [{{:keys [:Start :End]} :attrs :as position-mark}]
+  (if (and End (< End Start))
+    (assoc-in position-mark [:attrs :End] Start)
+    position-mark))
+
+(defn type-loop-if-end-otherwise-type-cue
+  [{{:keys [:Start :End]} :attrs :as position-mark}]
+  (if End
+    (assoc-in position-mark [:attrs :Type] "4")
+    (assoc-in position-mark [:attrs :Type] "0")))
+
+(def position-mark
+  {:tag (s/spec #{:POSITION_MARK})
+   :attrs {:Name string?
+           :Type ::position-mark-type
+           :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
+           (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
+           :Num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})
+           :Red (s/int-in 0 256)
+           :Green (s/int-in 0 256)
+           :Blue (s/int-in 0 256)}})
+
+(def position-mark-spec
+  (as->
+   (std/spec
+    {:name ::position-mark
+     :spec position-mark})
+   $
+    (assoc $ :gen (fn [] (gen/fmap (comp end-not-before-start
+                                         type-loop-if-end-otherwise-type-cue) (s/gen $))))))
 
 (def rekordbox-colours {::white [255 255 255]
                         ::green [60 235 80]
@@ -53,6 +84,42 @@
   (if (= ::um/type-loop type)
     (assoc position-mark :End end)
     position-mark))
+
+(s/fdef position-mark->marker
+  :args (s/cat :position-mark (spec/xml-zip-spec position-mark-spec))
+  :ret um/marker-spec
+  :fn (fn equiv? [{{conformed-position-mark :position-mark} :args
+                   conformed-marker :ret}]
+        (let [position-mark (s/unform position-mark-spec conformed-position-mark)
+              marker (s/unform um/marker-spec conformed-marker)]
+          (and (= (-> position-mark :attrs :Name) (::um/name marker))
+               (= (-> position-mark :attrs :Num) (::um/num marker))
+               (= (-> position-mark :attrs :Start) (::um/start marker))
+               (if (-> position-mark :attrs :End)
+                 (= (-> position-mark :attrs :End) (::um/end marker))
+                 (= (-> position-mark :attrs :Start) (::um/end marker)))))))
+
+(defn position-mark->marker
+  [position-mark-z]
+  (-> position-mark-z
+      zip/node
+      :attrs
+      (dissoc :Red :Green :Blue)
+      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
+                     {:Type #(assoc %2 ::um/type (position-mark-type->marker-type (%1 %3)))})
+      (#(merge {::um/end (::um/start %1)} %1))))
+
+(s/fdef marker->position-mark
+  :args (s/cat :marker um/marker-spec :hotcue? boolean?)
+  :ret position-mark-spec
+  :fn (fn equiv? [{{conformed-marker :marker conformed-hotcue? :hotcue?} :args
+                   conformed-position-mark :ret}]
+        (let [marker (s/unform um/marker-spec conformed-marker)
+              hotcue? (s/unform boolean? conformed-hotcue?)
+              position-mark (s/unform position-mark-spec conformed-position-mark)]
+          (if hotcue?
+            (= "-1" (-> position-mark :attrs :Num))
+            (= (::um/num marker) (-> position-mark :attrs :Num))))))
 
 (defn marker->position-mark
   [marker hotcue?]

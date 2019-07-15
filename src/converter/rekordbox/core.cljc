@@ -34,13 +34,13 @@
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [pos-num-markers (remove #(= "-1" (::um/num %)) markers)]
+  (let [non-grid-markers (remove um/grid-marker? markers)]
     (every? identity
             (map
              #(and
                (= (::um/num %1) (zx/attr (first %2) :Num))
                (= "-1" (zx/attr (second %2) :Num)))
-             pos-num-markers
+             non-grid-markers
              (partition 2 (zx/xml-> track-z :POSITION_MARK))))))
 
 (s/fdef item->track
@@ -62,34 +62,43 @@
      true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
      title (assoc :Name title)
      bpm (assoc :AverageBpm bpm))
-   :content (let [pos-num-markers (remove #(= "-1" (::um/num %)) markers)]
+   :content (let [non-grid-markers (remove um/grid-marker? markers)]
               (cond-> []
                 tempos (concat (map rt/item-tempo->tempo tempos))
-                pos-num-markers (concat (reduce #(conj %1
-                                                       (rp/marker->position-mark %2 false)
-                                                       (rp/marker->position-mark %2 true))
-                                                []
-                                                pos-num-markers))))})
+                ; two position marks for each marker, one is a hotcue, the other is a memory cue
+                non-grid-markers (concat (reduce #(conj %1
+                                                        (rp/marker->position-mark %2 false)
+                                                        (rp/marker->position-mark %2 true))
+                                                 []
+                                                 non-grid-markers))))})
 
 (s/fdef track->item
   :args (s/cat :track (spec/xml-zip-spec track-spec))
-  :ret u/item-spec)
+  :ret u/item-spec
+  :fn (fn equiv-item? [{{conformed-track :track} :args conformed-item :ret}]
+        (let [track-z (zip/xml-zip (s/unform track-spec conformed-track))
+              item (s/unform u/item-spec conformed-item)]
+          (and
+           (= (zx/attr track-z :Name) (::u/title item))
+           (= (zx/attr track-z :Artist) (::u/artist item))))))
 
 (defn track->item
   [track-z]
-  (let [tempo-z (zx/xml-> track-z :TEMPO)]
-    (cond-> {::u/location (zx/attr track-z :Location)}
-      (not-empty tempo-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempo-z))
-      )
-    )
-  )
+  (let [tempo-z (zx/xml-> track-z :TEMPO)
+        Name (zx/attr track-z :Name)
+        AverageBpm (zx/attr track-z :AverageBpm)]
+    (cond-> track-z
+      true (-> first :attrs (dissoc :Name :AverageBpm) (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
+      Name (assoc ::u/title Name)
+      AverageBpm (assoc ::u/bpm AverageBpm)
+      (not-empty tempo-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempo-z)))))
 
 (defn library->dj-playlists
   [progress _ {:keys [::u/collection]}]
   {:tag :DJ_PLAYLISTS
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
-              :content (map (if progress (progress item->track) item->track) 
+              :content (map (if progress (progress item->track) item->track)
                             (remove #(not (contains? % ::u/total-time)) collection))}]})
 
 (defn dj-playlists->library

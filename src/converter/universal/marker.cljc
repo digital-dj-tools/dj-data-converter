@@ -13,6 +13,10 @@
             ::type-grid
             ::type-loop}))
 
+(defn grid-marker?
+  [marker]
+  (= ::type-grid (::type marker)))
+
 (defn end-for-loop-markers
   [marker]
   (if (= ::type-loop (::type marker))

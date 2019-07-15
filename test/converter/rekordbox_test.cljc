@@ -32,7 +32,7 @@
 
 (defspec-test
   track->item
-  `t/track->item
+  `r/track->item
   {:opts {:num-tests 100}})
 
 (defspec-test

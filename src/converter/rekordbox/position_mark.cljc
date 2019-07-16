@@ -44,6 +44,7 @@
            :Type ::position-mark-type
            :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
            (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
+           ; TODO in position-mark-spec, ensure that -1 "shadow" position marks will only exist when a memory cue is at the same time index as a hot cue
            :Num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})
            :Red (s/int-in 0 256)
            :Green (s/int-in 0 256)

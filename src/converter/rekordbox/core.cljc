@@ -6,6 +6,7 @@
    [clojure.zip :as zip]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
+   [converter.universal.tempo :as ut]
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
    [converter.spec :as spec]
@@ -34,14 +35,17 @@
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [non-grid-markers (remove um/grid-marker? markers)]
-    (every? identity
-            (map
-             #(and
-               (= (::um/num %1) (zx/attr (first %2) :Num))
-               (= "-1" (zx/attr (second %2) :Num)))
-             non-grid-markers
-             (partition 2 (zx/xml-> track-z :POSITION_MARK))))))
+  (let [non-hidden-markers (remove um/hidden-marker? markers)
+        position-marks (zx/xml-> track-z :POSITION_MARK)]
+    (and
+     (= (count non-hidden-markers) (/ (count position-marks) 2))
+     (every? identity
+             (map
+              #(and
+                (= (::um/num %1) (zx/attr (first %2) :Num))
+                (= "-1" (zx/attr (second %2) :Num)))
+              non-hidden-markers
+              (partition 2 position-marks))))))
 
 (s/fdef item->track
   :args (s/cat :item (spec/such-that-spec u/item-spec #(contains? % ::u/total-time) 100))
@@ -62,15 +66,36 @@
      true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
      title (assoc :Name title)
      bpm (assoc :AverageBpm bpm))
-   :content (let [non-grid-markers (remove um/grid-marker? markers)]
+   :content (let [non-hidden-markers (remove um/hidden-marker? markers)] ; TODO support hidden (grid) markers
               (cond-> []
                 tempos (concat (map rt/item-tempo->tempo tempos))
                 ; two position marks for each marker, one is a hotcue, the other is a memory cue
-                non-grid-markers (concat (reduce #(conj %1
-                                                        (rp/marker->position-mark %2 false)
-                                                        (rp/marker->position-mark %2 true))
-                                                 []
-                                                 non-grid-markers))))})
+                non-hidden-markers (concat (reduce #(conj %1
+                                                          (rp/marker->position-mark %2 false)
+                                                          (rp/marker->position-mark %2 true))
+                                                   []
+                                                   non-hidden-markers))))})
+
+(defn equiv-markers?
+  [track-z {:keys [::u/markers]}]
+  (let [position-mark-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))]
+    (and
+     (= (count position-mark-z) (count markers))
+     (every? identity
+             (map
+              #(and
+                (= (zx/attr %1 :Num) (::um/num %2)))
+              position-mark-z
+              markers)))))
+
+(defn equiv-tempos?
+  [track-z {:keys [::u/tempos]}]
+  (every? identity
+          (map #(and
+                 (= (zx/attr %1 :Inizio) (::ut/inizio %2))
+                 (= (zx/attr %1 :Bpm) (::ut/bpm %2)))
+               (zx/xml-> track-z :TEMPO)
+               tempos)))
 
 (s/fdef track->item
   :args (s/cat :track (spec/xml-zip-spec track-spec))
@@ -80,18 +105,25 @@
               item (s/unform u/item-spec conformed-item)]
           (and
            (= (zx/attr track-z :Name) (::u/title item))
-           (= (zx/attr track-z :Artist) (::u/artist item))))))
+           (= (zx/attr track-z :Artist) (::u/artist item))
+           (equiv-tempos? track-z item)
+           (equiv-markers? track-z item)))))
 
 (defn track->item
   [track-z]
-  (let [tempo-z (zx/xml-> track-z :TEMPO)
+  (let [tempos-z (zx/xml-> track-z :TEMPO)
+        position-marks-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))
         Name (zx/attr track-z :Name)
         AverageBpm (zx/attr track-z :AverageBpm)]
     (cond-> track-z
       true (-> first :attrs (dissoc :Name :AverageBpm) (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
       Name (assoc ::u/title Name)
       AverageBpm (assoc ::u/bpm AverageBpm)
-      (not-empty tempo-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempo-z)))))
+      (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
+      (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z))
+      ; TODO if any marker start matches any tempo inizio, change the marker type to grid
+      ; TODO add markers with num -1 (hidden) and type grid, for any tempos whose inizio doesn't have a matching marker start
+      )))
 
 (defn library->dj-playlists
   [progress _ {:keys [::u/collection]}]

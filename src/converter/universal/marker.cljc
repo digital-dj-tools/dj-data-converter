@@ -13,9 +13,9 @@
             ::type-grid
             ::type-loop}))
 
-(defn grid-marker?
+(defn hidden-marker?
   [marker]
-  (= ::type-grid (::type marker)))
+  (= "-1" (::num marker)))
 
 (defn end-for-loop-markers
   [marker]

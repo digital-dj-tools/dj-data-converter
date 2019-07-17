@@ -17,6 +17,11 @@
    [spec-tools.spec :as sts]
    [utils.map :as map]))
 
+(defn item-contains-total-time?
+  "Returns true if the item has a total-time. Rekordbox xml tracks must have a total time"
+  [item]
+  (contains? item ::u/total-time))
+
 (def track-spec
   (std/spec
    {:name ::track
@@ -47,7 +52,7 @@
               (partition 2 position-marks))))))
 
 (s/fdef item->track
-  :args (s/cat :item (spec/such-that-spec u/item-spec #(contains? % ::u/total-time) 100))
+  :args (s/cat :item (spec/such-that-spec u/item-spec item-contains-total-time? 100))
   :ret track-spec
   :fn (fn equiv-track? [{{conformed-item :item} :args conformed-track :ret}]
         (let [item (s/unform u/item-spec conformed-item)
@@ -123,7 +128,7 @@
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
               :content (map (if progress (progress item->track) item->track)
-                            (remove #(not (contains? % ::u/total-time)) collection))}]})
+                            (filter item-contains-total-time? collection))}]})
 
 (defn dj-playlists->library
   [_ dj-playlists]
@@ -159,14 +164,29 @@
       :spec dj-playlists})
     (assoc :encode/xml (partial library->dj-playlists progress)))))
 
+(s/fdef dj-playlists->library
+  :args (s/cat :dj-playlists-spec any? :dj-playlists (dj-playlists-spec))
+  :ret u/library-spec
+  :fn (fn equiv-collection-counts?
+        [{{conformed-dj-playlists :dj-playlists} :args conformed-library :ret}]
+        (let [dj-playlists (s/unform (dj-playlists-spec) conformed-dj-playlists)
+              dj-playlists-z (zip/xml-zip dj-playlists)
+              library (s/unform u/library-spec conformed-library)]
+          (=
+           (count (zx/xml-> dj-playlists-z :COLLECTION :TRACK))
+           (count (::u/collection library)))))
+  )
+
 (s/fdef library->dj-playlists
   :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
-  :ret dj-playlists-spec
-  :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-dj-playlists :ret}]
+  :ret (dj-playlists-spec)
+  :fn (fn equiv-collection-counts?
+        [{{conformed-library :library} :args conformed-dj-playlists :ret}]
         (let [library (s/unform u/library-spec conformed-library)
-              dj-playlists (s/unform dj-playlists-spec conformed-dj-playlists)]
-          (= (count (->> library ::u/collection (remove #(not (contains? % ::u/total-time)))))
-             (count (->> dj-playlists :content first :content))))))
+              dj-playlists (s/unform (dj-playlists-spec) conformed-dj-playlists)
+              dj-playlists-z (zip/xml-zip dj-playlists)]
+          (= (count (->> library ::u/collection (filter item-contains-total-time?)))
+             (count (zx/xml-> dj-playlists-z :COLLECTION :TRACK))))))
 
 (def library-spec
   (-> u/library-spec

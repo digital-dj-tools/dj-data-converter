@@ -88,7 +88,7 @@
 (defn assert-tempo-and-grid-marker-counts
   [{:keys [::tempos ::markers] :as item}]
   (assert (= (count tempos)
-             (count (remove #(not= ::um/type-grid (::um/type %)) markers))))
+             (count (filter #(= ::um/type-grid (::um/type %)) markers))))
   item)
 
 (def item-spec
@@ -103,7 +103,7 @@
                                       sorted-tempos
                                       grid-markers->tempos
                                       sorted-markers
-                                      tempos->grid-markers
+                                      tempos->grid-markers ; TODO a tempo might not have a corresponding grid marker
                                       distinct-markers
                                       remove-grid-markers) %) (s/gen $))))
     (spec/remove-empty-spec $ ::tempos ::markers)))

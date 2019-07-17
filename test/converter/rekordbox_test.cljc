@@ -44,6 +44,11 @@
   {:opts {:num-tests 100}})
 
 (defspec-test
+  dj-playlists->library
+  `r/dj-playlists->library
+  {:opts {:num-tests 10}})
+
+(defspec-test
   library->dj-playlists
   `r/library->dj-playlists
   {:opts {:num-tests 10}})

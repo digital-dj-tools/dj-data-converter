@@ -31,20 +31,19 @@
                      :tempos (s/* (std/spec {:name ::tempo
                                              :spec rt/tempo-spec}))
                      :position-marks (s/* (std/spec {:name ::position-mark
-                                                     :spec rp/position-mark-spec})))}}))
+                                                     :spec rp/position-mark-with-shadow-marks-spec})))}}))
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [non-hidden-markers (remove um/hidden-marker? markers)
-        position-marks (zx/xml-> track-z :POSITION_MARK)]
+  (let [position-marks (zx/xml-> track-z :POSITION_MARK)]
     (and
-     (= (count non-hidden-markers) (/ (count position-marks) 2))
+     (= (count markers) (/ (count position-marks) 2))
      (every? identity
              (map
               #(and
                 (= (::um/num %1) (zx/attr (first %2) :Num))
                 (= "-1" (zx/attr (second %2) :Num)))
-              non-hidden-markers
+              markers
               (partition 2 position-marks))))))
 
 (s/fdef item->track
@@ -56,7 +55,7 @@
           (and
            (= (::u/title item) (zx/attr track-z :Name))
            (= (::u/artist item) (zx/attr track-z :Artist))
-           (equiv-position-marks? item track-z))))) ; TODO tempos
+           (equiv-position-marks? item track-z))))) ; TODO equiv-track-tempos
 
 (defn item->track
   [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
@@ -66,36 +65,32 @@
      true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
      title (assoc :Name title)
      bpm (assoc :AverageBpm bpm))
-   :content (let [non-hidden-markers (remove um/hidden-marker? markers)] ; TODO support hidden (grid) markers
-              (cond-> []
-                tempos (concat (map rt/item-tempo->tempo tempos))
+   :content (cond-> []
+              tempos (concat (map rt/item-tempo->tempo tempos))
                 ; two position marks for each marker, one is a hotcue, the other is a memory cue
-                non-hidden-markers (concat (reduce #(conj %1
-                                                          (rp/marker->position-mark %2 false)
-                                                          (rp/marker->position-mark %2 true))
-                                                   []
-                                                   non-hidden-markers))))})
+              markers (concat (reduce #(conj %1
+                                             (rp/marker->position-mark %2 false)
+                                             (rp/marker->position-mark %2 true))
+                                      []
+                                      markers)))})
 
+(defn type-grid-for-marker-with-matching-tempo
+  [track-z marker]
+  (let [matching-tempos-z (zx/xml-> track-z :TEMPO (zx/attr= :Inizio (::um/start marker)))]
+    (if (not-empty matching-tempos-z)
+      (assoc marker ::um/type ::um/type-grid)
+      marker)))
+
+; TODO check that marker type is changed to grid, when marker has matching tempo
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]
-  (let [position-mark-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))]
-    (and
-     (= (count position-mark-z) (count markers))
-     (every? identity
-             (map
-              #(and
-                (= (zx/attr %1 :Num) (::um/num %2)))
-              position-mark-z
-              markers)))))
+  (let [without-shadow-marks-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))]
+    (= (count without-shadow-marks-z) (count markers))))
 
 (defn equiv-tempos?
   [track-z {:keys [::u/tempos]}]
-  (every? identity
-          (map #(and
-                 (= (zx/attr %1 :Inizio) (::ut/inizio %2))
-                 (= (zx/attr %1 :Bpm) (::ut/bpm %2)))
-               (zx/xml-> track-z :TEMPO)
-               tempos)))
+  (let [tempo-z (zx/xml-> track-z :TEMPO)]
+    (= (count tempo-z) (count tempos))))
 
 (s/fdef track->item
   :args (s/cat :track (spec/xml-zip-spec track-spec))
@@ -112,7 +107,7 @@
 (defn track->item
   [track-z]
   (let [tempos-z (zx/xml-> track-z :TEMPO)
-        position-marks-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))
+        without-shadow-marks-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))
         Name (zx/attr track-z :Name)
         AverageBpm (zx/attr track-z :AverageBpm)]
     (cond-> track-z
@@ -120,10 +115,7 @@
       Name (assoc ::u/title Name)
       AverageBpm (assoc ::u/bpm AverageBpm)
       (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
-      (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z))
-      ; TODO if any marker start matches any tempo inizio, change the marker type to grid
-      ; TODO add markers with num -1 (hidden) and type grid, for any tempos whose inizio doesn't have a matching marker start
-      )))
+      (not-empty without-shadow-marks-z) (assoc ::u/markers (map (comp (partial type-grid-for-marker-with-matching-tempo track-z) rp/position-mark->marker) without-shadow-marks-z)))))
 
 (defn library->dj-playlists
   [progress _ {:keys [::u/collection]}]

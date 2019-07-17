@@ -44,20 +44,33 @@
            :Type ::position-mark-type
            :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
            (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
-           ; TODO in position-mark-spec, ensure that -1 "shadow" position marks will only exist when a memory cue is at the same time index as a hot cue
+           ; TODO in position-mark-with-shadow-marks-spec, ensure that -1 "shadow" position marks will only exist when a memory cue is at the same time index as a hot cue
            :Num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})
            :Red (s/int-in 0 256)
            :Green (s/int-in 0 256)
            :Blue (s/int-in 0 256)}})
 
-(def position-mark-spec
+(defn not-shadow-mark?
+  [position-mark]
+  (not= "-1" (-> position-mark :attrs :Num)))
+
+(defn position-mark-spec
+  [shadow-marks?]
   (as->
    (std/spec
     {:name ::position-mark
      :spec position-mark})
    $
-    (assoc $ :gen (fn [] (gen/fmap (comp end-not-before-start
-                                         type-loop-if-end-otherwise-type-cue) (s/gen $))))))
+    (assoc $ :gen (fn [] (->> (s/gen $)
+                              (gen/such-that #(if shadow-marks? true (not-shadow-mark? %)))
+                              (gen/fmap (comp end-not-before-start
+                                              type-loop-if-end-otherwise-type-cue)))))))
+
+(def position-mark-with-shadow-marks-spec
+  (position-mark-spec true))
+
+(def position-mark-without-shadow-marks-spec
+  (position-mark-spec false))
 
 (def rekordbox-colours {::white [255 255 255]
                         ::green [60 235 80]
@@ -87,11 +100,11 @@
     position-mark))
 
 (s/fdef position-mark->marker
-  :args (s/cat :position-mark (spec/xml-zip-spec position-mark-spec))
+  :args (s/cat :position-mark (spec/xml-zip-spec position-mark-without-shadow-marks-spec))
   :ret um/marker-spec
   :fn (fn equiv? [{{conformed-position-mark :position-mark} :args
                    conformed-marker :ret}]
-        (let [position-mark (s/unform position-mark-spec conformed-position-mark)
+        (let [position-mark (s/unform position-mark-without-shadow-marks-spec conformed-position-mark)
               marker (s/unform um/marker-spec conformed-marker)]
           (and (= (-> position-mark :attrs :Name) (::um/name marker))
                (= (-> position-mark :attrs :Num) (::um/num marker))
@@ -112,12 +125,12 @@
 
 (s/fdef marker->position-mark
   :args (s/cat :marker um/marker-spec :hotcue? boolean?)
-  :ret position-mark-spec
+  :ret position-mark-with-shadow-marks-spec
   :fn (fn equiv? [{{conformed-marker :marker conformed-hotcue? :hotcue?} :args
                    conformed-position-mark :ret}]
         (let [marker (s/unform um/marker-spec conformed-marker)
               hotcue? (s/unform boolean? conformed-hotcue?)
-              position-mark (s/unform position-mark-spec conformed-position-mark)]
+              position-mark (s/unform position-mark-with-shadow-marks-spec conformed-position-mark)]
           (if hotcue?
             (= "-1" (-> position-mark :attrs :Num))
             (= (::um/num marker) (-> position-mark :attrs :Num))))))

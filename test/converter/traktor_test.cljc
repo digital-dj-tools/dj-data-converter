@@ -52,10 +52,10 @@
 
 (defspec cue-spec-encode-decode-equality
   100
-  (tcp/for-all [cue (s/gen tc/cue-spec)]
+  (tcp/for-all [cue (s/gen tc/cue-with-hidden-cues-spec)]
                (as-> cue $
-                 (st/encode tc/cue-spec $ st/string-transformer)
-                 (st/decode tc/cue-spec $ st/string-transformer)
+                 (st/encode tc/cue-with-hidden-cues-spec $ st/string-transformer)
+                 (st/decode tc/cue-with-hidden-cues-spec $ st/string-transformer)
                  (is (= cue $)))))
 
 (defspec entry-spec-encode-decode-equality

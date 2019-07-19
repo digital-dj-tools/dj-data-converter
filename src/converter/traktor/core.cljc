@@ -151,6 +151,7 @@
 (defn item->entry
   [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/tempos ::u/markers]}]
   {:tag :ENTRY
+   ; TODO need to assoc MODIFIED_DATE and MODIFIED_TIME, and these must be 'newer' to replace existing data in Traktor
    :attrs (cond-> {}
             title (assoc :TITLE title)
             artist (assoc :ARTIST artist))

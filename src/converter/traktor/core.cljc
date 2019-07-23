@@ -106,7 +106,9 @@
                                                      :spec {:tag (s/spec #{:MODIFICATION_INFO})}}))
                   :info (s/? (std/spec {:name ::info
                                         :spec {:tag (s/spec #{:INFO})
-                                               :attrs {(std/opt :PLAYTIME) string?}}}))
+                                               :attrs {(std/opt :COMMENT) string?
+                                                       (std/opt :GENRE) string?
+                                                       (std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
                                                 :attrs {(std/opt :BPM) (s/double-in :min 0 :NaN? false :infinite? false)}}}))
@@ -135,14 +137,19 @@
   :args (s/cat :item u/item-spec)
   :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
         (let [item (s/unform u/item-spec conformed-item)
-              entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))]
+              entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
+              info-z (zx/xml1-> entry-z :INFO)]
           (and
            (= (::u/title item) (zx/attr entry-z :TITLE))
+           (= (::u/artist item) (zx/attr entry-z :ARTIST))
+           (= (::u/total-time item) (and info-z (zx/attr info-z :PLAYTIME)))
+           (= (::u/comments item) (and info-z (zx/attr info-z :COMMENT)))
+           (= (::u/genre item) (and info-z (zx/attr info-z :GENRE)))
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/tempos ::u/markers]}]
+  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album  ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    :attrs (cond-> {}
             title (assoc :TITLE title)
@@ -150,11 +157,14 @@
    :content (cond-> []
               true (conj (url->location location))
               (or track-number album) (conj {:tag :ALBUM
-                                      :attrs (cond-> {}
-                                               track-number (assoc :TRACK track-number)
-                                               album (assoc :TITLE album))})
-              total-time (conj {:tag :INFO
-                                :attrs {:PLAYTIME total-time}})
+                                             :attrs (cond-> {}
+                                                      track-number (assoc :TRACK track-number)
+                                                      album (assoc :TITLE album))})
+              (or comments genre total-time) (conj {:tag :INFO
+                                                   :attrs (cond-> {}
+                                                            comments (assoc :COMMENT comments)
+                                                            genre (assoc :GENRE genre)
+                                                            total-time (assoc :PLAYTIME total-time))})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)))})
@@ -204,6 +214,8 @@
           (and
            (= (zx/attr entry-z :TITLE) (::u/title item))
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
+           (= (and info-z (zx/attr info-z :COMMENT)) (::u/comments item))
+           (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
            (equiv-tempo? entry-z item))))
@@ -217,6 +229,8 @@
         track (and album-z (zx/attr album-z :TRACK))
         album-title (and album-z (zx/attr album-z :TITLE))
         info-z (zx/xml1-> entry-z :INFO)
+        comment (and info-z (zx/attr info-z :COMMENT))
+        genre (and info-z (zx/attr info-z :GENRE))
         playtime (and info-z (zx/attr info-z :PLAYTIME))
         tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
@@ -227,6 +241,8 @@
        artist (assoc ::u/artist artist)
        track (assoc ::u/track-number track)
        album-title (assoc ::u/album album-title)
+       comment (assoc ::u/comments comment)
+       genre (assoc ::u/genre genre)
        playtime (assoc ::u/total-time playtime)
        bpm (assoc ::u/bpm bpm)
        (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z)))

@@ -111,6 +111,9 @@
           (and
            (= (zx/attr track-z :Name) (::u/title item))
            (= (zx/attr track-z :Artist) (::u/artist item))
+           (= (zx/attr track-z :Genre) (::u/genre item))
+           (= (zx/attr track-z :TotalTime) (::u/total-time item))
+           (= (zx/attr track-z :Comments) (::u/comments item))
            (equiv-tempos? track-z item)
            (equiv-markers? track-z item)))))
 
@@ -179,8 +182,7 @@
               library (s/unform u/library-spec conformed-library)]
           (=
            (count (zx/xml-> dj-playlists-z :COLLECTION :TRACK))
-           (count (::u/collection library)))))
-  )
+           (count (::u/collection library))))))
 
 (s/fdef library->dj-playlists
   :args (s/cat :progress nil? :library-spec any? :library u/library-spec)

@@ -31,7 +31,9 @@
                    (std/opt :Name) string?
                    (std/opt :Artist) string?
                    (std/opt :Album) string?
-                   (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)}
+                   (std/opt :Genre) string?
+                   (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)
+                   (std/opt :Comments) string?}
            :content (s/cat
                      :tempos (s/* (std/spec {:name ::tempo
                                              :spec rt/tempo-spec}))
@@ -60,6 +62,9 @@
           (and
            (= (::u/title item) (zx/attr track-z :Name))
            (= (::u/artist item) (zx/attr track-z :Artist))
+           (= (::u/total-time item) (zx/attr track-z :TotalTime))
+           (= (::u/comments item) (zx/attr track-z :Comments))
+           (= (::u/genre item) (zx/attr track-z :Genre))
            (equiv-position-marks? item track-z))))) ; TODO equiv-track-tempos
 
 (defn item->track

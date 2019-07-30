@@ -118,7 +118,7 @@
                                                :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
                   :loopinfo (s/? (std/spec {:name ::loopinfo
                                             :spec {:tag (s/spec #{:LOOPINFO})}}))
-                  :cue (s/* tc/cue-with-hidden-cues-spec))})
+                  :cue (s/* tc/cue-visible-or-hidden-spec))})
 
 (def entry-spec
   (std/spec
@@ -159,6 +159,9 @@
   [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album  ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    ; TODO need to assoc MODIFIED_DATE and MODIFIED_TIME, and these must be 'newer' to replace existing data in Traktor
+   ; but Rekordbox xml doesn't have this data..
+   ; naive solution for now - just use "run datetime = now" for all items
+   ; slightly less naive solution - calc hash of items on both sides, then filter using hash1 != hash2, and then set "run datetime = now"
    :attrs (cond-> {}
             title (assoc :TITLE title)
             artist (assoc :ARTIST artist))
@@ -199,10 +202,10 @@
 
 (defn equiv-markers?
   [entry-z item]
-  (let [non-hidden-cues-z (remove #(= "-1" (zx/attr % :HOTCUE)) (zx/xml-> entry-z :CUE_V2))]
+  (let [visible-cues-z (remove (comp tc/hidden-cue? zip/node) (zx/xml-> entry-z :CUE_V2))]
     (every? identity
             (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
-                 non-hidden-cues-z
+                 visible-cues-z
                  (::u/markers item)))))
 
 (s/fdef entry->item
@@ -234,7 +237,7 @@
         playtime (and info-z (zx/attr info-z :PLAYTIME))
         tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
-        non-hidden-cues-z (remove #(= "-1" (zx/attr % :HOTCUE)) (zx/xml-> entry-z :CUE_V2))
+        visible-cues-z (remove (comp tc/hidden-cue? zip/node) (zx/xml-> entry-z :CUE_V2))
         grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
     (cond-> {::u/location (location->url (zx/xml1-> entry-z :LOCATION))}
       title (assoc ::u/title title)
@@ -245,7 +248,7 @@
       genre (assoc ::u/genre genre)
       playtime (assoc ::u/total-time playtime)
       bpm (assoc ::u/bpm bpm)
-      (not-empty non-hidden-cues-z) (assoc ::u/markers (map tc/cue->marker non-hidden-cues-z))
+      (not-empty visible-cues-z) (assoc ::u/markers (map tc/cue->marker visible-cues-z))
       (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial grid-cue->tempo bpm) grid-cues-z)))))
 
 (defn library->nml

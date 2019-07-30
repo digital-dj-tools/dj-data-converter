@@ -43,9 +43,9 @@
                             :LEN (s/double-in :min 0 :max 7200000 :NaN? false :infinite? false) ; millis
                             :HOTCUE ::hotcue}}}))
 
-(defn not-hidden-cue?
+(defn hidden-cue?
   [cue]
-  (not= "-1" (-> cue :attrs :HOTCUE)))
+  (= "-1" (-> cue :attrs :HOTCUE)))
 
 (defn cue-spec
   [hidden-cues?]
@@ -56,13 +56,13 @@
    $
     (assoc $ :gen (fn [] (->>
                           (s/gen $)
-                          (gen/such-that #(if hidden-cues? true (not-hidden-cue? %)))
+                          (gen/such-that #(if hidden-cues? true (not (hidden-cue? %))))
                           (gen/fmap #(start-plus-len-not-greater-than-max %))))))) ; TODO set len to zero unless loop
 
-(def cue-with-hidden-cues-spec
+(def cue-visible-or-hidden-spec
   (cue-spec true))
 
-(def cue-without-hidden-cues-spec
+(def cue-visible-only-spec
   (cue-spec false))
 
 (defn cue->marker-type
@@ -90,10 +90,10 @@
    (assoc cue :LEN (seconds->millis (- end start))))
 
 (s/fdef cue->marker
-  :args (s/cat :cue (spec/xml-zip-spec cue-without-hidden-cues-spec))
+  :args (s/cat :cue (spec/xml-zip-spec cue-visible-only-spec))
   :ret um/marker-spec
   :fn (fn equiv-marker? [{{conformed-cue :cue} :args conformed-marker :ret}]
-        (let [cue (s/unform cue-without-hidden-cues-spec conformed-cue)
+        (let [cue (s/unform cue-visible-only-spec conformed-cue)
               marker (s/unform um/marker-spec conformed-marker)
               START (-> cue :attrs :START)
               LEN (-> cue :attrs :LEN)]
@@ -113,7 +113,7 @@
 
 (s/fdef marker->cue
   :args (s/cat :marker um/marker-spec)
-  :ret cue-with-hidden-cues-spec)
+  :ret cue-visible-or-hidden-spec)
 
 (defn marker->cue
   [marker]

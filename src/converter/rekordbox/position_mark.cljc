@@ -138,10 +138,10 @@
             (= (::um/num marker) (-> position-mark :attrs :Num))))))
 
 (defn marker->position-mark
-  [marker hotcue?]
+  [marker memory-cue?]
   {:tag :POSITION_MARK
    :attrs (map/transform marker
                          (partial map/transform-key csk/->PascalCaseKeyword)
                          {::um/type marker-type->position-mark
                           ::um/end marker-end->position-mark
-                          ::um/num #(assoc %2 :Num (if hotcue? "-1" (%3 %1)))})})
+                          ::um/num #(assoc %2 :Num (if memory-cue? "-1" (%3 %1)))})})

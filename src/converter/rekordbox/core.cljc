@@ -42,16 +42,16 @@
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [position-marks (zx/xml-> track-z :POSITION_MARK)]
+  (let [position-marks-z (zx/xml-> track-z :POSITION_MARK)]
     (and
-     (= (count markers) (/ (count position-marks) 2))
+     (= (count markers) (/ (count position-marks-z) 2))
      (every? identity
              (map
               #(and
                 (= (::um/num %1) (zx/attr (first %2) :Num))
-                (= "-1" (zx/attr (second %2) :Num)))
+                ((comp rp/memory-cue? zip/node) (second %2)))
               markers
-              (partition 2 position-marks))))))
+              (partition 2 position-marks-z))))))
 
 (s/fdef item->track
   :args (s/cat :item (spec/such-that-spec u/item-spec item-contains-total-time? 100))
@@ -77,7 +77,7 @@
      bpm (assoc :AverageBpm bpm))
    :content (cond-> []
               tempos (concat (map rt/item-tempo->tempo tempos))
-                ; two position marks for each marker, one is a hotcue, the other is a memory cue
+                ; two position marks for each marker, one is a hot cue, the other is a memory cue
               markers (concat (reduce #(conj %1
                                              (rp/marker->position-mark %2 false)
                                              (rp/marker->position-mark %2 true))

@@ -55,10 +55,10 @@
 
 (defspec position-mark-spec-encode-decode-equality
   100
-  (tcp/for-all [position-mark (s/gen rp/position-mark-with-shadow-marks-spec)]
+  (tcp/for-all [position-mark (s/gen rp/position-mark-hot-cue-or-memory-cue-spec)]
                (as-> position-mark $
-                 (st/encode rp/position-mark-with-shadow-marks-spec $ st/string-transformer)
-                 (st/decode rp/position-mark-with-shadow-marks-spec $ st/string-transformer)
+                 (st/encode rp/position-mark-hot-cue-or-memory-cue-spec $ st/string-transformer)
+                 (st/decode rp/position-mark-hot-cue-or-memory-cue-spec $ st/string-transformer)
                  (is (= position-mark $)))))
 
 (defspec track-spec-encode-decode-equality

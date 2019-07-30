@@ -38,7 +38,7 @@
                      :tempos (s/* (std/spec {:name ::tempo
                                              :spec rt/tempo-spec}))
                      :position-marks (s/* (std/spec {:name ::position-mark
-                                                     :spec rp/position-mark-with-shadow-marks-spec})))}}))
+                                                     :spec rp/position-mark-hot-cue-or-memory-cue-spec})))}}))
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
@@ -94,8 +94,8 @@
 ; TODO check that marker type is changed to grid, when marker has matching tempo
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]
-  (let [without-shadow-marks-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))]
-    (= (count without-shadow-marks-z) (count markers))))
+  (let [position-marks-z (remove (comp rp/memory-cue? zip/node) (zx/xml-> track-z :POSITION_MARK))]
+    (= (count position-marks-z) (count markers))))
 
 (defn equiv-tempos?
   [track-z {:keys [::u/tempos]}]
@@ -120,7 +120,8 @@
 (defn track->item
   [track-z]
   (let [tempos-z (zx/xml-> track-z :TEMPO)
-        without-shadow-marks-z (remove #(= "-1" (zx/attr %1 :Num)) (zx/xml-> track-z :POSITION_MARK))
+        ; memory cues are filtered out (markers can't have num -1)
+        position-marks-z (remove (comp rp/memory-cue? zip/node) (zx/xml-> track-z :POSITION_MARK))
         Name (zx/attr track-z :Name)
         AverageBpm (zx/attr track-z :AverageBpm)]
     (cond-> track-z
@@ -128,7 +129,7 @@
       Name (assoc ::u/title Name)
       AverageBpm (assoc ::u/bpm AverageBpm)
       (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
-      (not-empty without-shadow-marks-z) (assoc ::u/markers (map (comp (partial type-grid-for-marker-with-matching-tempo track-z) rp/position-mark->marker) without-shadow-marks-z)))))
+      (not-empty position-marks-z) (assoc ::u/markers (map (comp (partial type-grid-for-marker-with-matching-tempo track-z) rp/position-mark->marker) position-marks-z)))))
 
 (defn library->dj-playlists
   [progress _ {:keys [::u/collection]}]
@@ -136,6 +137,7 @@
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
               :content (map (if progress (progress item->track) item->track)
+                            ; TODO summarize what was done (i.e. items without total time filtered out) in a report
                             (filter item-contains-total-time? collection))}]})
 
 (defn dj-playlists->library

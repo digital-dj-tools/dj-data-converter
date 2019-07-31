@@ -2,8 +2,8 @@
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [converter.rekordbox.core :as r]
-   [converter.traktor.core :as t]
    [converter.spec :as spec]
+   [converter.traktor.core :as t]
    [converter.xml :as xml]
    [spec-tools.core :as st]))
 

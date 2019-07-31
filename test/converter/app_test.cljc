@@ -6,8 +6,8 @@
    [plumula.mimolette.alpha :refer [defspec-test]]))
 
 (defspec-test
-  convert-data
-  `app/convert-data
+  convert
+  `app/convert
   {:opts {:num-tests 10}})
 
 ; (deftest convert-without-check-error-test

@@ -23,6 +23,10 @@
   {"0" ::um/type-cue
    "4" ::um/type-loop})
 
+(defn marker-type-supported?
+  [marker-type]
+  (contains? #{::um/type-cue ::um/type-loop} marker-type))
+
 (s/def ::position-mark-type
   (s/spec (set (keys position-mark-type->marker-type))))
 

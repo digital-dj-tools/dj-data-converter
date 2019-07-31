@@ -10,6 +10,9 @@
    [converter.rekordbox.core :as r]
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
+   [converter.universal.core :as u]
+   [converter.universal.marker :as um]
+   [converter.xml :as xml]
    [plumula.mimolette.alpha :refer [defspec-test]]
    [spec-tools.core :as st]))
 
@@ -76,3 +79,51 @@
                  (st/encode (r/dj-playlists-spec) $ st/string-transformer)
                  (spec/decode! (r/dj-playlists-spec) $ st/string-transformer)
                  (is (= dj-playlists $)))))
+
+(defn library-items-filter-contains-total-time
+  [library]
+  (update
+   library
+   ::u/collection
+   (partial filter u/item-contains-total-time?)))
+
+(defn item-markers-unsupported-type->cue-type
+  [item]
+  (if (::u/markers item)
+    (update item ::u/markers (fn [markers] (mapv #(if (rp/marker-type-supported? %) % (assoc % ::um/type ::um/type-cue)) markers)))
+    item))
+
+(defn library-items-markers-unsupported-type->cue-type
+  [library]
+  (update
+   library
+   ::u/collection
+   (fn [items] (map #(item-markers-unsupported-type->cue-type %) items))))
+
+(defspec library-spec-round-trip-library-equality
+  10
+  (tcp/for-all [library (s/gen u/library-spec)]
+               (as-> library $
+                 (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
+                 (xml/encode $)
+                 (xml/decode $)
+                 (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
+                 (spec/decode! r/library-spec $ spec/xml-transformer)
+                 (is (= ((comp library-items-markers-unsupported-type->cue-type library-items-filter-contains-total-time) library)
+                        (library-items-markers-unsupported-type->cue-type $))))))
+
+(defspec library-spec-round-trip-xml-equality
+  10
+  (tcp/for-all [library (s/gen u/library-spec)]
+               (as-> library $
+                 (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
+                 (xml/encode $)
+                 (xml/decode $)
+                 (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
+                 (spec/decode! r/library-spec $ spec/xml-transformer)
+                 (library-items-markers-unsupported-type->cue-type $) ; marker types unsupported by rekordbox lost in conversion
+                 (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
+                 (let [library-equiv ((comp library-items-markers-unsupported-type->cue-type
+                                            library-items-filter-contains-total-time) library)]
+                   (is (= (st/encode (r/dj-playlists-spec) library-equiv spec/xml-transformer)
+                          $))))))

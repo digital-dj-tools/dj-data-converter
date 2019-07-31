@@ -17,11 +17,6 @@
    [spec-tools.spec :as sts]
    [utils.map :as map]))
 
-(defn item-contains-total-time?
-  "Returns true if the item has a total-time. Rekordbox xml tracks must have a total time"
-  [item]
-  (contains? item ::u/total-time))
-
 (def track-spec
   (std/spec
    {:name ::track
@@ -54,7 +49,7 @@
               (partition 2 position-marks-z))))))
 
 (s/fdef item->track
-  :args (s/cat :item (spec/such-that-spec u/item-spec item-contains-total-time? 100))
+  :args (s/cat :item (spec/such-that-spec u/item-spec u/item-contains-total-time? 100))
   :ret track-spec
   :fn (fn equiv-track? [{{conformed-item :item} :args conformed-track :ret}]
         (let [item (s/unform u/item-spec conformed-item)
@@ -84,14 +79,6 @@
                                       []
                                       markers)))})
 
-(defn type-grid-for-marker-with-matching-tempo
-  [track-z marker]
-  (let [matching-tempos-z (zx/xml-> track-z :TEMPO (zx/attr= :Inizio (::um/start marker)))]
-    (if (not-empty matching-tempos-z)
-      (assoc marker ::um/type ::um/type-grid)
-      marker)))
-
-; TODO check that marker type is changed to grid, when marker has matching tempo
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]
   (let [position-marks-z (remove (comp rp/memory-cue? zip/node) (zx/xml-> track-z :POSITION_MARK))]
@@ -129,7 +116,7 @@
       Name (assoc ::u/title Name)
       AverageBpm (assoc ::u/bpm AverageBpm)
       (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
-      (not-empty position-marks-z) (assoc ::u/markers (map (comp (partial type-grid-for-marker-with-matching-tempo track-z) rp/position-mark->marker) position-marks-z)))))
+      (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z)))))
 
 (defn library->dj-playlists
   [progress _ {:keys [::u/collection]}]
@@ -137,8 +124,9 @@
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
               :content (map (if progress (progress item->track) item->track)
+                            ; Rekordbox xml tracks must have a total time
                             ; TODO summarize what was done (i.e. items without total time filtered out) in a report
-                            (filter item-contains-total-time? collection))}]})
+                            (filter u/item-contains-total-time? collection))}]})
 
 (defn dj-playlists->library
   [_ dj-playlists]
@@ -194,7 +182,7 @@
         (let [library (s/unform u/library-spec conformed-library)
               dj-playlists (s/unform (dj-playlists-spec) conformed-dj-playlists)
               dj-playlists-z (zip/xml-zip dj-playlists)]
-          (= (count (->> library ::u/collection (filter item-contains-total-time?)))
+          (= (count (->> library ::u/collection (filter u/item-contains-total-time?)))
              (count (zx/xml-> dj-playlists-z :COLLECTION :TRACK))))))
 
 (def library-spec

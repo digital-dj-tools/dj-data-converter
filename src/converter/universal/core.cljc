@@ -23,6 +23,11 @@
    (std/opt ::tempos) [ut/tempo-spec]
    (std/opt ::markers) [um/marker-spec]})
 
+(defn item-contains-total-time?
+  "Returns true if the item has a total-time."
+  [item]
+  (contains? item ::total-time))
+
 (defn distinct-by
   [keyfn coll]
   (map first (vals (group-by keyfn coll))))

@@ -78,22 +78,18 @@
   [v msg]
   (println msg v))
 
-; (defn dissoc-tempos-metro-battito
-;   [item]
-;   (update item ::u/tempos (fn [tempos] (mapv #(dissoc % ::ut/metro ::ut/battito) tempos))))
-
-(defn dissoc-tempos-bpm-metro-battito
+(defn item-tempos-dissoc-bpm-metro-battito
   [item]
   (if (::u/tempos item)
     (update item ::u/tempos (fn [tempos] (mapv #(dissoc % ::ut/bpm ::ut/metro ::ut/battito) tempos)))
     item))
 
-(defn dissoc-all-tempos-bpm-metro-battito
+(defn library-items-tempos-dissoc-bpm-metro-battito
   [library]
   (update
    library
    ::u/collection
-   (fn [items] (map #(dissoc-tempos-bpm-metro-battito %) items))))
+   (fn [items] (map #(item-tempos-dissoc-bpm-metro-battito %) items))))
 
 (defspec library-spec-round-trip-library-equality
   10
@@ -105,7 +101,8 @@
                  (spec/decode! (t/nml-spec) $ spec/string-transformer)
                  (spec/decode! t/library-spec $ spec/xml-transformer)
                  ; TODO for the first tempo of each item, assert bpm's are equal (in addition to inizio being equal)
-                 (is (= (dissoc-all-tempos-bpm-metro-battito library) (dissoc-all-tempos-bpm-metro-battito $))))))
+                 (is (= (library-items-tempos-dissoc-bpm-metro-battito library) 
+                        (library-items-tempos-dissoc-bpm-metro-battito $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
@@ -117,5 +114,5 @@
                  (spec/decode! (t/nml-spec) $ spec/string-transformer)
                  (spec/decode! t/library-spec $ spec/xml-transformer)
                  (st/encode (t/nml-spec) $ spec/xml-transformer)
-                 (xml/encode $)
-                 (is (= (xml/encode (st/encode (t/nml-spec) library spec/xml-transformer)) $)))))
+                 (is (= (st/encode (t/nml-spec) library spec/xml-transformer) 
+                        $)))))

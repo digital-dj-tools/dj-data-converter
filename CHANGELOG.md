@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Convert from Serato DJ to Rekordbox
 - Convert playlists (Traktor to Rekordbox)
 - Convert playlists (Rekordbox to Traktor)
-- Copy additional tag metadata when converting (e.g. genre, comment)
+- Copy additional tag metadata when converting (e.g. year)
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting (Traktor to Rekordbox)
 - System abstraction for reloading code in the REPL (and removal of def's)
+
+## 0.3.3 (2019-08-02)
+### Added
+- Copy additional tag metadata when converting (genre, comment)
 
 ## 0.3.2 (2019-06-27)
 ### Changed

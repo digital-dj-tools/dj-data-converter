@@ -118,7 +118,7 @@
                                                :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
                   :loopinfo (s/? (std/spec {:name ::loopinfo
                                             :spec {:tag (s/spec #{:LOOPINFO})}}))
-                  :cue (s/* tc/cue-visible-or-hidden-spec))})
+                  :cue (s/* tc/cue-spec))})
 
 (def entry-spec
   (std/spec
@@ -149,11 +149,13 @@
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
-(defn hidden-grid-cues-for-tempos-without-matching-markers
+; TODO move to cue ns?
+(defn marker->cue-tagged
+  "Returns a tagged cue for each tempo without a matching marker."
   [tempos markers]
   (let [tempos-without-matching-markers (filter #(empty? (filter (fn [marker] (= (::ut/inizio %) (::um/start marker))) markers)) tempos)]
     ; TODO report warning if tempo bpm differs from item bpm
-    (map #(tc/hidden-grid-cue (::ut/inizio %1)) tempos-without-matching-markers)))
+    (map #(tc/marker->cue-tagged (::ut/inizio %1)) tempos-without-matching-markers)))
 
 (defn item->entry
   [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album  ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
@@ -178,7 +180,8 @@
                                                              total-time (assoc :PLAYTIME total-time))})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
-              markers (concat (map tc/marker->cue markers) (hidden-grid-cues-for-tempos-without-matching-markers tempos markers)))})
+              markers (concat (map tc/marker->cue markers)
+                              (marker->cue-tagged tempos markers)))})
 
 ; TODO move to cue ns?
 (defn grid-cue->tempo
@@ -188,7 +191,7 @@
    ::ut/metro "4/4"
    ::ut/battito "1"})
 
-(defn equiv-tempo?
+(defn equiv-tempos?
   [entry-z item]
   (let [tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
@@ -201,12 +204,14 @@
                  (::u/tempos item)))))
 
 (defn equiv-markers?
-  [entry-z item]
-  (let [visible-cues-z (remove (comp tc/hidden-cue? zip/node) (zx/xml-> entry-z :CUE_V2))]
-    (every? identity
-            (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
-                 visible-cues-z
-                 (::u/markers item)))))
+  [entry-z {:keys [::u/markers]}]
+  (let [cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))]
+    (and
+     (= (count cues-z) (count markers))
+     (every? identity
+             (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
+                  cues-z
+                  markers)))))
 
 (s/fdef entry->item
   :args (s/cat :entry (spec/xml-zip-spec entry-spec))
@@ -221,7 +226,7 @@
            (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
-           (equiv-tempo? entry-z item))))
+           (equiv-tempos? entry-z item))))
   :ret u/item-spec)
 
 (defn entry->item
@@ -237,7 +242,7 @@
         playtime (and info-z (zx/attr info-z :PLAYTIME))
         tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
-        visible-cues-z (remove (comp tc/hidden-cue? zip/node) (zx/xml-> entry-z :CUE_V2))
+        cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))
         grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
     (cond-> {::u/location (location->url (zx/xml1-> entry-z :LOCATION))}
       title (assoc ::u/title title)
@@ -248,7 +253,7 @@
       genre (assoc ::u/genre genre)
       playtime (assoc ::u/total-time playtime)
       bpm (assoc ::u/bpm bpm)
-      (not-empty visible-cues-z) (assoc ::u/markers (map tc/cue->marker visible-cues-z))
+      (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z))
       (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial grid-cue->tempo bpm) grid-cues-z)))))
 
 (defn library->nml

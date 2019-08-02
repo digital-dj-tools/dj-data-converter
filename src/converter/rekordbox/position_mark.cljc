@@ -58,23 +58,15 @@
   [position-mark]
   (= "-1" (-> position-mark :attrs :Num)))
 
-(defn position-mark-spec
-  [memory-cues?]
+(def position-mark-spec
   (as->
    (std/spec
     {:name ::position-mark
      :spec position-mark})
    $
     (assoc $ :gen (fn [] (->> (s/gen $)
-                              (gen/such-that #(if memory-cues? true (not (memory-cue? %))))
                               (gen/fmap (comp end-not-before-start
                                               type-loop-if-end-otherwise-type-cue)))))))
-
-(def position-mark-hot-cue-or-memory-cue-spec
-  (position-mark-spec true))
-
-(def position-mark-hot-cue-only-spec
-  (position-mark-spec false))
 
 (def rekordbox-colours {::white [255 255 255]
                         ::green [60 235 80]
@@ -104,13 +96,11 @@
     position-mark))
 
 (s/fdef position-mark->marker
-  ; We only generate position marks for hot cues, because
-  ; memory cues are filtered out in track->item (markers can't have num -1)
-  :args (s/cat :position-mark (spec/xml-zip-spec position-mark-hot-cue-only-spec))
+  :args (s/cat :position-mark (spec/xml-zip-spec position-mark-spec))
   :ret um/marker-spec
   :fn (fn equiv? [{{conformed-position-mark :position-mark} :args
                    conformed-marker :ret}]
-        (let [position-mark (s/unform position-mark-hot-cue-only-spec conformed-position-mark)
+        (let [position-mark (s/unform position-mark-spec conformed-position-mark)
               marker (s/unform um/marker-spec conformed-marker)]
           (and (= (-> position-mark :attrs :Name) (::um/name marker))
                (= (-> position-mark :attrs :Num) (::um/num marker))
@@ -131,21 +121,32 @@
 
 (s/fdef marker->position-mark
   :args (s/cat :marker um/marker-spec :hotcue? boolean?)
-  :ret position-mark-hot-cue-or-memory-cue-spec
+  :ret position-mark-spec
   :fn (fn equiv? [{{conformed-marker :marker conformed-hotcue? :hotcue?} :args
                    conformed-position-mark :ret}]
         (let [marker (s/unform um/marker-spec conformed-marker)
               hotcue? (s/unform boolean? conformed-hotcue?)
-              position-mark (s/unform position-mark-hot-cue-or-memory-cue-spec conformed-position-mark)]
+              position-mark (s/unform position-mark-spec conformed-position-mark)]
           (if hotcue?
             (= "-1" (-> position-mark :attrs :Num))
             (= (::um/num marker) (-> position-mark :attrs :Num))))))
 
 (defn marker->position-mark
+  ([marker memory-cue?]
+   (marker->position-mark marker memory-cue? (::um/name marker)))
+  ([marker memory-cue? name]
+   {:tag :POSITION_MARK
+    :attrs (map/transform marker
+                          (partial map/transform-key csk/->PascalCaseKeyword)
+                          {::um/name (fn [o n k] (assoc n :Name name)) ; TODO fix this shit
+                           ::um/type marker-type->position-mark
+                           ::um/end marker-end->position-mark
+                           ::um/num #(assoc %2 :Num (if memory-cue? "-1" (%3 %1)))})}))
+
+(defn marker->position-mark-tagged
   [marker memory-cue?]
-  {:tag :POSITION_MARK
-   :attrs (map/transform marker
-                         (partial map/transform-key csk/->PascalCaseKeyword)
-                         {::um/type marker-type->position-mark
-                          ::um/end marker-end->position-mark
-                          ::um/num #(assoc %2 :Num (if memory-cue? "-1" (%3 %1)))})})
+  (marker->position-mark marker memory-cue? (str/join " " ["[djdc]" (::um/name marker)])))
+
+(defn position-mark-tagged?
+  [position-mark]
+  (str/starts-with? (-> position-mark :attrs :Name) "[djdc]"))

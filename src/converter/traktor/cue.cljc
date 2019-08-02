@@ -47,8 +47,7 @@
   [cue]
   (= "-1" (-> cue :attrs :HOTCUE)))
 
-(defn cue-spec
-  [hidden-cues?]
+(def cue-spec
   (as->
    (std/spec
     {:name ::cue
@@ -56,14 +55,7 @@
    $
     (assoc $ :gen (fn [] (->>
                           (s/gen $)
-                          (gen/such-that #(if hidden-cues? true (not (hidden-cue? %))))
                           (gen/fmap #(start-plus-len-not-greater-than-max %))))))) ; TODO set len to zero unless loop
-
-(def cue-visible-or-hidden-spec
-  (cue-spec true))
-
-(def cue-visible-only-spec
-  (cue-spec false))
 
 (defn cue->marker-type
   [{:keys [:TYPE]} marker _]
@@ -87,13 +79,13 @@
 
 (defn marker-end->cue
   [{:keys [::um/start ::um/end] :as marker} cue _]
-   (assoc cue :LEN (seconds->millis (- end start))))
+  (assoc cue :LEN (seconds->millis (- end start))))
 
 (s/fdef cue->marker
-  :args (s/cat :cue (spec/xml-zip-spec cue-visible-only-spec))
+  :args (s/cat :cue (spec/xml-zip-spec cue-spec))
   :ret um/marker-spec
   :fn (fn equiv-marker? [{{conformed-cue :cue} :args conformed-marker :ret}]
-        (let [cue (s/unform cue-visible-only-spec conformed-cue)
+        (let [cue (s/unform cue-spec conformed-cue)
               marker (s/unform um/marker-spec conformed-marker)
               START (-> cue :attrs :START)
               LEN (-> cue :attrs :LEN)]
@@ -102,33 +94,38 @@
 (defn cue->marker
   [cue-z]
   (-> cue-z
-   zip/node 
-   :attrs
-   (dissoc :DISPL_ORDER :REPEATS)
-   (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
-                  {:TYPE cue->marker-type
-                   :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
-                   :LEN cue->marker-end
-                   :HOTCUE ::um/num})))
+      zip/node
+      :attrs
+      (dissoc :DISPL_ORDER :REPEATS)
+      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
+                     {:TYPE cue->marker-type
+                      :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
+                      :LEN cue->marker-end
+                      :HOTCUE ::um/num})))
 
 (s/fdef marker->cue
   :args (s/cat :marker um/marker-spec)
-  :ret cue-visible-or-hidden-spec)
+  :ret cue-spec)
 
 (defn marker->cue
   [marker]
   {:tag :CUE_V2
    :attrs (map/transform marker
-           (partial map/transform-key (comp keyword str/upper-case name))
-           {::um/type marker-type->cue
-            ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
-            ::um/end marker-end->cue
-            ::um/num :HOTCUE})})
+                         (partial map/transform-key (comp keyword str/upper-case name))
+                         {::um/type marker-type->cue
+                          ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
+                          ::um/end marker-end->cue
+                          ::um/num :HOTCUE})})
 
-(defn hidden-grid-cue
+(defn marker->cue-tagged
   [start]
   {:tag :CUE_V2
-   :attrs {:TYPE (type-kw->type-num (::um/type-grid))
+   :attrs {:NAME "[djdc]"
+           :TYPE (type-kw->type-num (::um/type-grid))
            :START start
            :LEN 0
            :HOTCUE "-1"}})
+
+(defn cue-tagged?
+  [cue]
+  (str/starts-with? (-> cue :attrs :NAME) "[djdc]"))

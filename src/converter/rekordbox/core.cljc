@@ -33,20 +33,24 @@
                      :tempos (s/* (std/spec {:name ::tempo
                                              :spec rt/tempo-spec}))
                      :position-marks (s/* (std/spec {:name ::position-mark
-                                                     :spec rp/position-mark-hot-cue-or-memory-cue-spec})))}}))
+                                                     :spec rp/position-mark-spec})))}}))
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [position-marks-z (zx/xml-> track-z :POSITION_MARK)]
+  (let [visible-markers (remove um/hidden-marker? markers)
+        hidden-markers (filter um/hidden-marker? markers)
+        position-marks-z (zx/xml-> track-z :POSITION_MARK)
+        position-marks-hot-cue-z (remove (comp rp/memory-cue? zip/node) position-marks-z)
+        position-marks-memory-cue-z (filter (comp rp/memory-cue? zip/node) position-marks-z)
+        position-marks-tagged-z (filter (comp rp/position-mark-tagged? zip/node) position-marks-z)]
     (and
-     (= (count markers) (/ (count position-marks-z) 2))
+     (= (count visible-markers) (count position-marks-hot-cue-z))
+     (= (count hidden-markers) (- (count position-marks-memory-cue-z) (count position-marks-tagged-z)))
      (every? identity
              (map
-              #(and
-                (= (::um/num %1) (zx/attr (first %2) :Num))
-                ((comp rp/memory-cue? zip/node) (second %2)))
-              markers
-              (partition 2 position-marks-z))))))
+              #(= (::um/num %1) (zx/attr %2 :Num))
+              visible-markers
+              position-marks-hot-cue-z)))))
 
 (s/fdef item->track
   :args (s/cat :item (spec/such-that-spec u/item-spec u/item-contains-total-time? 100))
@@ -62,6 +66,14 @@
            (= (::u/genre item) (zx/attr track-z :Genre))
            (equiv-position-marks? item track-z))))) ; TODO equiv-track-tempos
 
+; TODO move to position-mark ns?
+(defn marker->position-marks
+  [marker]
+  (cond-> []
+    true (conj (rp/marker->position-mark marker (um/hidden-marker? marker)))
+    ; TODO don't add a tagged mark if the item has a hidden cue marker with the same start
+    (not (um/hidden-marker? marker)) (conj (rp/marker->position-mark-tagged marker true))))
+
 (defn item->track
   [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
   {:tag :TRACK
@@ -72,22 +84,17 @@
      bpm (assoc :AverageBpm bpm))
    :content (cond-> []
               tempos (concat (map rt/item-tempo->tempo tempos))
-                ; two position marks for each marker, one is a hot cue, the other is a memory cue
-              markers (concat (reduce #(conj %1
-                                             (rp/marker->position-mark %2 false)
-                                             (rp/marker->position-mark %2 true))
-                                      []
-                                      markers)))})
+              markers (concat (reduce #(concat %1 (marker->position-marks %2)) [] markers)))})
 
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]
-  (let [position-marks-z (remove (comp rp/memory-cue? zip/node) (zx/xml-> track-z :POSITION_MARK))]
+  (let [position-marks-z (remove (comp rp/position-mark-tagged? zip/node) (zx/xml-> track-z :POSITION_MARK))]
     (= (count position-marks-z) (count markers))))
 
 (defn equiv-tempos?
   [track-z {:keys [::u/tempos]}]
-  (let [tempo-z (zx/xml-> track-z :TEMPO)]
-    (= (count tempo-z) (count tempos))))
+  (let [tempos-z (zx/xml-> track-z :TEMPO)]
+    (= (count tempos-z) (count tempos))))
 
 (s/fdef track->item
   :args (s/cat :track (spec/xml-zip-spec track-spec))
@@ -107,8 +114,7 @@
 (defn track->item
   [track-z]
   (let [tempos-z (zx/xml-> track-z :TEMPO)
-        ; memory cues are filtered out (markers can't have num -1)
-        position-marks-z (remove (comp rp/memory-cue? zip/node) (zx/xml-> track-z :POSITION_MARK))
+        position-marks-z (remove (comp rp/position-mark-tagged? zip/node) (zx/xml-> track-z :POSITION_MARK))
         Name (zx/attr track-z :Name)
         AverageBpm (zx/attr track-z :AverageBpm)]
     (cond-> track-z

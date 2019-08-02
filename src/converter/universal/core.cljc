@@ -24,7 +24,7 @@
    (std/opt ::markers) [um/marker-spec]})
 
 (defn item-contains-total-time?
-  "Returns true if the item has a total-time."
+  "Returns true if the item contains a total time."
   [item]
   (contains? item ::total-time))
 
@@ -33,15 +33,18 @@
   (map first (vals (group-by keyfn coll))))
 
 (defn sorted-markers
+  "Returns an item with markers sorted by start."
   [item]
   (if (::markers item)
     (update item ::markers #(vec (sort-by ::um/start %)))
     item))
 
 (defn distinct-markers
+  "Returns an item with markers distinct by num, except for hidden markers."
   [item]
   (if (::markers item)
-    (update item ::markers #(vec (distinct-by ::um/num %)))
+    (update item ::markers #(vec (concat (distinct-by ::um/num (remove um/hidden-marker? %))
+                                         (filter um/hidden-marker? %))))
     item))
 
 (defn tempos->grid-markers
@@ -56,37 +59,42 @@
           tempos))
 
 (defn remove-grid-markers
+  "Returns an item with all grid markers removed if the item doesn't contain a bpm, 
+  otherwise an item with all hidden grid markers removed."
   [item]
   (if (::markers item)
     (update item ::markers #(vec (remove (fn [marker] (and
-                                                       (or (not (::bpm item)) (= "-1" (::um/num marker)))
+                                                       (or (not (::bpm item)) (um/hidden-marker? marker))
                                                        (= ::um/type-grid (::um/type marker)))) %)))
     item))
 
 (defn grid-markers->tempos
+  "Returns an item with a tempo created for each visible grid marker, if the item contains a bpm."
   [{:keys [::bpm ::markers] :as item}]
   (as-> item $
     (reduce #(update %1 ::tempos
                      (fn [tempos marker] (if (and
-                                              (not= "-1" (::um/num marker))
+                                              (not (um/hidden-marker? marker))
                                               bpm
                                               (= ::um/type-grid (::um/type marker)))
                                            (vec (conj tempos {::ut/inizio (::um/start marker)
-                                                         ::ut/bpm bpm
-                                                         ::ut/metro "4/4"
-                                                         ::ut/battito "1"}))
+                                                              ::ut/bpm bpm
+                                                              ::ut/metro "4/4"
+                                                              ::ut/battito "1"}))
                                            tempos)) %2)
             $
             markers)
     (map/remove-nil $ ::tempos)))
 
 (defn sorted-tempos
+  "Returns an item with tempos sorted by inizio."
   [item]
   (if (::tempos item)
     (update item ::tempos #(vec (sort-by ::ut/inizio %)))
     item))
 
 (defn bpm-from-tempos
+  "Returns an item with bpm derived from the first tempo."
   [{:keys [::tempos] :as item}]
   (if (not-empty tempos)
     (assoc item ::bpm (::ut/bpm (first tempos))) ; TODO could take average, if bpm's were numeric

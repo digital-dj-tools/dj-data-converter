@@ -52,10 +52,10 @@
 
 (defspec cue-spec-encode-decode-equality
   100
-  (tcp/for-all [cue (s/gen tc/cue-visible-or-hidden-spec)]
+  (tcp/for-all [cue (s/gen tc/cue-spec)]
                (as-> cue $
-                 (st/encode tc/cue-visible-or-hidden-spec $ st/string-transformer)
-                 (st/decode tc/cue-visible-or-hidden-spec $ st/string-transformer)
+                 (st/encode tc/cue-spec $ st/string-transformer)
+                 (st/decode tc/cue-spec $ st/string-transformer)
                  (is (= cue $)))))
 
 (defspec entry-spec-encode-decode-equality
@@ -74,10 +74,6 @@
                  (spec/decode! (t/nml-spec) $ st/string-transformer)
                  (is (= nml $)))))
 
-(defn doto-println
-  [v msg]
-  (println msg v))
-
 (defn item-tempos-dissoc-bpm-metro-battito
   [item]
   (if (::u/tempos item)
@@ -86,10 +82,16 @@
 
 (defn library-items-tempos-dissoc-bpm-metro-battito
   [library]
-  (update
-   library
-   ::u/collection
-   (fn [items] (map #(item-tempos-dissoc-bpm-metro-battito %) items))))
+  (if (::u/collection library)
+    (update
+     library
+     ::u/collection
+     (fn [items] (map #(item-tempos-dissoc-bpm-metro-battito %) items)))
+    library))
+
+(defn library-equiv
+  [library]
+  (library-items-tempos-dissoc-bpm-metro-battito library))
 
 (defspec library-spec-round-trip-library-equality
   10
@@ -101,8 +103,8 @@
                  (spec/decode! (t/nml-spec) $ spec/string-transformer)
                  (spec/decode! t/library-spec $ spec/xml-transformer)
                  ; TODO for the first tempo of each item, assert bpm's are equal (in addition to inizio being equal)
-                 (is (= (library-items-tempos-dissoc-bpm-metro-battito library) 
-                        (library-items-tempos-dissoc-bpm-metro-battito $))))))
+                 (is (= (library-equiv library)
+                        (library-equiv $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
@@ -114,5 +116,5 @@
                  (spec/decode! (t/nml-spec) $ spec/string-transformer)
                  (spec/decode! t/library-spec $ spec/xml-transformer)
                  (st/encode (t/nml-spec) $ spec/xml-transformer)
-                 (is (= (st/encode (t/nml-spec) library spec/xml-transformer) 
+                 (is (= (st/encode (t/nml-spec) library spec/xml-transformer)
                         $)))))

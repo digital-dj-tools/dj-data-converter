@@ -58,10 +58,10 @@
 
 (defspec position-mark-spec-encode-decode-equality
   100
-  (tcp/for-all [position-mark (s/gen rp/position-mark-hot-cue-or-memory-cue-spec)]
+  (tcp/for-all [position-mark (s/gen rp/position-mark-spec)]
                (as-> position-mark $
-                 (st/encode rp/position-mark-hot-cue-or-memory-cue-spec $ st/string-transformer)
-                 (st/decode rp/position-mark-hot-cue-or-memory-cue-spec $ st/string-transformer)
+                 (st/encode rp/position-mark-spec $ st/string-transformer)
+                 (st/decode rp/position-mark-spec $ st/string-transformer)
                  (is (= position-mark $)))))
 
 (defspec track-spec-encode-decode-equality
@@ -82,10 +82,12 @@
 
 (defn library-items-filter-contains-total-time
   [library]
-  (update
-   library
-   ::u/collection
-   (partial filter u/item-contains-total-time?)))
+  (if (::u/collection library)
+    (update
+     library
+     ::u/collection
+     (partial filter u/item-contains-total-time?))
+    library))
 
 (defn item-markers-unsupported-type->cue-type
   [item]
@@ -95,10 +97,16 @@
 
 (defn library-items-markers-unsupported-type->cue-type
   [library]
-  (update
-   library
-   ::u/collection
-   (fn [items] (map #(item-markers-unsupported-type->cue-type %) items))))
+  (if (::u/collection library)
+    (update
+     library
+     ::u/collection
+     (fn [items] (map #(item-markers-unsupported-type->cue-type %) items)))
+    library))
+
+(defn library-equiv
+  [library]
+  (library-items-markers-unsupported-type->cue-type library))
 
 (defspec library-spec-round-trip-library-equality
   10
@@ -109,8 +117,8 @@
                  (xml/decode $)
                  (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
                  (spec/decode! r/library-spec $ spec/xml-transformer)
-                 (is (= ((comp library-items-markers-unsupported-type->cue-type library-items-filter-contains-total-time) library)
-                        (library-items-markers-unsupported-type->cue-type $))))))
+                 (is (= ((comp library-equiv library-items-filter-contains-total-time) library)
+                        (library-equiv $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
@@ -121,9 +129,7 @@
                  (xml/decode $)
                  (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
                  (spec/decode! r/library-spec $ spec/xml-transformer)
-                 (library-items-markers-unsupported-type->cue-type $) ; marker types unsupported by rekordbox lost in conversion
+                 (library-equiv $)
                  (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
-                 (let [library-equiv ((comp library-items-markers-unsupported-type->cue-type
-                                            library-items-filter-contains-total-time) library)]
-                   (is (= (st/encode (r/dj-playlists-spec) library-equiv spec/xml-transformer)
-                          $))))))
+                 (is (= (st/encode (r/dj-playlists-spec) ((comp library-equiv library-items-filter-contains-total-time) library) spec/xml-transformer)
+                        $)))))

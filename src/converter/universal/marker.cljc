@@ -29,7 +29,7 @@
              ::type ::type-kw
              ::start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) ; seconds
              ::end (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) ; seconds
-             ::num (s/spec #{"0" "1" "2" "3" "4" "5" "6" "7"})})
+             ::num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})})
 
 (def marker-spec
   (as->
@@ -39,3 +39,8 @@
    $
     (assoc $ :gen (fn [] (gen/fmap #((comp end-for-other-markers
                                            end-for-loop-markers) %) (s/gen $))))))
+
+; TODO think of a better name
+(defn hidden-marker?
+  [marker]
+  (= "-1" (::num marker)))

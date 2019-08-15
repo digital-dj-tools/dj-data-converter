@@ -6,14 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Support the case where an entry has a tempo, but no cues (Traktor to Rekordbox)
+- Include app version number in comment field of each item (to be used by grid correction algorithm)
 - Convert from Rekordbox to Traktor
+- Copy additional tag metadata when converting (e.g. year)
+- Convert color tags
 - Convert from Serato DJ to Rekordbox
-- Convert playlists (Traktor to Rekordbox)
-- Convert playlists (Rekordbox to Traktor)
-- Copy additional tag metadata when converting (e.g. genre, comment)
-- Support disabling the "Store Beatmarker as Hotcue" Traktor setting (Traktor to Rekordbox)
-- System abstraction for reloading code in the REPL (and removal of def's)
+- Convert from Rekordbox to Serato DJ
+- Support the case where an entry has a tempo, but no cues (Traktor to Rekordbox)
+- Support disabling the "Store Beatmarker as Hotcue" Traktor setting
+
+## 0.3.3 (2019-08-02)
+### Added
+- Copy additional tag metadata when converting (genre, comment)
 
 ## 0.3.2 (2019-06-27)
 ### Changed

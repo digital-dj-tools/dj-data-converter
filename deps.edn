@@ -25,6 +25,7 @@
            :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
            :nrepl-server {:extra-deps {cider/cider-nrepl {:mvn/version "0.21.1"}
                                        cider/piggieback {:mvn/version "0.4.1"}
+                                       com.bhauman/figwheel-main {:mvn/version "0.2.1"}
                                        ^:depot/ignore org.clojure/tools.namespace {:mvn/version "0.2.11"}}
                           :main-opts ["-m" "nrepl.cmdline"
                                       "--middleware" "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}

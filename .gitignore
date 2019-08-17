@@ -13,5 +13,6 @@ node_modules
 /pkg/
 /out/
 /cljs-test-runner-out/
+.nrepl-port
 *.xml
 *.nml

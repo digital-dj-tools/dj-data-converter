@@ -20,6 +20,18 @@
    [spec-tools.spec :as sts]
    [utils.map :as map]))
 
+(defn import-date->date-added
+  [import-date]
+  ; FIXME horrible hack, will replace with string->date fn using a suitable clj(s) datetime parsing/formatting lib
+  (if (string? import-date)
+    (clojure.string/replace import-date "/" "-")
+    import-date))
+
+(defn date-added->import-date
+  [date-added]
+  ; FIXME horrible hack, will replace with date->string fn using a suitable clj(s) datetime parsing/formatting lib
+  (clojure.string/replace date-added "-" "/"))
+
 (def nml-path-sep
   "/:")
 
@@ -108,6 +120,7 @@
                                         :spec {:tag (s/spec #{:INFO})
                                                :attrs {(std/opt :COMMENT) string?
                                                        (std/opt :GENRE) string?
+                                                       (std/opt :IMPORT_DATE) string?
                                                        (std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
@@ -145,11 +158,12 @@
            (= (::u/total-time item) (and info-z (zx/attr info-z :PLAYTIME)))
            (= (::u/comments item) (and info-z (zx/attr info-z :COMMENT)))
            (= (::u/genre item) (and info-z (zx/attr info-z :GENRE)))
+           (= (::u/date-added item) (import-date->date-added (and info-z (zx/attr info-z :IMPORT_DATE))))
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album  ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
+  [{:keys [::u/location ::u/date-added ::u/title ::u/artist ::u/track-number ::u/album  ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    :attrs (cond-> {}
             title (assoc :TITLE title)
@@ -160,11 +174,12 @@
                                              :attrs (cond-> {}
                                                       track-number (assoc :TRACK track-number)
                                                       album (assoc :TITLE album))})
-              (or comments genre total-time) (conj {:tag :INFO
-                                                   :attrs (cond-> {}
-                                                            comments (assoc :COMMENT comments)
-                                                            genre (assoc :GENRE genre)
-                                                            total-time (assoc :PLAYTIME total-time))})
+              (or date-added comments genre total-time) (conj {:tag :INFO
+                                                               :attrs (cond-> {}
+                                                                        date-added (assoc :IMPORT_DATE (date-added->import-date date-added))
+                                                                        comments (assoc :COMMENT comments)
+                                                                        genre (assoc :GENRE genre)
+                                                                        total-time (assoc :PLAYTIME total-time))})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)))})
@@ -216,6 +231,7 @@
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
            (= (and info-z (zx/attr info-z :COMMENT)) (::u/comments item))
            (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
+           (= (import-date->date-added (and info-z (zx/attr info-z :IMPORT_DATE))) (::u/date-added item))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
            (equiv-tempo? entry-z item))))
@@ -229,6 +245,7 @@
         track (and album-z (zx/attr album-z :TRACK))
         album-title (and album-z (zx/attr album-z :TITLE))
         info-z (zx/xml1-> entry-z :INFO)
+        import-date (and info-z (zx/attr info-z :IMPORT_DATE))
         comment (and info-z (zx/attr info-z :COMMENT))
         genre (and info-z (zx/attr info-z :GENRE))
         playtime (and info-z (zx/attr info-z :PLAYTIME))
@@ -241,6 +258,7 @@
        artist (assoc ::u/artist artist)
        track (assoc ::u/track-number track)
        album-title (assoc ::u/album album-title)
+       import-date (assoc ::u/date-added (import-date->date-added import-date))
        comment (assoc ::u/comments comment)
        genre (assoc ::u/genre genre)
        playtime (assoc ::u/total-time playtime)

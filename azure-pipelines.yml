@@ -80,7 +80,7 @@ jobs:
       downloadPath: $(System.DefaultWorkingDirectory)
   - task: GithubRelease@0
     inputs:
-      gitHubConnection: digital-dj-tools
+      gitHubConnection: digital-dj-tools-bot
       repositoryName: digital-dj-tools/dj-data-converter
       action: create
       target: $(Build.SourceVersion)

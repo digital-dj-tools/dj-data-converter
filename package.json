@@ -17,7 +17,8 @@
     "scripts": "out/**/*.js"
   },
   "dependencies": {
-    "xmldom": "^0.1.27",
-    "source-map-support": "^0.5.9"
+    "file-uri-to-path": "^1.0.0",
+    "source-map-support": "^0.5.9",
+    "xmldom": "^0.1.27"
   }
 }

@@ -1,10 +1,10 @@
 (ns converter.traktor.core
   (:require
-   [cemerick.url :refer [url url-encode url-decode]]
+   [cemerick.url :refer [url url-decode]]
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.string :refer [split join]]
+   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.str :as str]
@@ -47,22 +47,10 @@
     string? ; TODO and with cat+regex specs
     (fn [] (nml-dir-gen))))
 
-(s/def ::nml-path
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (gen/fmap (partial apply str)
-                     (gen/tuple
-                      ; drive letter (optional)
-                      (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
-                      ; dir
-                      (nml-dir-gen)
-                      ; filename
-                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-with-whitespace-gen)))))))
-
 (def location
   {:tag (s/spec #{:LOCATION})
    :attrs {:DIR ::nml-dir
-           :FILE ::str/not-blank-string
+           :FILE ::str/not-blank-string-with-whitespace
            (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter
                                       :not-drive-letter ::str/not-blank-string})
            (std/opt :VOLUMEID) ::str/not-blank-string}})
@@ -81,12 +69,12 @@
 
 (defn url->location
   [{:keys [:path]}]
-  (let [paths (rest (split path #"/"))
+  (let [paths (rest (string/split path #"/"))
         dirs (if (str/drive-letter? (first paths)) (rest (drop-last paths)) (drop-last paths))
         file (last paths)
         volume (if (str/drive-letter? (first paths)) (first paths))]
     {:tag :LOCATION
-     :attrs (cond-> {:DIR (str nml-path-sep (join nml-path-sep (map url-decode dirs)))
+     :attrs (cond-> {:DIR (str nml-path-sep (string/join nml-path-sep (map url-decode dirs)))
                      :FILE (url-decode file)}
               volume (assoc :VOLUME volume))}))
 
@@ -102,8 +90,8 @@
     (apply url (as-> [] $
                  (conj $ "file://localhost")
                  (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
-                 (reduce conj $ (map url-encode (split dir nml-path-sep-regex)))
-                 (conj $ (url-encode file))))))
+                 (reduce conj $ (map url/url-encode (string/split dir nml-path-sep-regex)))
+                 (conj $ (url/url-encode file))))))
 
 (def entry
   {:tag (s/spec #{:ENTRY})

@@ -15,7 +15,8 @@
   {:output-file "rekordbox.xml"})
 
 (def option-specs
-  [["-h" "--help"]])
+  [["-h" "--help"]
+   ["-w" "--wsl"]])
 
 (defn usage-message
   [summary]
@@ -52,13 +53,13 @@
 
 #?(:clj
    (defn process
-     [config arguments options]
+     [config options arguments]
      (try
        (with-open [reader (io/reader (:input-file arguments))
                    writer (io/writer (:output-file arguments))]
          (as-> reader $
            (xml/parse $ :skip-whitespace true)
-           (app/convert config $)
+           (app/convert config options $)
            (xml/emit $ writer)))
        [0 "Conversion completed"]
        (catch Throwable t (do
@@ -67,13 +68,13 @@
 
 #?(:cljs
    (defn process
-     [config arguments options]
+     [config options arguments]
      (try
        (as-> (:input-file arguments) $
          (io/slurp $)
          (xml/parse-str $)
          (converter.xml/strip-whitespace $)
-         (app/convert config $)
+         (app/convert config options $)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))
        [0 "Conversion completed"]
@@ -96,7 +97,7 @@
   (let [{:keys [arguments options exit-message help?]} (parse-args args)]
     (if exit-message
       (exit (if help? 0 1) exit-message)
-      (apply exit (process config (merge default-arguments arguments) options)))))
+      (apply exit (process config options (merge default-arguments arguments))))))
 
 (defn -main
   [& args]

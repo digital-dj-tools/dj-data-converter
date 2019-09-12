@@ -1,17 +1,62 @@
 (ns converter.url
-  (:require [cemerick.url :refer [url url-encode]]
-            #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-            #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-            [converter.str :as str]
-            [spec-tools.core :as st]))
+  (:require
+   [cemerick.url :as url]
+   #?(:clj [clojure.java.io :as io])
+   [clojure.string :as string]
+   #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
+   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
+   [converter.str :as str]
+   #?(:cljs [file-uri-to-path])
+   [spec-tools.core :as st]))
+
+; TODO only accept file:// urls
+
+; this doesn't encode certain characters
+; since nodejs file-uri-to-path doesn't decode them (no idea why)
+(defn url-encode
+  [str]
+  (-> str
+      url/url-encode
+      (string/replace "%23" "#")
+      (string/replace "%24" "$")
+      (string/replace "%26" "&")
+      (string/replace "%2B" "+")
+      (string/replace "%2C" ",")
+      (string/replace "%3F" "?")))
 
 (defn string->url
   [_ str]
   (if (string? str)
     (try
-      (url str)
-      (catch #?(:clj Exception, :cljs js/Error) _ str))
+      (url/url str)
+      (catch #?(:clj Exception
+                :cljs js/Error) _ str))
     str))
+
+#?(:clj
+   (defn url->path
+     [url]
+     (-> url
+         str
+         java.net.URL.
+         io/as-file
+         str)))
+
+#?(:cljs
+   (defn url->path
+     [url]
+     (-> url
+         str
+         file-uri-to-path)))
+
+(defn drive->wsl
+  [url wsl?]
+  (if wsl?
+    (url/url url (string/replace (:path url)
+                                 #"^/([A-Z]):/"
+                                 #(str "/mnt/" (string/lower-case (% 1)) "/")))
+
+    url))
 
 (defn url-gen
   []
@@ -26,7 +71,7 @@
              (gen/vector)
              (gen/not-empty)))
        (gen/fmap
-        #(apply url (flatten %)))))
+        #(apply url/url (flatten %)))))
 
 (s/def ::url (st/spec (s/and
                        #(instance? cemerick.url.URL %)

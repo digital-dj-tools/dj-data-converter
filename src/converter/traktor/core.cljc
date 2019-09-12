@@ -47,6 +47,19 @@
     string? ; TODO and with cat+regex specs
     (fn [] (nml-dir-gen))))
 
+; used in playlists!
+(s/def ::nml-path
+  (s/with-gen
+    string? ; TODO and with cat+regex specs
+    (fn [] (gen/fmap (partial apply str)
+                     (gen/tuple
+                      ; drive letter (optional)
+                      (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
+                      ; dir
+                      (nml-dir-gen)
+                      ; filename
+                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-with-whitespace-gen)))))))
+
 (def location
   {:tag (s/spec #{:LOCATION})
    :attrs {:DIR ::nml-dir

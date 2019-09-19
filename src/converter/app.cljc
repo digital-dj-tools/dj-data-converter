@@ -32,7 +32,7 @@
 (s/fdef convert
   :args (s/cat :config #{{:converter traktor->rekordbox}}
                :xml (spec/value-encoded-spec (t/nml-spec) spec/string-transformer))
-  :ret (spec/value-encoded-spec r/dj-playlists-spec spec/string-transformer))
+  :ret (spec/value-encoded-spec (r/dj-playlists-spec) spec/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert

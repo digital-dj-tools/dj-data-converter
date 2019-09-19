@@ -4,7 +4,7 @@
    #?(:clj [clojure.java.io :as io] :cljs [cljs-node-io.core :as io :refer [slurp spit]])
    #?(:cljs [converter.xmldom])
    [clojure.data.xml :as xml]
-   [clojure.string :as str]
+   [clojure.string :as string]
    [clojure.tools.cli :as cli]
    [converter.app :as app]
    [converter.error :as err]
@@ -23,14 +23,14 @@
         ""
         "Options:"
         summary]
-       (str/join \newline)))
+       (string/join \newline)))
 
 (defn error-message
   [errors]
   (as-> ["The following errors occurred while parsing the command:"
          ""] $
     (concat $ errors)
-    (str/join \newline $)))
+    (string/join \newline $)))
 
 (defn parse-args
   [args]
@@ -38,17 +38,31 @@
     (cond
       (:help options) {:exit-message (usage-message summary) :help? true}
       errors {:exit-message (error-message errors)}
-      (= 1 (count arguments)) {:arguments {:input-file (first arguments)}
+      (= 1 (count arguments)) {:arguments (merge default-arguments {:input-file (first arguments)})
                                :options options}
-      :else
-      {:exit-message (usage-message summary)})))
+      :else {:exit-message (usage-message summary)})))
 
+; TODO move to utils
+(defn println-err
+  [& objs]
+  #?(:clj (binding [*out* *err*]
+            (apply println objs))
+     :cljs (binding [*print-fn* *print-err-fn*]
+             (apply println objs))))
+
+; TODO move to utils
 (defn exit
   [status message]
-  (println message)
-  (if (not= 0 status)
-    #?(:clj (System/exit status)
-       :cljs (.exit nodejs/process status))))
+  (if (= 0 status)
+    (println message)
+    (println-err message))
+  #?(:clj (System/exit status)
+     :cljs (.exit nodejs/process status)))
+
+(defn output-dir
+  [{:keys [:output-file]}]
+  (or (.getParent (io/file output-file))
+      ""))
 
 #?(:clj
    (defn process
@@ -62,7 +76,10 @@
            (xml/emit $ writer)))
        [0 "Conversion completed"]
        (catch Throwable t (do
-                            (err/write-report (err/create-report arguments options (Throwable->map t)))
+                            (-> t
+                                Throwable->map
+                                (err/create-report arguments options)
+                                (err/write-report (output-dir arguments)))
                             [2 "Problems converting, please provide error-report.edn file..."])))))
 
 #?(:cljs
@@ -78,7 +95,10 @@
          (io/spit (:output-file arguments) $))
        [0 "Conversion completed"]
        (catch :default e (do
-                           (err/write-report (err/create-report arguments options (err/Error->map e)))
+                           (-> e
+                               err/Error->map
+                               (err/create-report arguments options)
+                               (err/write-report (output-dir arguments)))
                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
 (defn print-progress
@@ -91,17 +111,15 @@
       (swap! item-count inc)
       (f item))))
 
-(defn process-args
-  [config args]
-  (let [{:keys [arguments options exit-message help?]} (parse-args args)]
-    (if exit-message
-      (exit (if help? 0 1) exit-message)
-      (apply exit (process config (merge default-arguments arguments) options)))))
+(def config
+  {:converter app/traktor->rekordbox
+   :progress print-progress})
 
 (defn -main
   [& args]
-  (let [config {:converter app/traktor->rekordbox
-                :progress print-progress}]
-    (process-args config args)))
+  (let [{:keys [arguments options exit-message help?]} (parse-args args)]
+    (if exit-message
+      (exit (if help? 0 1) exit-message)
+      (apply exit (process config arguments options)))))
 
 #?(:cljs (set! *main-cli-fn* -main))

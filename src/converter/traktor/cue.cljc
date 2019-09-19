@@ -121,7 +121,7 @@
   [start]
   {:tag :CUE_V2
    :attrs {:NAME "[djdc]"
-           :TYPE (type-kw->type-num (::um/type-grid))
+           :TYPE (type-kw->type-num ::um/type-grid)
            :START start
            :LEN 0
            :HOTCUE "-1"}})

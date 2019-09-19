@@ -18,6 +18,7 @@
    (std/opt ::album) string?
    (std/opt ::total-time) string?
    (std/opt ::bpm) (s/double-in :min 0 :NaN? false :infinite? false)
+   (std/opt ::date-added) string? ; TODO use datetime
    (std/opt ::comments) string?
    (std/opt ::genre) string?
    (std/opt ::tempos) [ut/tempo-spec]

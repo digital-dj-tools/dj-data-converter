@@ -41,11 +41,6 @@
         library-spec (library-spec (:converter config))
         output-spec (output-spec (:converter config) (:progress config))]
     (as-> xml $
-    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
       (spec/decode! input-spec $ spec/string-transformer)
-    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first next next :content)))
       (spec/decode! library-spec $ spec/xml-transformer)
-    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) ::u/collection)))        
-      (st/encode output-spec $ spec/xml-transformer)
-    ; (doto $ (doto-prn (comp #(if (nil? %) % (realized? %)) :content first :content)))
-      )))
+      (st/encode output-spec $ spec/xml-transformer))))

@@ -28,6 +28,7 @@
                    (std/opt :Album) string?
                    (std/opt :Genre) string?
                    (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)
+                   (std/opt :DateAdded) string?
                    (std/opt :Comments) string?}
            :content (s/cat
                      :tempos (s/* (std/spec {:name ::tempo

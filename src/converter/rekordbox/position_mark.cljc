@@ -69,7 +69,7 @@
                                               type-loop-if-end-otherwise-type-cue)))))))
 
 (def rekordbox-colours {::white [255 255 255]
-                        ::green [60 235 80]
+                        ::green [40 226 20]
                         ::orange [255 140 0]
                         ::yellow [195 175 4]
                         ::pink [222 68 207]})

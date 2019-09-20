@@ -133,3 +133,16 @@
   (std/spec
    {:name ::library
     :spec library}))
+
+(defn- marker-matching-tempo?
+  [tempo marker] 
+  (and (= (::ut/inizio tempo) (::um/start marker))
+       (= ::um/type-grid (::um/type marker))))
+
+(defn tempos-without-matching-markers
+  "Returns the tempos without a matching marker, as in the tempos whose inizio doesn't have a matching non-grid marker start"
+  [tempos markers]
+  ; TODO report warning if tempo bpm differs from item bpm
+  (filter 
+   #(empty? (filter (fn [marker] (marker-matching-tempo? % marker)) markers)) 
+   tempos))

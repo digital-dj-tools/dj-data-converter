@@ -23,6 +23,7 @@
     :spec {:tag (s/spec #{:TRACK})
            :attrs {:Location ::url/url
                    :TotalTime string?
+                   (std/opt :TrackID) pos-int? 
                    (std/opt :Name) string?
                    (std/opt :Artist) string?
                    (std/opt :Album) string?

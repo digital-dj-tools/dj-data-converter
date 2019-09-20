@@ -9,9 +9,8 @@
    [converter.spec :as spec]
    [converter.traktor.core :as t]
    [converter.traktor.cue :as tc]
+   [converter.test-utils :as test]
    [converter.universal.core :as u]
-   [converter.universal.tempo :as ut]
-   [converter.xml :as xml]
    [plumula.mimolette.alpha :refer [defspec-test]]
    [spec-tools.core :as st]))
 
@@ -74,47 +73,19 @@
                  (spec/decode! (t/nml-spec) $ st/string-transformer)
                  (is (= nml $)))))
 
-(defn item-tempos-dissoc-bpm-metro-battito
-  [item]
-  (if (::u/tempos item)
-    (update item ::u/tempos (fn [tempos] (mapv #(dissoc % ::ut/bpm ::ut/metro ::ut/battito) tempos)))
-    item))
-
-(defn library-items-tempos-dissoc-bpm-metro-battito
-  [library]
-  (if (::u/collection library)
-    (update
-     library
-     ::u/collection
-     (fn [items] (map #(item-tempos-dissoc-bpm-metro-battito %) items)))
-    library))
-
-(defn library-equiv
-  [library]
-  (library-items-tempos-dissoc-bpm-metro-battito library))
-
 (defspec library-spec-round-trip-library-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)]
                (as-> library $
-                 (st/encode (t/nml-spec) $ spec/xml-transformer)
-                 (xml/encode $)
-                 (xml/decode $)
-                 (spec/decode! (t/nml-spec) $ spec/string-transformer)
-                 (spec/decode! t/library-spec $ spec/xml-transformer)
-                 ; TODO for the first tempo of each item, assert bpm's are equal (in addition to inizio being equal)
-                 (is (= (library-equiv library)
-                        (library-equiv $))))))
+                 (test/traktor-round-trip $)
+                 (is (= (test/library-equiv-traktor library)
+                        (test/library-equiv-traktor $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)]
                (as-> library $
-                 (st/encode (t/nml-spec) $ spec/xml-transformer)
-                 (xml/encode $)
-                 (xml/decode $)
-                 (spec/decode! (t/nml-spec) $ spec/string-transformer)
-                 (spec/decode! t/library-spec $ spec/xml-transformer)
+                 (test/traktor-round-trip $)
                  (st/encode (t/nml-spec) $ spec/xml-transformer)
                  (is (= (st/encode (t/nml-spec) library spec/xml-transformer)
                         $)))))

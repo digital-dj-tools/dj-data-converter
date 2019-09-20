@@ -7,14 +7,14 @@
    [converter.xml :as xml]
    [spec-tools.core :as st]))
 
-(defprotocol TraktorRekordboxConverter
+(defprotocol Converter
   (input-spec [this])
   (library-spec [this])
   (output-spec [this config]))
 
 (def traktor->rekordbox
   (reify
-    TraktorRekordboxConverter
+    Converter
     (input-spec
       [this]
       (t/nml-spec))
@@ -24,6 +24,19 @@
     (output-spec
       [this progress]
       (r/dj-playlists-spec progress))))
+
+(def rekordbox->traktor
+  (reify
+    Converter
+    (input-spec
+      [this]
+      (r/dj-playlists-spec))
+    (library-spec
+      [this]
+      r/library-spec)
+    (output-spec
+      [this progress]
+      (t/nml-spec progress))))
 
 (defn doto-prn
   [obj f]

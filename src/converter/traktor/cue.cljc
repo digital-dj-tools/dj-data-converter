@@ -3,7 +3,7 @@
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.set :as set]
-   [clojure.string :as str]
+   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
@@ -97,7 +97,7 @@
       zip/node
       :attrs
       (dissoc :DISPL_ORDER :REPEATS)
-      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
+      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) string/lower-case name))
                      {:TYPE cue->marker-type
                       :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
                       :LEN cue->marker-end
@@ -111,7 +111,7 @@
   [marker]
   {:tag :CUE_V2
    :attrs (map/transform marker
-                         (partial map/transform-key (comp keyword str/upper-case name))
+                         (partial map/transform-key (comp keyword string/upper-case name))
                          {::um/type marker-type->cue
                           ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
                           ::um/end marker-end->cue
@@ -122,10 +122,10 @@
   {:tag :CUE_V2
    :attrs {:NAME "[djdc]"
            :TYPE (type-kw->type-num ::um/type-grid)
-           :START start
+           :START (seconds->millis start)
            :LEN 0
            :HOTCUE "-1"}})
 
 (defn cue-tagged?
   [cue]
-  (str/starts-with? (-> cue :attrs :NAME) "[djdc]"))
+  (string/starts-with? (-> cue :attrs :NAME) "[djdc]"))

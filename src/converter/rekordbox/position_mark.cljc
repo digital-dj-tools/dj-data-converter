@@ -23,10 +23,6 @@
   {"0" ::um/type-cue
    "4" ::um/type-loop})
 
-(defn marker-type-supported?
-  [marker-type]
-  (contains? #{::um/type-cue ::um/type-loop} marker-type))
-
 (s/def ::position-mark-type
   (s/spec (set (keys position-mark-type->marker-type))))
 
@@ -49,9 +45,9 @@
            :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
            (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
            :Num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})
-           :Red (s/int-in 0 256)
-           :Green (s/int-in 0 256)
-           :Blue (s/int-in 0 256)}})
+           (std/opt :Red) (s/int-in 0 256)
+           (std/opt :Green) (s/int-in 0 256)
+           (std/opt :Blue) (s/int-in 0 256)}})
 
 (defn memory-cue?
   "Returns true if the position mark is a memory cue"
@@ -85,9 +81,11 @@
   [{:keys [::um/type]} position-mark _]
   (as-> position-mark $
     (assoc $ :Type (marker-type->position-mark-type type))
-    (apply assoc $ (reduce-kv #(conj %1 %3 ((marker-type->rekordbox-colours type) %2))
-                              []
-                              [:Red :Green :Blue]))))
+    (if (memory-cue? position-mark)
+      (apply assoc $ (reduce-kv #(conj %1 %3 ((marker-type->rekordbox-colours type) %2))
+                                []
+                                [:Red :Green :Blue]))
+      $)))
 
 (defn marker-end->position-mark
   [{:keys [::um/type ::um/end]} position-mark _]

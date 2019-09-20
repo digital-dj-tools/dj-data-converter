@@ -6,17 +6,24 @@
    [converter.cli :as cli]))
 
 (deftest process-test
-  (testing "Traktor collection file is present and valid"
+  (testing "Traktor to Rekordbox, Traktor file is present and valid"
     (let [config {:converter app/traktor->rekordbox}
           arguments {:input-file "test-resources/collection.nml"
                      :output-file "/tmp/rekordbox.xml"}
           options {}
           result (cli/process config arguments options)]
       (is (= 0 (first result)))))
-  (testing "Traktor collection file is missing"
+  (testing "Traktor to Rekordbox, Traktor file is missing"
     (let [config {:converter app/traktor->rekordbox}
           arguments {:input-file "test-resources/collection-missing.nml"
                      :output-file "/tmp/rekordbox.xml"}
           options {}
           result (cli/process config arguments options)]
-      (is (= 2 (first result))))))
+      (is (= 2 (first result)))))
+  (testing "Rekordbox to Traktor, Rekordbox file is present and valid"
+    (let [config {:converter app/rekordbox->traktor}
+          arguments {:input-file "test-resources/rekordbox.xml"
+                     :output-file "/tmp/collection.nml"}
+          options {}
+          result (cli/process config arguments options)]
+      (is (= 0 (first result))))))

@@ -10,6 +10,7 @@
    [converter.rekordbox.core :as r]
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
+   [converter.test-utils :as test]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.xml :as xml]
@@ -80,56 +81,20 @@
                  (spec/decode! (r/dj-playlists-spec) $ st/string-transformer)
                  (is (= dj-playlists $)))))
 
-(defn library-items-filter-contains-total-time
-  [library]
-  (if (::u/collection library)
-    (update
-     library
-     ::u/collection
-     (partial filter u/item-contains-total-time?))
-    library))
-
-(defn item-markers-unsupported-type->cue-type
-  [item]
-  (if (::u/markers item)
-    (update item ::u/markers (fn [markers] (mapv #(if (rp/marker-type-supported? %) % (assoc % ::um/type ::um/type-cue)) markers)))
-    item))
-
-(defn library-items-markers-unsupported-type->cue-type
-  [library]
-  (if (::u/collection library)
-    (update
-     library
-     ::u/collection
-     (fn [items] (map #(item-markers-unsupported-type->cue-type %) items)))
-    library))
-
-(defn library-equiv
-  [library]
-  (library-items-markers-unsupported-type->cue-type library))
-
 (defspec library-spec-round-trip-library-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)]
                (as-> library $
-                 (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
-                 (xml/encode $)
-                 (xml/decode $)
-                 (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
-                 (spec/decode! r/library-spec $ spec/xml-transformer)
-                 (is (= ((comp library-equiv library-items-filter-contains-total-time) library)
-                        (library-equiv $))))))
+                 (test/rekordbox-round-trip $)
+                 (is (= (test/library-equiv-rekordbox library)
+                        (test/library-equiv-rekordbox $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)]
                (as-> library $
+                 (test/rekordbox-round-trip $)
+                 (test/library-equiv-rekordbox $)
                  (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
-                 (xml/encode $)
-                 (xml/decode $)
-                 (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
-                 (spec/decode! r/library-spec $ spec/xml-transformer)
-                 (library-equiv $)
-                 (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
-                 (is (= (st/encode (r/dj-playlists-spec) ((comp library-equiv library-items-filter-contains-total-time) library) spec/xml-transformer)
+                 (is (= (st/encode (r/dj-playlists-spec) (test/library-equiv-rekordbox library) spec/xml-transformer)
                         $)))))

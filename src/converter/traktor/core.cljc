@@ -146,7 +146,7 @@
       (= (::u/bpm item) bpm)
       (= (::ut/bpm (first tempos)) bpm))))
 
-; TODO equiv-cues
+; TODO equiv-cues, which needs to cover tc/marker->cue and tc/marker->cue-tagged
 (s/fdef item->entry
   :args (s/cat :item u/item-spec)
   :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
@@ -163,13 +163,13 @@
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
-; TODO move to cue ns?
-(defn marker->cue-tagged
-  "Returns a tagged cue for each tempo without a matching marker."
-  [tempos markers]
-  (let [tempos-without-matching-markers (filter #(empty? (filter (fn [marker] (= (::ut/inizio %) (::um/start marker))) markers)) tempos)]
-    ; TODO report warning if tempo bpm differs from item bpm
-    (map #(tc/marker->cue-tagged (::ut/inizio %1)) tempos-without-matching-markers)))
+; ; TODO move to cue ns?
+; (defn marker->cue-tagged
+;   "Returns a tagged cue for each tempo without a matching marker."
+;   [tempos markers]
+;   (let [tempos-without-matching-markers (filter #(empty? (filter (fn [marker] (= (::ut/inizio %) (::um/start marker))) markers)) tempos)]
+;     ; TODO report warning if tempo bpm differs from item bpm
+;     (map #(tc/marker->cue-tagged (::ut/inizio %1)) tempos-without-matching-markers)))
 
 (defn item->entry
   [{:keys [::u/location ::u/date-added ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
@@ -196,7 +196,7 @@
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)
-                              (marker->cue-tagged tempos markers)))})
+                              (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
 
 ; TODO move to cue ns?
 (defn grid-cue->tempo

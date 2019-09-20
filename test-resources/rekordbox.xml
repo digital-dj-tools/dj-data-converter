@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DJ_PLAYLISTS Version="1.0.0">
+    <PRODUCT Name="rekordbox" Version="5.6.1" Company="Pioneer DJ"/>
+    <COLLECTION Entries="2">
+        <TRACK TrackID="1" Name="Get Down On It (Rocco Raimundo Edit)" Artist="Kool &amp; The Gang" Composer="" Album="Get Down On It (Rocco Raimundo Edit)" Grouping="" Genre="Funk" Kind="MP3 File" Size="0" TotalTime="466" DiscNumber="0" TrackNumber="1" Year="0" AverageBpm="111.99" DateAdded="2018-12-21" BitRate="0" SampleRate="0" Comments="3-4/7,8 EXTRA" PlayCount="0" Rating="0" Location="file://localhost/D:/Music/Collections/Performance/Lossy/With%20Rights/Downloads/Kool%20%26%20The%20Gang/Get%20Down%20On%20It%20(Rocco%20Raimundo%20Edit)/Get%20Down%20On%20It%20(Rocco%20Raimundo%20Edit)%20-%20Kool%20%26%20The%20Gang.mp3" Remixer="" Tonality="" Label="" Mix="">
+            <TEMPO Inizio="0.053" Bpm="112.00" Metro="4/4" Battito="1"/>
+            <POSITION_MARK Name="AutoGrid" Type="0" Start="0.053" Num="-1"/>
+            <POSITION_MARK Name="AutoGrid" Type="0" Start="0.053" Num="0" Red="255" Green="255" Blue="255"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="34.339" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="34.339" Num="1" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="68.625" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="68.625" Num="2" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="102.911" Num="3" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="102.911" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="4" Start="240.054" End="257.196" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="4" Start="240.054" End="257.196" Num="4" Red="255" Green="140" Blue="0"/>
+            <POSITION_MARK Name="n.n." Type="4" Start="274.339" End="291.482" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="4" Start="274.339" End="291.482" Num="5" Red="255" Green="140" Blue="0"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="308.625" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="308.625" Num="6" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="n.n." Type="4" Start="325.768" End="342.911" Num="7" Red="255" Green="140" Blue="0"/>
+            <POSITION_MARK Name="n.n." Type="4" Start="325.768" End="342.911" Num="-1"/>
+        </TRACK>
+        <TRACK TrackID="2" Name="Need U (100%) (Skreamix)" Artist="Duke Dumont ft. A*M*E" Composer="" Album="Need U (100%) (Remixes)" Grouping="" Genre="Nu-Disco" Kind="MP3 File" Size="0" TotalTime="393" DiscNumber="0" TrackNumber="4" Year="0" AverageBpm="124.00" DateAdded="2019-4-16" BitRate="0" SampleRate="0" Comments="2-3/6-7" PlayCount="0" Rating="0" Location="file://localhost/D:/Music/Collections/Performance/Lossy/Without%20Rights/Downloads/Duke%20Dumont%20ft.%20AME/Need%20U%20(100%25)%20(Remixes)/Need%20U%20(100%25)%20(Skreamix)%20-%20Duke%20Dumont%20ft.%20AME.mp3" Remixer="" Tonality="" Label="" Mix="">
+            <TEMPO Inizio="0.543" Bpm="124.00" Metro="4/4" Battito="1"/>
+            <POSITION_MARK Name="AutoGrid" Type="0" Start="0.543" Num="-1"/>
+            <POSITION_MARK Name="AutoGrid" Type="0" Start="0.543" Num="0" Red="255" Green="255" Blue="255"/>
+            <POSITION_MARK Name="Drums" Type="0" Start="31.511" Num="1" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="Drums" Type="0" Start="31.511" Num="-1"/>
+            <POSITION_MARK Name="Bassline" Type="0" Start="62.479" Num="2" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="Bassline" Type="0" Start="62.479" Num="-1"/>
+            <POSITION_MARK Name="Vocals" Type="0" Start="93.446" Num="-1"/>
+            <POSITION_MARK Name="Vocals" Type="0" Start="93.446" Num="3" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="Drop" Type="0" Start="124.414" Num="-1"/>
+            <POSITION_MARK Name="Drop" Type="0" Start="124.414" Num="4" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="Break" Type="0" Start="232.801" Num="-1"/>
+            <POSITION_MARK Name="Break" Type="0" Start="232.801" Num="5" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="Drop" Type="0" Start="263.768" Num="-1"/>
+            <POSITION_MARK Name="Drop" Type="0" Start="263.768" Num="6" Red="40" Green="226" Blue="20"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="325.703" Num="-1"/>
+            <POSITION_MARK Name="n.n." Type="0" Start="325.703" Num="7" Red="40" Green="226" Blue="20"/>
+        </TRACK>
+    </COLLECTION>
+</DJ_PLAYLISTS>

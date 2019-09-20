@@ -38,7 +38,7 @@
                  (update-in [:data :problems] (fn [problem] (map #(dissoc % :val) problem))))))
 
 (defn create-report
-  [arguments options error]
+  [error options arguments]
   {:args arguments
    :opts options
    :error (if (data-error? error)
@@ -46,5 +46,5 @@
             error)})
 
 (defn write-report
-  [report]
-  (spit "error-report.edn" (with-out-str (pprint/pprint report))))
+  [report output-dir]
+  (spit (str output-dir "/error-report.edn") (with-out-str (pprint/pprint report))))

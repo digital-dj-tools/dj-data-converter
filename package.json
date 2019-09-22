@@ -4,8 +4,8 @@
   "bin": "out/cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-win": "pkg . --targets node10-win-x64 --output pkg/dj-data-converter-win.exe",
-    "build-mac": "pkg . --targets node10-macos-x64 --output pkg/dj-data-converter-macos",
+    "build-win": "pkg . --targets node8-win-x64 --output pkg/dj-data-converter-win.exe",
+    "build-mac": "pkg . --targets node8-macos-x64 --output pkg/dj-data-converter-macos",
     "build": "npm run build-win && npm run build-mac"
   },
   "keywords": [],

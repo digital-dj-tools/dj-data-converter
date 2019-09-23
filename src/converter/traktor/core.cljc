@@ -139,12 +139,10 @@
     :spec entry}))
 
 (defn equiv-bpm?
-  [{:keys [::u/tempos] :as item} entry-z]
+  [item entry-z]
   (let [tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))]
-    (if (empty? tempos)
-      (= (::u/bpm item) bpm)
-      (= (::ut/bpm (first tempos)) bpm))))
+    (= (::u/bpm item) bpm)))
 
 ; TODO equiv-cues, which needs to cover tc/marker->cue and tc/marker->cue-tagged
 (s/fdef item->entry
@@ -164,7 +162,8 @@
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/date-added ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
+  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre 
+           ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    ; TODO need to assoc MODIFIED_DATE and MODIFIED_TIME, and these must be 'newer' to replace existing data in Traktor
    ; but Rekordbox xml doesn't have this data..
@@ -186,7 +185,7 @@
                                                                         genre (assoc :GENRE genre)
                                                                         total-time (assoc :PLAYTIME total-time))})
               bpm (conj {:tag :TEMPO
-                         :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
+                         :attrs {:BPM bpm}})
               markers (concat (map tc/marker->cue markers)
                               (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
 

@@ -163,14 +163,6 @@
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
-; ; TODO move to cue ns?
-; (defn marker->cue-tagged
-;   "Returns a tagged cue for each tempo without a matching marker."
-;   [tempos markers]
-;   (let [tempos-without-matching-markers (filter #(empty? (filter (fn [marker] (= (::ut/inizio %) (::um/start marker))) markers)) tempos)]
-;     ; TODO report warning if tempo bpm differs from item bpm
-;     (map #(tc/marker->cue-tagged (::ut/inizio %1)) tempos-without-matching-markers)))
-
 (defn item->entry
   [{:keys [::u/location ::u/date-added ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
   {:tag :ENTRY
@@ -197,14 +189,6 @@
                          :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
               markers (concat (map tc/marker->cue markers)
                               (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
-
-; TODO move to cue ns?
-(defn grid-cue->tempo
-  [bpm cue-z]
-  {::ut/inizio (tc/millis->seconds (zx/attr cue-z :START))
-   ::ut/bpm bpm
-   ::ut/metro "4/4"
-   ::ut/battito "1"})
 
 (defn equiv-tempos?
   [entry-z item]
@@ -272,7 +256,7 @@
       playtime (assoc ::u/total-time playtime)
       bpm (assoc ::u/bpm bpm)
       (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z))
-      (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial grid-cue->tempo bpm) grid-cues-z)))))
+      (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial tc/cue->tempo bpm) grid-cues-z)))))
 
 (defn library->nml
   [progress _ {:keys [::u/collection]}]

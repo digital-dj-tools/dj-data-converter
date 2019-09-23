@@ -1,5 +1,6 @@
 (ns converter.traktor.cue
   (:require
+   [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.set :as set]
@@ -7,6 +8,7 @@
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
+   [converter.universal.tempo :as ut]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]
    [utils.map :as map]))
@@ -102,6 +104,13 @@
                       :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
                       :LEN cue->marker-end
                       :HOTCUE ::um/num})))
+
+(defn cue->tempo
+  [bpm cue-z]
+  {::ut/inizio (millis->seconds (zx/attr cue-z :START))
+   ::ut/bpm bpm
+   ::ut/metro "4/4"
+   ::ut/battito "1"})
 
 (s/fdef marker->cue
   :args (s/cat :marker um/marker-spec)

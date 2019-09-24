@@ -4,12 +4,12 @@
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.string :refer [split join]]
+   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]
-   [converter.str :as str]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
+   [converter.traktor.location :as tl]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
@@ -24,93 +24,20 @@
   [import-date]
   ; FIXME horrible hack, will replace with string->date fn using a suitable clj(s) datetime parsing/formatting lib
   (if (string? import-date)
-    (clojure.string/replace import-date "/" "-")
+    (string/replace import-date "/" "-")
     import-date))
 
 (defn date-added->import-date
   [date-added]
   ; FIXME horrible hack, will replace with date->string fn using a suitable clj(s) datetime parsing/formatting lib
-  (clojure.string/replace date-added "-" "/"))
-
-(def nml-path-sep
-  "/:")
-
-(def nml-path-sep-regex
-  #"/:")
-
-(defn nml-dir-gen
-  []
-  (gen/fmap #(->> % (interleave (repeat nml-path-sep)) (apply str)) (gen/vector (str/not-blank-string-with-whitespace-gen))))
-
-(s/def ::nml-dir
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (nml-dir-gen))))
-
-(s/def ::nml-path
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (gen/fmap (partial apply str)
-                     (gen/tuple
-                      ; drive letter (optional)
-                      (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
-                      ; dir
-                      (nml-dir-gen)
-                      ; filename
-                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-with-whitespace-gen)))))))
-
-(def location
-  {:tag (s/spec #{:LOCATION})
-   :attrs {:DIR ::nml-dir
-           :FILE ::str/not-blank-string
-           (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter
-                                      :not-drive-letter ::str/not-blank-string})
-           (std/opt :VOLUMEID) ::str/not-blank-string}})
-
-(def location-spec
-  (spec/such-that-spec
-   (std/spec {:name ::location
-              :spec location})
-   #(or (and (-> % :attrs :VOLUME) (-> % :attrs :VOLUMEID))
-        (and (not (-> % :attrs :VOLUME)) (not (-> % :attrs :VOLUMEID))))
-   10))
-
-(s/fdef url->location
-  :args (s/cat :location ::url/url)
-  :ret location-spec)
-
-(defn url->location
-  [{:keys [:path]}]
-  (let [paths (rest (split path #"/"))
-        dirs (if (str/drive-letter? (first paths)) (rest (drop-last paths)) (drop-last paths))
-        file (last paths)
-        volume (if (str/drive-letter? (first paths)) (first paths))]
-    {:tag :LOCATION
-     :attrs (cond-> {:DIR (str nml-path-sep (join nml-path-sep (map url-decode dirs)))
-                     :FILE (url-decode file)}
-              volume (assoc :VOLUME volume))}))
-
-(s/fdef location->url
-  :args (s/cat :location-z (spec/xml-zip-spec location-spec))
-  :ret ::url/url)
-
-(defn location->url
-  [location-z]
-  (let [dir (zx/attr location-z :DIR)
-        file (zx/attr location-z :FILE)
-        volume (zx/attr location-z :VOLUME)]
-    (apply url (as-> [] $
-                 (conj $ "file://localhost")
-                 (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
-                 (reduce conj $ (map url-encode (split dir nml-path-sep-regex)))
-                 (conj $ (url-encode file))))))
+  (string/replace date-added "-" "/"))
 
 (def entry
   {:tag (s/spec #{:ENTRY})
    :attrs {(std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
-                  :location location-spec
+                  :location tl/location-spec
                   :album (s/? (std/spec {:name ::album
                                          :spec {:tag (s/spec #{:ALBUM})
                                                 :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
@@ -162,7 +89,7 @@
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre 
+  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
            ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    ; TODO need to assoc MODIFIED_DATE and MODIFIED_TIME, and these must be 'newer' to replace existing data in Traktor
@@ -173,7 +100,7 @@
             title (assoc :TITLE title)
             artist (assoc :ARTIST artist))
    :content (cond-> []
-              true (conj (url->location location))
+              true (conj (tl/url->location location))
               (or track-number album) (conj {:tag :ALBUM
                                              :attrs (cond-> {}
                                                       track-number (assoc :TRACK track-number)
@@ -244,7 +171,7 @@
         bpm (and tempo-z (zx/attr tempo-z :BPM))
         cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))
         grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
-    (cond-> {::u/location (location->url (zx/xml1-> entry-z :LOCATION))}
+    (cond-> {::u/location (tl/location->url (zx/xml1-> entry-z :LOCATION))}
       title (assoc ::u/title title)
       artist (assoc ::u/artist artist)
       track (assoc ::u/track-number track)

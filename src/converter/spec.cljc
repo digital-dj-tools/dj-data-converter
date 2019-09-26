@@ -63,8 +63,15 @@
 
 ; TODO spec is assumed to be a spec-tools record
 (defn such-that-spec
-  [spec pred max-tries]
-  (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec) max-tries))))
+  ([spec pred]
+   (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec)))))
+  ([spec pred max-tries]
+   (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec) max-tries)))))
+
+; TODO spec is assumed to be a spec-tools record
+(defn with-gen-fmap-spec
+  [spec f]
+  (assoc spec :gen (fn [] (gen/fmap f (s/gen spec)))))
 
 (defrecord ValueEncodedSpec [spec transformer]
   s/Spec

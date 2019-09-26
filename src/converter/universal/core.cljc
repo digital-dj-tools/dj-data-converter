@@ -94,6 +94,7 @@
     (update item ::tempos #(vec (sort-by ::ut/inizio %)))
     item))
 
+; TODO should probably be the mean tempo, not first tempo
 (defn bpm-from-tempos
   "Returns an item with bpm derived from the first tempo."
   [{:keys [::tempos] :as item}]

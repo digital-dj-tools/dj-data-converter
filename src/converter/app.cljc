@@ -39,14 +39,23 @@
       [this config]
       (t/nml-spec config))))
 
-(defn doto-prn
-  [obj f]
-  (prn (f obj)))
+(defprotocol Edition
+  (converter [this config]))
+
+(def basic-edition
+  (reify
+    Edition
+    (converter [this {:keys [input]}]
+      (cond
+        ; TODO either throw exception if input is anything else
+        ; or guarantee it isn't by spec conform etc
+        (= input :traktor) traktor->rekordbox
+        (= input :rekordbox) rekordbox->traktor))))
 
 (s/fdef convert
-  :args (s/cat 
+  :args (s/cat
          :converter #{traktor->rekordbox}
-         :config config/config-spec
+         :config (spec/such-that-spec config/config-spec #(= :traktor (:input %)))
          :xml (spec/value-encoded-spec (t/nml-spec {}) spec/string-transformer))
   :ret (spec/value-encoded-spec (r/dj-playlists-spec {}) spec/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings

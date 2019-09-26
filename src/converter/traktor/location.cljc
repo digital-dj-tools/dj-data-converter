@@ -25,8 +25,7 @@
    (std/spec {:name ::location
               :spec location})
    #(or (and (-> % :attrs :VOLUME) (-> % :attrs :VOLUMEID))
-        (and (not (-> % :attrs :VOLUME)) (not (-> % :attrs :VOLUMEID))))
-   10))
+        (and (not (-> % :attrs :VOLUME)) (not (-> % :attrs :VOLUMEID))))))
 
 (s/fdef url->location
   :args (s/cat :url ::url/url)

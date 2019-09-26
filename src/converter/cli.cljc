@@ -8,7 +8,8 @@
    [clojure.tools.cli :as cli]
    [converter.app :as app]
    [converter.error :as err]
-   [converter.xml])
+   [converter.xml]
+   [tick.alpha.api :as tick])
   #?(:clj (:gen-class)))
 
 (def default-arguments
@@ -60,19 +61,32 @@
      :cljs (.exit nodejs/process status)))
 
 (defn output-dir
-  [{:keys [:output-file]}]
+  [{:keys [output-file]}]
   (or (.getParent (io/file output-file))
       ""))
 
+(defprotocol ArgumentsToConverter
+  (converter [this arguments]))
+
+; for basic edition
+(def arguments-to-basic-converter
+  (reify
+    ArgumentsToConverter
+    (converter [this {:keys [input-file] :as arguments}]
+      (cond 
+        (string/ends-with? input-file ".nml") app/traktor->rekordbox
+        (string/ends-with? input-file ".xml") app/rekordbox->traktor
+        :else (throw (ex-info "Could not determine converter for given arguments" {:arguments arguments}))))))
+
 #?(:clj
    (defn process
-     [config arguments options]
+     [arguments-to-converter config arguments options]
      (try
        (with-open [reader (io/reader (:input-file arguments))
                    writer (io/writer (:output-file arguments))]
          (as-> reader $
            (xml/parse $ :skip-whitespace true)
-           (app/convert config $)
+           (app/convert (converter arguments-to-converter arguments) config $)
            (xml/emit $ writer)))
        [0 "Conversion completed"]
        (catch Throwable t (do
@@ -84,13 +98,13 @@
 
 #?(:cljs
    (defn process
-     [config arguments options]
+     [arguments-to-converter config arguments options]
      (try
        (as-> (:input-file arguments) $
          (io/slurp $)
          (xml/parse-str $)
          (converter.xml/strip-whitespace $)
-         (app/convert config $)
+         (app/convert (converter arguments-to-converter arguments) config $)
          (xml/emit-str $)
          (io/spit (:output-file arguments) $))
        [0 "Conversion completed"]
@@ -112,14 +126,14 @@
       (f item))))
 
 (def config
-  {:converter app/traktor->rekordbox
-   :progress print-progress})
+  {:progress print-progress
+   :clock (tick/clock)})
 
 (defn -main
   [& args]
   (let [{:keys [arguments options exit-message help?]} (parse-args args)]
     (if exit-message
       (exit (if help? 0 1) exit-message)
-      (apply exit (process config arguments options)))))
+      (apply exit (process arguments-to-basic-converter config arguments options)))))
 
 #?(:cljs (set! *main-cli-fn* -main))

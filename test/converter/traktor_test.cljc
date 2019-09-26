@@ -6,6 +6,7 @@
    [clojure.test.check]
    [clojure.test.check.clojure-test :refer [defspec] #?@(:cljs [:include-macros true])]
    [clojure.test.check.properties :as tcp #?@(:cljs [:include-macros true])]
+   [converter.config :as config]
    [converter.spec :as spec]
    [converter.traktor.core :as t]
    [converter.traktor.cue :as tc]
@@ -67,25 +68,27 @@
 
 (defspec nml-spec-encode-decode-equality
   10
-  (tcp/for-all [nml (s/gen (t/nml-spec))]
+  (tcp/for-all [nml (s/gen (t/nml-spec test/config))]
                (as-> nml $
-                 (st/encode (t/nml-spec) $ st/string-transformer)
-                 (spec/decode! (t/nml-spec) $ st/string-transformer)
+                 (st/encode (t/nml-spec test/config) $ st/string-transformer)
+                 (spec/decode! (t/nml-spec test/config) $ st/string-transformer)
                  (is (= nml $)))))
 
 (defspec library-spec-round-trip-library-equality
   10
-  (tcp/for-all [library (s/gen u/library-spec)]
+  (tcp/for-all [library (s/gen u/library-spec)
+                config (s/gen config/config-spec)]
                (as-> library $
-                 (test/traktor-round-trip $)
+                 (test/traktor-round-trip config $)
                  (is (= (test/library-equiv-traktor library)
                         (test/library-equiv-traktor $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
-  (tcp/for-all [library (s/gen u/library-spec)]
+  (tcp/for-all [library (s/gen u/library-spec)
+                config (s/gen config/config-spec)]
                (as-> library $
-                 (test/traktor-round-trip $)
-                 (st/encode (t/nml-spec) $ spec/xml-transformer)
-                 (is (= (st/encode (t/nml-spec) library spec/xml-transformer)
+                 (test/traktor-round-trip config $)
+                 (st/encode (t/nml-spec config) $ spec/xml-transformer)
+                 (is (= (st/encode (t/nml-spec config) library spec/xml-transformer)
                         $)))))

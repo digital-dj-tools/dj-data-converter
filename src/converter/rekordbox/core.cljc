@@ -127,7 +127,7 @@
       (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z)))))
 
 (defn library->dj-playlists
-  [progress _ {:keys [::u/collection]}]
+  [{:keys [progress]} _ {:keys [::u/collection]}]
   {:tag :DJ_PLAYLISTS
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
@@ -161,21 +161,19 @@
                                         :spec {:tag (s/spec #{:PLAYLISTS})}})))})
 
 (defn dj-playlists-spec
-  ([]
-   (dj-playlists-spec nil))
-  ([progress]
-   (->
-    (std/spec
-     {:name ::dj-playlists
-      :spec dj-playlists})
-    (assoc :encode/xml (partial library->dj-playlists progress)))))
+  [config]
+  (->
+   (std/spec
+    {:name ::dj-playlists
+     :spec dj-playlists})
+   (assoc :encode/xml (partial library->dj-playlists config))))
 
 (s/fdef dj-playlists->library
-  :args (s/cat :dj-playlists-spec any? :dj-playlists (dj-playlists-spec))
+  :args (s/cat :dj-playlists-spec any? :dj-playlists (dj-playlists-spec {}))
   :ret u/library-spec
   :fn (fn equiv-collection-counts?
         [{{conformed-dj-playlists :dj-playlists} :args conformed-library :ret}]
-        (let [dj-playlists (s/unform (dj-playlists-spec) conformed-dj-playlists)
+        (let [dj-playlists (s/unform (dj-playlists-spec {}) conformed-dj-playlists)
               dj-playlists-z (zip/xml-zip dj-playlists)
               library (s/unform u/library-spec conformed-library)]
           (=
@@ -183,12 +181,12 @@
            (count (::u/collection library))))))
 
 (s/fdef library->dj-playlists
-  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
-  :ret (dj-playlists-spec)
+  :args (s/cat :config map? :library-spec any? :library u/library-spec)
+  :ret (dj-playlists-spec {})
   :fn (fn equiv-collection-counts?
         [{{conformed-library :library} :args conformed-dj-playlists :ret}]
         (let [library (s/unform u/library-spec conformed-library)
-              dj-playlists (s/unform (dj-playlists-spec) conformed-dj-playlists)
+              dj-playlists (s/unform (dj-playlists-spec {}) conformed-dj-playlists)
               dj-playlists-z (zip/xml-zip dj-playlists)]
           (= (count (->> library ::u/collection (filter u/item-contains-total-time?)))
              (count (zx/xml-> dj-playlists-z :COLLECTION :TRACK))))))

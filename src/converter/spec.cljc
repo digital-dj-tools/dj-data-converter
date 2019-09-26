@@ -4,6 +4,7 @@
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as str]
    [clojure.zip :as zip]
+   [converter.time :as time]
    [converter.url :as url]
    [spec-tools.core :as st]
    [spec-tools.transform :as stt]
@@ -25,15 +26,19 @@
 (def xml-transformer
   (st/type-transformer
    {:name :xml
-    :decoders (merge stt/string-type-decoders {:url url/string->url})
-    :encoders (merge stt/string-type-encoders {:url stt/any->string})
+    :decoders (merge stt/string-type-decoders {:url url/string->url
+                                               :date (partial time/string->date "yyyy/M/d")})
+    :encoders (merge stt/string-type-encoders {:url stt/any->string
+                                               :date (partial time/date->string "yyyy/M/d")})
     :default-encoder stt/any->any}))
 
 (def string-transformer
   (st/type-transformer
    {:name :string
-    :decoders (merge stt/string-type-decoders {:url url/string->url})
-    :encoders (merge stt/string-type-encoders {:url stt/any->string})
+    :decoders (merge stt/string-type-decoders {:url url/string->url
+                                               :date (partial time/string->date "yyyy/M/d")})
+    :encoders (merge stt/string-type-encoders {:url stt/any->string
+                                               :date (partial time/date->string "yyyy/M/d")})
     :default-encoder stt/any->any}))
 
 ; this only works as long as it's not nested inside other data specs

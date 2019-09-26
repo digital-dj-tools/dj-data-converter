@@ -6,6 +6,8 @@
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as string]
    [clojure.zip :as zip]
+   [converter.config :as config]
+   [converter.time :as time]
    [converter.spec :as spec]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
@@ -18,6 +20,7 @@
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]
+   [tick.alpha.api :as tick]
    [utils.map :as map]))
 
 (defn import-date->date-added
@@ -34,7 +37,9 @@
 
 (def entry
   {:tag (s/spec #{:ENTRY})
-   :attrs {(std/opt :TITLE) string?
+   :attrs {:MODIFIED_DATE ::time/date
+           :MODIFIED_TIME (s/int-in 0 86400)
+           (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
                   :location tl/location-spec
@@ -73,7 +78,7 @@
 
 ; TODO equiv-cues, which needs to cover tc/marker->cue and tc/marker->cue-tagged
 (s/fdef item->entry
-  :args (s/cat :item u/item-spec)
+  :args (s/cat :process-instant ::time/instant :item u/item-spec)
   :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
         (let [item (s/unform u/item-spec conformed-item)
               entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
@@ -89,14 +94,14 @@
   :ret entry-spec)
 
 (defn item->entry
-  [{:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
-           ::u/tempos ::u/markers]}]
+  [process-instant {:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album
+                        ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
+                        ::u/tempos ::u/markers]}]
   {:tag :ENTRY
-   ; TODO need to assoc MODIFIED_DATE and MODIFIED_TIME, and these must be 'newer' to replace existing data in Traktor
-   ; but Rekordbox xml doesn't have this data..
-   ; naive solution for now - just use "run datetime = now" for all items
-   ; slightly less naive solution - calc hash of items on both sides, then filter using hash1 != hash2, and then set "run datetime = now"
-   :attrs (cond-> {}
+   ; naive solution for now - just use process-instant for all items
+   ; slightly less naive solution - calc hash of items on both sides, then filter using hash1 != hash2, and then use process-instant for those items only
+   :attrs (cond-> {:MODIFIED_DATE (tick/date process-instant)
+                   :MODIFIED_TIME (tick/seconds (tick/between (tick/truncate process-instant :days) process-instant))}
             title (assoc :TITLE title)
             artist (assoc :ARTIST artist))
    :content (cond-> []
@@ -185,11 +190,13 @@
       (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial tc/cue->tempo bpm) grid-cues-z)))))
 
 (defn library->nml
-  [progress _ {:keys [::u/collection]}]
+  [{:keys [progress clock]} _ {:keys [::u/collection]}]
   {:tag :NML
    :attrs {:VERSION 19}
    :content [{:tag :COLLECTION
-              :content (map (if progress (progress item->entry) item->entry) collection)}]})
+              :content (let [process-instant (tick/with-clock clock (tick/instant))]
+                         (map (if progress (progress (partial item->entry process-instant)) (partial item->entry process-instant))
+                              collection))}]})
 
 (defn nml->library
   [_ nml]
@@ -219,21 +226,19 @@
                                             :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
 
 (defn nml-spec
-  ([]
-   (nml-spec nil))
-  ([progress]
-   (->
-    (std/spec
-     {:name ::nml
-      :spec nml})
-    (assoc :encode/xml (partial library->nml progress)))))
+  [config]
+  (->
+   (std/spec
+    {:name ::nml
+     :spec nml})
+   (assoc :encode/xml (partial library->nml config))))
 
 (s/fdef library->nml
-  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
-  :ret (nml-spec)
+  :args (s/cat :config config/config-spec :library-spec any? :library u/library-spec)
+  :ret (nml-spec {})
   :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-nml :ret}]
         (let [library (s/unform u/library-spec conformed-library)
-              nml-z (zip/xml-zip (s/unform (nml-spec) conformed-nml))
+              nml-z (zip/xml-zip (s/unform (nml-spec {}) conformed-nml))
               collection-z (zx/xml1-> nml-z :COLLECTION)]
           (= (count (->> library ::u/collection))
              (count (zx/xml-> collection-z :ENTRY))))))

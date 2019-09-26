@@ -1,5 +1,11 @@
 (ns converter.test-utils
   (:require
+   #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
+   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
+   [clojure.test.check.generators]
+   [converter.app :as app]
+   [converter.config :as config]
+   [converter.time :as time]
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
    [converter.traktor.core :as t]
@@ -7,7 +13,8 @@
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
    [converter.xml :as xml]
-   [spec-tools.core :as st]))
+   [spec-tools.core :as st]
+   [tick.alpha.api :as tick]))
 
 (defn- item-tempos-dissoc-bpm-metro-battito
   [item]
@@ -67,20 +74,23 @@
       library-items-filter-contains-total-time
       library-items-markers-unsupported-type->cue-type))
 
+(def config
+  (gen/generate (s/gen config/config-spec)))
+
 (defn traktor-round-trip
-  [library]
+  [config library]
   (as-> library $
-    (st/encode (t/nml-spec) $ spec/xml-transformer)
+    (st/encode (t/nml-spec config) $ spec/xml-transformer)
     (xml/encode $)
     (xml/decode $)
-    (spec/decode! (t/nml-spec) $ spec/string-transformer)
+    (spec/decode! (t/nml-spec config) $ spec/string-transformer)
     (spec/decode! t/library-spec $ spec/xml-transformer)))
 
 (defn rekordbox-round-trip
-  [library]
+  [config library]
   (as-> library $
-    (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
+    (st/encode (r/dj-playlists-spec config) $ spec/xml-transformer)
     (xml/encode $)
     (xml/decode $)
-    (spec/decode! (r/dj-playlists-spec) $ spec/string-transformer)
+    (spec/decode! (r/dj-playlists-spec config) $ spec/string-transformer)
     (spec/decode! r/library-spec $ spec/xml-transformer)))

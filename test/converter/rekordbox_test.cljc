@@ -6,6 +6,7 @@
    [clojure.test.check]
    [clojure.test.check.clojure-test :refer [defspec] #?@(:cljs [:include-macros true])]
    [clojure.test.check.properties :as tcp #?@(:cljs [:include-macros true])]
+   [converter.config :as config]
    [converter.spec :as spec]
    [converter.rekordbox.core :as r]
    [converter.rekordbox.position-mark :as rp]
@@ -75,26 +76,28 @@
 
 (defspec dj-playlists-spec-encode-decode-equality
   10
-  (tcp/for-all [dj-playlists (s/gen (r/dj-playlists-spec))]
+  (tcp/for-all [dj-playlists (s/gen (r/dj-playlists-spec test/config))]
                (as-> dj-playlists $
-                 (st/encode (r/dj-playlists-spec) $ st/string-transformer)
-                 (spec/decode! (r/dj-playlists-spec) $ st/string-transformer)
+                 (st/encode (r/dj-playlists-spec test/config) $ st/string-transformer)
+                 (spec/decode! (r/dj-playlists-spec test/config) $ st/string-transformer)
                  (is (= dj-playlists $)))))
 
 (defspec library-spec-round-trip-library-equality
   10
-  (tcp/for-all [library (s/gen u/library-spec)]
+  (tcp/for-all [library (s/gen u/library-spec)
+                config (s/gen config/config-spec)]
                (as-> library $
-                 (test/rekordbox-round-trip $)
+                 (test/rekordbox-round-trip config $)
                  (is (= (test/library-equiv-rekordbox library)
                         (test/library-equiv-rekordbox $))))))
 
 (defspec library-spec-round-trip-xml-equality
   10
-  (tcp/for-all [library (s/gen u/library-spec)]
+  (tcp/for-all [library (s/gen u/library-spec)
+                config (s/gen config/config-spec)]
                (as-> library $
-                 (test/rekordbox-round-trip $)
+                 (test/rekordbox-round-trip config $)
                  (test/library-equiv-rekordbox $)
-                 (st/encode (r/dj-playlists-spec) $ spec/xml-transformer)
-                 (is (= (st/encode (r/dj-playlists-spec) (test/library-equiv-rekordbox library) spec/xml-transformer)
+                 (st/encode (r/dj-playlists-spec config) $ spec/xml-transformer)
+                 (is (= (st/encode (r/dj-playlists-spec config) (test/library-equiv-rekordbox library) spec/xml-transformer)
                         $)))))

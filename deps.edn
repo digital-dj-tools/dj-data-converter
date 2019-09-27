@@ -19,9 +19,6 @@
                   :main-opts ["-m" "cognitect.test-runner"]}
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.7.0"}}
                        :main-opts ["-m" "cljs-test-runner.main"]}
-           :native-image {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.0"}}
-                          :main-opts ["-m" "cambada.native-image"
-                                      "-m" "converter.cli"]}
            :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
            :nrepl-server {:extra-deps {cider/cider-nrepl {:mvn/version "0.21.1"}
                                        cider/piggieback {:mvn/version "0.4.1"}
@@ -30,7 +27,4 @@
                           :main-opts ["-m" "nrepl.cmdline"
                                       "--middleware" "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}
            :outdated {:extra-deps {olical/depot {:mvn/version "1.8.2"}}
-                      :main-opts ["-m" "depot.outdated.main"]}}
- ; workaround for https://github.com/luchiniatwork/cambada/issues/19
- :mvn/repos {"central" {:url "https://repo1.maven.org/maven2/"}
-             "clojars" {:url "https://repo.clojars.org/"}}}
+                      :main-opts ["-m" "depot.outdated.main"]}}}

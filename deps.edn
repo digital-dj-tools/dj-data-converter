@@ -12,7 +12,10 @@
   org.clojure/tools.cli {:mvn/version "0.4.2"}
   metosin/spec-tools {:mvn/version "0.9.3"}
   com.cemerick/url {:mvn/version "0.1.1" :exclusions [com.cemerick/clojurescript.test]}
-  tick {:mvn/version "0.4.19-alpha"}}
+  tick {:mvn/version "0.4.19-alpha"
+        :exclusions [cljsjs/js-joda
+                     cljsjs/js-joda-timezone
+                     cljsjs/js-joda-locale-en-us]}}
  :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {org.clojure/test.check {:mvn/version "0.9.0"}
                               plumula/mimolette {:mvn/version "0.2.1"}

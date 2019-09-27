@@ -58,17 +58,19 @@
      :cljs (.exit nodejs/process status)))
 
 (defn output-dir
-  [{:keys [output-file]}]
-  (or (.getParent (io/file output-file))
-      ""))
+  [output-file]
+  (when output-file (.getParent (io/file output-file))))
 
 (defn output-file
-  [{:keys [output]}]
-  (cond
+  ([arguments]
+   (output-file arguments nil))
+  ([{:keys [output-file] :as arguments} {:keys [output]}]
+   (or output-file
+       (cond
         ; TODO either throw exception if output is anything else
         ; or guarantee it isn't by spec conform etc
-    (= output :traktor) "collection.nml"
-    (= output :rekordbox) "rekordbox.xml"))
+         (= output :traktor) "collection.nml"
+         (= output :rekordbox) "rekordbox.xml"))))
 
 #?(:clj
    (defn process
@@ -76,7 +78,7 @@
      (try
        (let [config (config/arguments->config arguments)]
          (with-open [reader (io/reader (:input-file arguments))
-                     writer (io/writer (output-file config))]
+                     writer (io/writer (output-file arguments config))]
            (as-> reader $
              (xml/parse $ :skip-whitespace true)
              (app/convert (app/converter edition config) config $)
@@ -86,7 +88,7 @@
                             (-> t
                                 Throwable->map
                                 (err/create-report arguments options)
-                                (err/write-report (output-dir arguments)))
+                                (err/write-report (output-dir (output-file arguments))))
                             [2 "Problems converting, please provide error-report.edn file..."])))))
 
 #?(:cljs
@@ -100,13 +102,13 @@
            (converter.xml/strip-whitespace $)
            (app/convert (app/converter edition config) config $)
            (xml/emit-str $)
-           (io/spit (output-file config) $)))
+           (io/spit (output-file arguments config) $)))
        [0 "Conversion completed"]
        (catch :default e (do
                            (-> e
                                err/Error->map
                                (err/create-report arguments options)
-                               (err/write-report (output-dir arguments)))
+                               (err/write-report (output-dir (output-file arguments))))
                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
 (defn -main

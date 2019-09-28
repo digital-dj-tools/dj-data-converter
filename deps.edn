@@ -13,7 +13,8 @@
   com.cemerick/url {:mvn/version "0.1.1" :exclusions [com.cemerick/clojurescript.test]}}
  :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {org.clojure/test.check {:mvn/version "0.9.0"}
-                              plumula/mimolette {:mvn/version "0.2.1"}}}
+                              plumula/mimolette {:mvn/version "0.2.1"}
+                              ^:depot/ignore org.clojure/tools.namespace {:mvn/version "0.2.11"}}}
            :test {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                           :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
                   :main-opts ["-m" "cognitect.test-runner"]}
@@ -22,8 +23,7 @@
            :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
            :nrepl-server {:extra-deps {cider/cider-nrepl {:mvn/version "0.21.1"}
                                        cider/piggieback {:mvn/version "0.4.1"}
-                                       com.bhauman/figwheel-main {:mvn/version "0.2.1"}
-                                       ^:depot/ignore org.clojure/tools.namespace {:mvn/version "0.2.11"}}
+                                       com.bhauman/figwheel-main {:mvn/version "0.2.1"}}
                           :main-opts ["-m" "nrepl.cmdline"
                                       "--middleware" "[cider.nrepl/cider-middleware,cider.piggieback/wrap-cljs-repl]"]}
            :outdated {:extra-deps {olical/depot {:mvn/version "1.8.2"}}

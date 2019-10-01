@@ -19,7 +19,7 @@
  :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {org.clojure/test.check {:mvn/version "0.9.0"}
                               plumula/mimolette {:mvn/version "0.2.1"}
-                              ^:depot/ignore org.clojure/tools.namespace {:mvn/version "0.2.11"}}}
+                              org.clojure/tools.namespace {:mvn/version "0.3.1"}}}
            :test {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                           :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
                   :main-opts ["-m" "cognitect.test-runner"]}

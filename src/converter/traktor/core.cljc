@@ -95,11 +95,12 @@
 
 (defn item->entry
   [process-instant {:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album
-                        ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
-                        ::u/tempos ::u/markers]}]
+                           ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
+                           ::u/tempos ::u/markers]}]
   {:tag :ENTRY
    ; naive solution for now - just use process-instant for all items
-   ; slightly less naive solution - calc hash of items on both sides, then filter using hash1 != hash2, and then use process-instant for those items only
+   ; slightly less naive solution - calc hash of items on both sides, then filter 
+   ; using hash1 != hash2, and then use process-instant for those items only
    :attrs (cond-> {:MODIFIED_DATE (tick/date process-instant)
                    :MODIFIED_TIME (tick/seconds (tick/between (tick/truncate process-instant :days) process-instant))}
             title (assoc :TITLE title)
@@ -118,8 +119,8 @@
                                                                         total-time (assoc :PLAYTIME total-time))})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM bpm}})
-              markers (concat (map tc/marker->cue markers)
-                              (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
+              (or tempos markers) (concat (map tc/marker->cue (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers)))
+                                          (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
 
 (defn equiv-tempos?
   [entry-z item]

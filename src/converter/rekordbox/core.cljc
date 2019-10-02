@@ -39,8 +39,8 @@
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [visible-markers (remove um/hidden-marker? markers)
-        hidden-markers (filter um/hidden-marker? markers)
+  (let [visible-markers (um/visible-markers markers)
+        hidden-markers (um/hidden-markers markers)
         position-marks-z (zx/xml-> track-z :POSITION_MARK)
         position-marks-hot-cue-z (remove (comp rp/memory-cue? zip/node) position-marks-z)
         position-marks-memory-cue-z (filter (comp rp/memory-cue? zip/node) position-marks-z)

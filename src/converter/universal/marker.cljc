@@ -40,7 +40,39 @@
     (assoc $ :gen (fn [] (gen/fmap #((comp end-for-other-markers
                                            end-for-loop-markers) %) (s/gen $))))))
 
+(defn marker-of-type?
+  [marker & marker-types]
+  (contains? (set marker-types) (::type marker)))
+
 ; TODO think of a better name
 (defn hidden-marker?
   [marker]
   (= "-1" (::num marker)))
+
+(defn hidden-markers
+  [markers]
+  (filter hidden-marker? markers))
+
+(defn visible-markers
+  [markers]
+  (remove hidden-marker? markers))
+
+(defn- matching-markers?
+  "Returns true if the markers are matching (on type, start and end)."
+  [m1 m2]
+  (let [keys [::type ::start ::end]]
+    (= (select-keys m1 keys)
+       (select-keys m2 keys))))
+
+(defn- matching-visible-marker?
+  "Returns true if there is at least one visible marker matching the hidden marker."
+  [markers hidden-marker]
+  ; TODO ideally short-circuit when the first match is found
+  (not-empty (filter #(matching-markers? % hidden-marker)
+                     (visible-markers markers))))
+
+(defn hidden-markers-without-matching-visible-marker
+  "Returns the hidden markers that don't have a matching non-hidden marker."
+  [markers]
+  (remove (partial matching-visible-marker? markers)
+          (hidden-markers markers)))

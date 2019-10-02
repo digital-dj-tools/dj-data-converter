@@ -44,11 +44,12 @@
   "Returns an item with markers distinct by num, except for hidden markers."
   [item]
   (if (::markers item)
-    (update item ::markers #(vec (concat (distinct-by ::um/num (remove um/hidden-marker? %))
-                                         (filter um/hidden-marker? %))))
+    (update item ::markers #(vec (concat (distinct-by ::um/num (um/visible-markers %))
+                                         (um/hidden-markers %))))
     item))
 
 (defn tempos->grid-markers
+  "Returns an item with a hidden grid marker created for each tempo."
   [{:keys [::tempos] :as item}]
   (reduce #(update %1 ::markers
                    (fn [markers tempo] (conj markers {::um/name ""
@@ -59,33 +60,35 @@
           item
           tempos))
 
-(defn remove-grid-markers
-  "Returns an item with all grid markers removed if the item doesn't contain a bpm, 
-  otherwise an item with all hidden grid markers removed."
-  [item]
+(defn filter-markers
+  [item & marker-types]
   (if (::markers item)
-    (update item ::markers #(vec (remove (fn [marker] (and
-                                                       (or (not (::bpm item)) (um/hidden-marker? marker))
-                                                       (= ::um/type-grid (::um/type marker)))) %)))
+    (assoc item
+           ::markers
+           (vec (filter #(apply um/marker-of-type? % marker-types) (::markers item))))
     item))
 
+(defn remove-markers
+  [item & marker-types]
+  (if (::markers item)
+    (assoc item
+           ::markers
+           (vec (remove #(apply um/marker-of-type? % marker-types) (::markers item))))
+    item))
+
+(defn marker->tempo
+  [bpm marker]
+  {::ut/inizio (::um/start marker)
+   ::ut/bpm bpm
+   ::ut/metro "4/4"
+   ::ut/battito "1"})
+
 (defn grid-markers->tempos
-  "Returns an item with a tempo created for each visible grid marker, if the item contains a bpm."
   [{:keys [::bpm ::markers] :as item}]
-  (as-> item $
-    (reduce #(update %1 ::tempos
-                     (fn [tempos marker] (if (and
-                                              (not (um/hidden-marker? marker))
-                                              bpm
-                                              (= ::um/type-grid (::um/type marker)))
-                                           (vec (conj tempos {::ut/inizio (::um/start marker)
-                                                              ::ut/bpm bpm
-                                                              ::ut/metro "4/4"
-                                                              ::ut/battito "1"}))
-                                           tempos)) %2)
-            $
-            markers)
-    (map/remove-nil $ ::tempos)))
+  (let [grid-markers (filter #(um/marker-of-type? % ::um/type-grid) markers)]
+    (if (and bpm (not-empty grid-markers))
+      (assoc item ::tempos (map (partial marker->tempo bpm) grid-markers))
+      item)))
 
 (defn sorted-tempos
   "Returns an item with tempos sorted by inizio."
@@ -99,31 +102,62 @@
   "Returns an item with bpm derived from the first tempo."
   [{:keys [::tempos] :as item}]
   (if (not-empty tempos)
-    (assoc item ::bpm (::ut/bpm (first tempos))) ; TODO could take average, if bpm's were numeric
+    (assoc item ::bpm (::ut/bpm (first tempos)))
     item))
 
 (defn assert-tempo-and-grid-marker-counts
   [{:keys [::tempos ::markers] :as item}]
   (assert (= (count tempos)
-             (count (filter #(= ::um/type-grid (::um/type %)) markers))))
+             (count (filter #(um/marker-of-type? % ::um/type-grid) markers))))
   item)
 
+(defn item-from-traktor
+  [item]
+  ((comp
+    #(assoc % ::comments "from-traktor")
+    assert-tempo-and-grid-marker-counts
+    ; TODO map/remove-empty is not working for some reason, tests fail..
+    ; #(map/remove-empty % ::markers)
+    #(if (empty? (::markers %)) (dissoc % ::markers))
+    sorted-tempos
+    grid-markers->tempos
+    #(dissoc % ::tempos)
+    sorted-markers
+    distinct-markers
+    #(if-not (::bpm item) (remove-markers % ::um/type-grid) %))
+   item))
+
+(defn item-from-rekordbox
+  [item]
+  ((comp
+    #(assoc % ::comments "from-rekordbox")
+    ; TODO map/remove-empty is not working for some reason, tests fail..
+    ; #(map/remove-empty % ::markers ::tempos)
+    #(if (empty? (::tempos %)) (dissoc % ::tempos))
+    #(if (empty? (::markers %)) (dissoc % ::markers))
+    ; TODO add a hidden marker of type cue at first tempo inizio, this is typical
+    bpm-from-tempos
+    sorted-tempos
+    #(if (empty? (::tempos %)) (dissoc % ::bpm) %)
+    sorted-markers
+    distinct-markers
+    #(filter-markers % ::um/type-cue ::um/type-loop))
+   item))
+
+(def item-from-traktor-spec
+  (spec/with-gen-fmap-spec
+    (std/spec {:name ::item :spec item})
+    item-from-traktor))
+
+(def item-from-rekordbox-spec
+  (spec/with-gen-fmap-spec
+    (std/spec {:name ::item :spec item})
+    item-from-rekordbox))
+
 (def item-spec
-  (as->
-   (std/spec
-    {:name ::item
-     :spec item})
-   $
-    (assoc $ :gen (fn [] (gen/fmap #((comp
-                                      assert-tempo-and-grid-marker-counts
-                                      bpm-from-tempos
-                                      sorted-tempos
-                                      grid-markers->tempos
-                                      sorted-markers
-                                      tempos->grid-markers ; TODO a tempo might not have a corresponding grid marker
-                                      distinct-markers
-                                      remove-grid-markers) %) (s/gen $))))
-    (spec/remove-empty-spec $ ::tempos ::markers)))
+  (st/spec
+   (s/or :item-from-traktor item-from-traktor-spec
+         :item-from-rekordbox item-from-rekordbox-spec)))
 
 (def library
   ; we want a lazy seq for the collection (it can be large) 
@@ -136,14 +170,14 @@
     :spec library}))
 
 (defn- marker-matching-tempo?
-  [tempo marker] 
+  [tempo marker]
   (and (= (::ut/inizio tempo) (::um/start marker))
        (= ::um/type-grid (::um/type marker))))
 
 (defn tempos-without-matching-markers
-  "Returns the tempos without a matching marker, as in the tempos whose inizio doesn't have a matching non-grid marker start"
+  "Returns the tempos without a matching marker, as in the tempos whose inizio doesn't have a matching grid marker start"
   [tempos markers]
   ; TODO report warning if tempo bpm differs from item bpm
-  (filter 
-   #(empty? (filter (fn [marker] (marker-matching-tempo? % marker)) markers)) 
+  (filter
+   #(empty? (filter (fn [marker] (marker-matching-tempo? % marker)) markers))
    tempos))

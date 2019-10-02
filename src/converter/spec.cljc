@@ -57,11 +57,6 @@
   (->XmlZipSpec spec))
 
 ; TODO spec is assumed to be a spec-tools record
-(defn remove-empty-spec
-  [spec & ks]
-  (assoc spec :gen (fn [] (gen/fmap #(apply map/remove-empty % ks) (s/gen spec)))))
-
-; TODO spec is assumed to be a spec-tools record
 (defn such-that-spec
   ([spec pred]
    (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec)))))

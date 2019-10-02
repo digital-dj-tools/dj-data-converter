@@ -37,8 +37,8 @@
 
 (def entry
   {:tag (s/spec #{:ENTRY})
-   :attrs {:MODIFIED_DATE ::time/date
-           :MODIFIED_TIME (s/int-in 0 86400)
+   :attrs {(std/opt :MODIFIED_DATE) ::time/date
+           (std/opt :MODIFIED_TIME) (s/int-in 0 86400)
            (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat

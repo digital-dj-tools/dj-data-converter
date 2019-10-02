@@ -110,7 +110,7 @@
    :attrs {(std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
-                  :location location-spec
+                  :location (s/? location-spec)
                   :album (s/? (std/spec {:name ::album
                                          :spec {:tag (s/spec #{:ALBUM})
                                                 :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
@@ -220,8 +220,14 @@
                  cues-z
                  (::u/markers item)))))
 
+; TODO would rather use data.zip.xml api, but spec/such-that-spec can't 
+; currently be wrapped around spec/xml-zip-spec
+(defn entry-has-location?
+  [entry]
+  (= :LOCATION (-> entry :content first :tag)))
+
 (s/fdef entry->item
-  :args (s/cat :entry (spec/xml-zip-spec entry-spec))
+  :args (s/cat :entry (spec/xml-zip-spec (spec/such-that-spec entry-spec entry-has-location? 10)))
   :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
         (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
               info-z (zx/xml1-> entry-z :INFO)
@@ -278,7 +284,7 @@
   (if (xml/xml? nml)
     (let [nml-z (zip/xml-zip nml)
           collection-z (zx/xml1-> nml-z :COLLECTION)]
-      {::u/collection (map entry->item (zx/xml-> collection-z :ENTRY))})
+      {::u/collection (map entry->item (zx/xml-> collection-z :ENTRY [:LOCATION]))})
     nml))
 
 (def nml

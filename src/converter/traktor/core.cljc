@@ -94,6 +94,8 @@
   [location-z]
   (not (string/blank? (zx/attr location-z :FILE))))
 
+; TODO would rather use data.zip.xml api all the way down, 
+; but spec/such-that-spec can't currently be wrapped around spec/xml-zip-spec
 (defn location-file-is-not-blank?
   [location]
   (location-z-file-is-not-blank? (zip/xml-zip location)))
@@ -139,7 +141,9 @@
                                                :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
                   :loopinfo (s/? (std/spec {:name ::loopinfo
                                             :spec {:tag (s/spec #{:LOOPINFO})}}))
-                  :cue (s/* tc/cue-spec))})
+                  :cue (s/* tc/cue-spec)
+                  :stems (s/* (std/spec {:name ::stems
+                                         :spec {:tag (s/spec #{:STEMS})}})))})
 
 (def entry-spec
   (std/spec
@@ -292,7 +296,15 @@
    :content [{:tag :COLLECTION
               :content (map (if progress (progress item->entry) item->entry) collection)}]})
 
-; returns clean entries from the collection
+(defn nth-entry
+  [nml index]
+  (-> nml
+      zip/xml-zip
+      (zx/xml1-> :COLLECTION)
+      (zx/xml-> :ENTRY)
+      (nth index)
+      zip/node))
+
 (defn entries-z
   [collection-z]
   (filter #(and (location-z %)

@@ -119,8 +119,8 @@
                                                                         total-time (assoc :PLAYTIME total-time))})
               bpm (conj {:tag :TEMPO
                          :attrs {:BPM bpm}})
-              (or tempos markers) (concat (map tc/marker->cue (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers)))
-                                          (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
+              markers (concat (map tc/marker->cue (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers))))
+              tempos (concat (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))})
 
 (defn equiv-tempos?
   [entry-z item]

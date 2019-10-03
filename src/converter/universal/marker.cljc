@@ -67,9 +67,7 @@
 (defn- matching-visible-marker?
   "Returns true if there is at least one visible marker matching the hidden marker."
   [markers hidden-marker]
-  ; TODO ideally short-circuit when the first match is found
-  (not-empty (filter #(matching-markers? % hidden-marker)
-                     (visible-markers markers))))
+  (some #(matching-markers? % hidden-marker) (visible-markers markers)))
 
 (defn hidden-markers-without-matching-visible-marker
   "Returns the hidden markers that don't have a matching non-hidden marker."

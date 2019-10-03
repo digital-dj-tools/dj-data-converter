@@ -170,14 +170,18 @@
     :spec library}))
 
 (defn- marker-matching-tempo?
-  [tempo marker]
+  "Returns true if the marker is a grid marker that matches the tempo (on tempo inizo to marker start)"
+  [marker tempo]
   (and (= (::ut/inizio tempo) (::um/start marker))
        (= ::um/type-grid (::um/type marker))))
+
+(defn matching-tempo?
+  "Returns true if there is at least one marker matching the tempo."
+  [markers tempo]
+  (some #(marker-matching-tempo? % tempo) markers))
 
 (defn tempos-without-matching-markers
   "Returns the tempos without a matching marker, as in the tempos whose inizio doesn't have a matching grid marker start"
   [tempos markers]
   ; TODO report warning if tempo bpm differs from item bpm
-  (filter
-   #(empty? (filter (fn [marker] (marker-matching-tempo? % marker)) markers))
-   tempos))
+  (remove (partial matching-tempo? markers) tempos))

@@ -78,10 +78,10 @@
                                      ::um/type-loop (rekordbox-colours ::orange)})
 
 (defn marker-type->position-mark
-  [{:keys [::um/type]} position-mark _]
+  [memory-cue? {:keys [::um/type]} position-mark _]
   (as-> position-mark $
     (assoc $ :Type (marker-type->position-mark-type type))
-    (if (memory-cue? position-mark)
+    (if (not memory-cue?)
       (apply assoc $ (reduce-kv #(conj %1 %3 ((marker-type->rekordbox-colours type) %2))
                                 []
                                 [:Red :Green :Blue]))
@@ -118,16 +118,17 @@
       (#(merge {::um/end (::um/start %1)} %1))))
 
 (s/fdef marker->position-mark
-  :args (s/cat :marker um/marker-spec :hotcue? boolean?)
+  :args (s/cat :marker um/marker-spec :memory-cue? boolean?)
   :ret position-mark-spec
-  :fn (fn equiv? [{{conformed-marker :marker conformed-hotcue? :hotcue?} :args
+  :fn (fn equiv? [{{conformed-marker :marker conformed-memory-cue? :memory-cue?} :args
                    conformed-position-mark :ret}]
         (let [marker (s/unform um/marker-spec conformed-marker)
-              hotcue? (s/unform boolean? conformed-hotcue?)
+              memory-cue? (s/unform boolean? conformed-memory-cue?)
               position-mark (s/unform position-mark-spec conformed-position-mark)]
-          (if hotcue?
+          (if memory-cue?
             (= "-1" (-> position-mark :attrs :Num))
-            (= (::um/num marker) (-> position-mark :attrs :Num))))))
+            (and (= (::um/num marker) (-> position-mark :attrs :Num))
+                 (= (get (marker-type->rekordbox-colours (::um/type marker)) 0) (-> position-mark :attrs :Red)))))))
 
 (defn marker->position-mark
   ([marker memory-cue?]
@@ -137,7 +138,7 @@
     :attrs (map/transform marker
                           (partial map/transform-key csk/->PascalCaseKeyword)
                           {::um/name (fn [o n k] (assoc n :Name name)) ; TODO fix this shit
-                           ::um/type marker-type->position-mark
+                           ::um/type (partial marker-type->position-mark memory-cue?)
                            ::um/end marker-end->position-mark
                            ::um/num #(assoc %2 :Num (if memory-cue? "-1" (%3 %1)))})}))
 

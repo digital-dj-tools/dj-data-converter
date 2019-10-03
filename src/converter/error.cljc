@@ -30,7 +30,9 @@
   [{{:keys [problems]} :data :as error}]
   (cond->
    (-> error
+       (update-in [:via 0] dissoc :message :at)
        (update-in [:via 0 :data] dissoc :value)
+       (dissoc :trace)
        (update-in [:data] dissoc :value))
     problems (-> (update-in [:via 0 :data :problems] #(take 1 %))
                  (update-in [:via 0 :data :problems] (fn [problem] (map #(dissoc % :val) problem)))

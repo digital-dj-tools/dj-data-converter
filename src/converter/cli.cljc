@@ -9,7 +9,9 @@
    [converter.config :as config]
    [converter.app :as app]
    [converter.error :as err]
-   [converter.xml])
+   [converter.xml]
+   #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)] 
+      :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)]))
   #?(:clj (:gen-class)))
 
 (def option-specs
@@ -75,14 +77,16 @@
 #?(:clj
    (defn process
      [edition arguments options]
+     (tufte/add-basic-println-handler! {})
      (try
        (let [config (config/arguments->config arguments)]
          (with-open [reader (io/reader (:input-file arguments))
                      writer (io/writer (output-file arguments config))]
-           (as-> reader $
-             (xml/parse $ :skip-whitespace true)
-             (app/convert (app/converter edition config) config $)
-             (xml/emit $ writer))))
+           (profile {}
+            (as-> reader $
+              (p ::parse (xml/parse $ :skip-whitespace true))
+              (p ::convert (app/convert (app/converter edition config) config $))
+              (p ::emit (xml/emit $ writer))))))
        [0 "Conversion completed"]
        (catch Throwable t (do
                             (-> t
@@ -94,15 +98,17 @@
 #?(:cljs
    (defn process
      [edition arguments options]
+     (tufte/add-basic-println-handler! {})
      (try
        (let [config (config/arguments->config arguments)]
-         (as-> (:input-file arguments) $
-           (io/slurp $)
-           (xml/parse-str $)
-           (converter.xml/strip-whitespace $)
-           (app/convert (app/converter edition config) config $)
-           (xml/emit-str $)
-           (io/spit (output-file arguments config) $)))
+         (profile {}
+          (as-> (:input-file arguments) $
+            (p ::slurp (io/slurp $))
+            (p ::parse (xml/parse-str $))
+            (p ::strip-whitespace (converter.xml/strip-whitespace $))
+            (p ::convert (app/convert (app/converter edition config) config $))
+            (p ::emit (xml/emit-str $))
+            (p ::spit (io/spit (output-file arguments config) $)))))
        [0 "Conversion completed"]
        (catch :default e (do
                            (-> e

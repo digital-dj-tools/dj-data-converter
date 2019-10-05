@@ -5,6 +5,7 @@
   camel-snake-kebab {:mvn/version "0.4.0"}
   cljc.java-time {:mvn/version "0.1.6"}
   cljs-node-io {:mvn/version "1.1.2"}
+  com.taoensso/tufte {:mvn/version "2.1.0"}
   digital-dj-tools/utils {:git/url "https://github.com/digital-dj-tools/utils.git"
                           :sha "a6e97edb71bdba724779c5118811a3cc56d6c877"}
   org.clojure/data.xml {:mvn/version "0.2.0-alpha6"}

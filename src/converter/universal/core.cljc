@@ -118,7 +118,7 @@
     assert-tempo-and-grid-marker-counts
     ; TODO map/remove-empty is not working for some reason, tests fail..
     ; #(map/remove-empty % ::markers)
-    #(if (empty? (::markers %)) (dissoc % ::markers))
+    #(if (empty? (::markers %)) (dissoc % ::markers) %)
     sorted-tempos
     grid-markers->tempos
     #(dissoc % ::tempos)
@@ -133,8 +133,8 @@
     #(assoc % ::comments "from-rekordbox")
     ; TODO map/remove-empty is not working for some reason, tests fail..
     ; #(map/remove-empty % ::markers ::tempos)
-    #(if (empty? (::tempos %)) (dissoc % ::tempos))
-    #(if (empty? (::markers %)) (dissoc % ::markers))
+    #(if (empty? (::tempos %)) (dissoc % ::tempos) %)
+    #(if (empty? (::markers %)) (dissoc % ::markers) %)
     ; TODO add a hidden marker of type cue at first tempo inizio, this is typical
     bpm-from-tempos
     sorted-tempos

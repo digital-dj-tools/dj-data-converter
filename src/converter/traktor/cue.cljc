@@ -132,7 +132,7 @@
    :attrs {:NAME "[djdc]"
            :TYPE (type-kw->type-num ::um/type-grid)
            :START (seconds->millis start)
-           :LEN 0
+           :LEN 0.0
            :HOTCUE "-1"}})
 
 (defn cue-tagged?

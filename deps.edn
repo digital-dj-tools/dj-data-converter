@@ -23,9 +23,18 @@
                               org.clojure/tools.namespace {:mvn/version "0.3.1"}}}
            :test {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
                                                           :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
-                  :main-opts ["-m" "cognitect.test-runner"]}
+                  :main-opts ["-m" "cognitect.test-runner"
+                              "-e" ":profile"]}
+           :profile {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
+                                                             :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
+                     :main-opts ["-m" "cognitect.test-runner"
+                                 "-i" ":profile"]}
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.7.0"}}
-                       :main-opts ["-m" "cljs-test-runner.main"]}
+                       :main-opts ["-m" "cljs-test-runner.main"
+                                   "-e" ":profile"]}
+           :profile-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.7.0"}}
+                          :main-opts ["-m" "cljs-test-runner.main"
+                                      "-i" ":profile"]}
            :compile-cljs {:main-opts ["-m" "cljs.main" "-co" "compile-opts.edn" "-c" "converter.cli"]}
            :nrepl-server {:extra-deps {cider/cider-nrepl {:mvn/version "0.21.1"}
                                        cider/piggieback {:mvn/version "0.4.1"}

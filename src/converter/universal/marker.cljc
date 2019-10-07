@@ -74,3 +74,8 @@
   [markers]
   (remove (partial matching-visible-marker? markers)
           (hidden-markers markers)))
+
+(defn matching-marker?
+  "Returns true if markers has at least one marker matching the marker."
+  [markers marker]
+  (some #(matching-markers? % marker) markers))

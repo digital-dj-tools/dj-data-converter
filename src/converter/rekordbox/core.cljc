@@ -76,7 +76,6 @@
   (cond-> []
     true (conj (rp/marker->position-mark marker (um/hidden-marker? marker)))
     (and (not (um/hidden-marker? marker))
-         (um/marker-of-type? marker ::um/type-cue) 
          (not (um/matching-marker? hidden-markers marker))) (conj (rp/marker->position-mark-tagged marker true))))
 
 (defn item->track

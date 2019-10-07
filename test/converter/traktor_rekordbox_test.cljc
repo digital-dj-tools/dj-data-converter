@@ -9,8 +9,7 @@
    [converter.config :as config]
    [converter.test-utils :as test]
    [converter.universal.core :as u]
-   [plumula.mimolette.alpha :refer [defspec-test]]
-   [tick.alpha.api :as tick]))
+   [plumula.mimolette.alpha :refer [defspec-test]]))
 
 (defspec traktor-rekordbox-round-trip-library-equality
   10
@@ -19,8 +18,8 @@
                (as-> library $
                  (test/traktor-round-trip config $)
                  (test/rekordbox-round-trip config $)
-                 (is (= ((comp test/library-equiv-rekordbox test/library-equiv-traktor) library)
-                        ((comp test/library-equiv-rekordbox test/library-equiv-traktor) $))))))
+                 (is (= ((comp test/library-equiv-traktor test/library-equiv-rekordbox) library)
+                        ((comp test/library-equiv-traktor test/library-equiv-rekordbox) $))))))
 
 (defspec rekordbox-traktor-round-trip-library-equality
   10

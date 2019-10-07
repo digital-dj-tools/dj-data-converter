@@ -80,6 +80,7 @@
       (process edition arguments options (config/arguments->config arguments)))
      ([edition arguments options config]
       (tufte/add-basic-println-handler! {})
+      (tufte/set-min-level! (or (:profile-min-level options) 6))
       (try
         (with-open [reader (io/reader (:input-file arguments))
                     writer (io/writer (output-file arguments config))]
@@ -102,6 +103,7 @@
       (process edition arguments options (config/arguments->config arguments)))
      ([edition arguments options config]
       (tufte/add-basic-println-handler! {})
+      (tufte/set-min-level! (or (:profile-min-level options) 6))
       (try
         (profile {}
                  (as-> (:input-file arguments) $

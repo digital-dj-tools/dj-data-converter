@@ -39,7 +39,7 @@
 (deftest ^:profile rekordbox->traktor
   (let [result (cli/process app/basic-edition
                             arguments
-                            {}
+                            {:profile-min-level 0}
                             config)]
     (is (= 0 (first result)))))
 

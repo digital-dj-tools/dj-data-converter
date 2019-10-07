@@ -70,11 +70,13 @@
 
 ; TODO move to position-mark ns?
 (defn marker->position-marks
-  [marker]
+  [hidden-markers marker]
   (cond-> []
     true (conj (rp/marker->position-mark marker (um/hidden-marker? marker)))
-    ; TODO don't add a tagged mark if the item has a hidden cue marker with the same start
-    (not (um/hidden-marker? marker)) (conj (rp/marker->position-mark-tagged marker true))))
+    (and (not (um/hidden-marker? marker))
+         (um/marker-of-type? marker ::um/type-cue) 
+         (not (um/matching-marker? hidden-markers marker))) (conj (rp/marker->position-mark-tagged marker true))
+    ))
 
 (defn item->track
   [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
@@ -86,7 +88,7 @@
      bpm (assoc :AverageBpm bpm))
    :content (cond-> []
               tempos (concat (map rt/item-tempo->tempo tempos))
-              markers (concat (reduce #(concat %1 (marker->position-marks %2)) [] markers)))})
+              markers (concat (reduce #(concat %1 (marker->position-marks (um/hidden-markers markers) %2)) [] markers)))})
 
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]

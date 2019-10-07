@@ -6,7 +6,9 @@
    [converter.spec :as spec]
    [converter.traktor.core :as t]
    [converter.xml :as xml]
-   [spec-tools.core :as st]))
+   [spec-tools.core :as st]
+   #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
+      :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
 
 (defprotocol Converter
   (input-spec [this config])
@@ -66,6 +68,6 @@
         library-spec (library-spec converter)
         output-spec (output-spec converter config)]
     (as-> xml $
-      (spec/decode! input-spec $ spec/string-transformer)
-      (spec/decode! library-spec $ spec/xml-transformer)
-      (st/encode output-spec $ spec/xml-transformer))))
+      (p ::decode-1 (spec/decode! input-spec $ spec/string-transformer))
+      (p ::decode-2 (spec/decode! library-spec $ spec/xml-transformer))
+      (p ::encode (st/encode output-spec $ spec/xml-transformer)))))

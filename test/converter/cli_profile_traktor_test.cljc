@@ -10,6 +10,7 @@
    [converter.cli :as cli]
    [converter.cli-profile :as profile]
    [converter.config :as config]
+   [converter.spec :as spec]
    [converter.str :as str]
    [converter.traktor.core :as t]
    [converter.universal.core :as u]))
@@ -28,8 +29,9 @@
   (profile/setup dir
                  input-file
                  (t/nml-spec config)
-                 u/item-from-traktor-spec
-                 1000)
+                 (spec/such-that-spec u/item-from-traktor-spec
+                                      u/item-contains-total-time? 100)
+                 100)
   (f)
   (profile/teardown dir))
 

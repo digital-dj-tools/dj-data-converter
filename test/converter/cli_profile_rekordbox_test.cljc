@@ -11,6 +11,7 @@
    [converter.cli-profile :as profile]
    [converter.config :as config]
    [converter.rekordbox.core :as r]
+   [converter.spec :as spec]
    [converter.str :as str]
    [converter.universal.core :as u]
    [spec-tools.core :as st]))
@@ -29,8 +30,9 @@
   (profile/setup dir
                  input-file
                  (r/dj-playlists-spec config)
-                 u/item-from-rekordbox-spec
-                 1000)
+                 (spec/such-that-spec u/item-from-rekordbox-spec
+                                      u/item-contains-total-time? 100)
+                 100)
   (f)
   (profile/teardown dir))
 

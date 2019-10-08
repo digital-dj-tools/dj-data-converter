@@ -4,7 +4,7 @@
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.string :refer [split join]]
+   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.str :as str]
@@ -62,10 +62,10 @@
 (def location
   {:tag (s/spec #{:LOCATION})
    :attrs {:DIR ::nml-dir
-           :FILE ::str/not-blank-string
+           :FILE string?
            (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter
-                                      :not-drive-letter ::str/not-blank-string})
-           (std/opt :VOLUMEID) ::str/not-blank-string}})
+                                      :named string?})
+           (std/opt :VOLUMEID) string?}})
 
 (def location-spec
   (spec/such-that-spec
@@ -81,17 +81,27 @@
 
 (defn url->location
   [{:keys [:path]}]
-  (let [paths (rest (split path #"/"))
+  (let [paths (rest (string/split path #"/"))
         dirs (if (str/drive-letter? (first paths)) (rest (drop-last paths)) (drop-last paths))
         file (last paths)
         volume (if (str/drive-letter? (first paths)) (first paths))]
     {:tag :LOCATION
-     :attrs (cond-> {:DIR (str nml-path-sep (join nml-path-sep (map url-decode dirs)))
+     :attrs (cond-> {:DIR (str nml-path-sep (string/join nml-path-sep (map url-decode dirs)))
                      :FILE (url-decode file)}
               volume (assoc :VOLUME volume))}))
 
+(defn location-z-file-is-not-blank?
+  [location-z]
+  (not (string/blank? (zx/attr location-z :FILE))))
+
+; TODO would rather use data.zip.xml api all the way down, 
+; but spec/such-that-spec can't currently be wrapped around spec/xml-zip-spec
+(defn location-file-is-not-blank?
+  [location]
+  (location-z-file-is-not-blank? (zip/xml-zip location)))
+
 (s/fdef location->url
-  :args (s/cat :location-z (spec/xml-zip-spec location-spec))
+  :args (s/cat :location-z (spec/xml-zip-spec (spec/such-that-spec location-spec location-file-is-not-blank? 10)))
   :ret ::url/url)
 
 (defn location->url
@@ -102,7 +112,7 @@
     (apply url (as-> [] $
                  (conj $ "file://localhost")
                  (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
-                 (reduce conj $ (map url-encode (split dir nml-path-sep-regex)))
+                 (reduce conj $ (map url-encode (string/split dir nml-path-sep-regex)))
                  (conj $ (url-encode file))))))
 
 (def entry
@@ -110,7 +120,7 @@
    :attrs {(std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
-                  :location location-spec
+                  :location (s/? location-spec)
                   :album (s/? (std/spec {:name ::album
                                          :spec {:tag (s/spec #{:ALBUM})
                                                 :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
@@ -131,7 +141,9 @@
                                                :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
                   :loopinfo (s/? (std/spec {:name ::loopinfo
                                             :spec {:tag (s/spec #{:LOOPINFO})}}))
-                  :cue (s/* tc/cue-spec))})
+                  :cue (s/* tc/cue-spec)
+                  :stems (s/* (std/spec {:name ::stems
+                                         :spec {:tag (s/spec #{:STEMS})}})))})
 
 (def entry-spec
   (std/spec
@@ -220,8 +232,19 @@
                  cues-z
                  (::u/markers item)))))
 
+; returns the entry location, or nil if it doesn't have a location
+(defn location-z
+  [entry-z]
+  (zx/xml1-> entry-z :LOCATION))
+
+; TODO would rather use data.zip.xml api all the way down, 
+; but spec/such-that-spec can't currently be wrapped around spec/xml-zip-spec
+(defn entry-has-location?
+  [entry]
+  (location-z (zip/xml-zip entry)))
+
 (s/fdef entry->item
-  :args (s/cat :entry (spec/xml-zip-spec entry-spec))
+  :args (s/cat :entry (spec/xml-zip-spec (spec/such-that-spec entry-spec entry-has-location? 10)))
   :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
         (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
               info-z (zx/xml1-> entry-z :INFO)
@@ -273,12 +296,27 @@
    :content [{:tag :COLLECTION
               :content (map (if progress (progress item->entry) item->entry) collection)}]})
 
+(defn nth-entry
+  [nml index]
+  (-> nml
+      zip/xml-zip
+      (zx/xml1-> :COLLECTION)
+      (zx/xml-> :ENTRY)
+      (nth index)
+      zip/node))
+
+(defn entries-z
+  [collection-z]
+  (filter #(and (location-z %)
+                (location-z-file-is-not-blank? (location-z %)))
+          (zx/xml-> collection-z :ENTRY)))
+
 (defn nml->library
   [_ nml]
   (if (xml/xml? nml)
     (let [nml-z (zip/xml-zip nml)
           collection-z (zx/xml1-> nml-z :COLLECTION)]
-      {::u/collection (map entry->item (zx/xml-> collection-z :ENTRY))})
+      {::u/collection (map entry->item (entries-z collection-z))})
     nml))
 
 (def nml

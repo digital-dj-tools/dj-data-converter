@@ -38,26 +38,34 @@
 (def nml-path-sep-regex
   #"/:")
 
+(def nml-dir-observed-volumes
+  #{"Harddisk" "Macintosh HD"})
+
 (defn nml-dir-gen
   []
-  (gen/fmap #(->> % (interleave (repeat nml-path-sep)) (apply str)) (gen/vector (str/not-blank-string-with-whitespace-gen))))
+  (->> (gen/tuple
+        ; sometimes see a volume in location dir on macos (don't know why)
+        (gen/one-of [(gen/elements nml-dir-observed-volumes)
+                     (gen/elements #{[]})])
+        (gen/vector (str/not-blank-string-with-whitespace-gen)))
+       (gen/fmap #(as-> % $
+                    (flatten $)
+                    (interleave (repeat nml-path-sep) $)
+                    (vec $)
+                    (conj $ nml-path-sep)
+                    (apply str $)))))
 
 (s/def ::nml-dir
   (s/with-gen
     string? ; TODO and with cat+regex specs
     (fn [] (nml-dir-gen))))
 
-(s/def ::nml-path
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (gen/fmap (partial apply str)
-                     (gen/tuple
-                      ; drive letter (optional)
-                      (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
-                      ; dir
-                      (nml-dir-gen)
-                      ; filename
-                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-with-whitespace-gen)))))))
+(defn nml-dirs
+  [dir]
+  (let [paths (rest (string/split dir nml-path-sep-regex))]
+    (if (contains? nml-dir-observed-volumes (first paths))
+      (rest paths)
+      paths)))
 
 (def location
   {:tag (s/spec #{:LOCATION})
@@ -112,7 +120,7 @@
     (apply url (as-> [] $
                  (conj $ "file://localhost")
                  (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
-                 (reduce conj $ (map url-encode (string/split dir nml-path-sep-regex)))
+                 (reduce conj $ (map url-encode (nml-dirs dir)))
                  (conj $ (url-encode file))))))
 
 (def entry

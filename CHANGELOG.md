@@ -6,7 +6,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Include app version number in comment field of each item (to be used by grid correction algorithm)
 - Convert from Rekordbox to Traktor
 - Copy additional tag metadata when converting (e.g. year)
 - Convert color tags
@@ -14,6 +13,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Convert from Rekordbox to Serato DJ
 - Support the case where an entry has a tempo, but no cues (Traktor to Rekordbox)
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting
+
+## 0.3.4 (2019-10-08)
+### Added
+- Convert Traktor import date to Rekordbox date added
+- Add optional stems in Traktor entry spec
+### Fixed
+- Filter entries with location and non-blank location file, so that only these Traktor entries are converted [#21](https://github.com/digital-dj-tools/dj-data-converter/issues/21)
+- Correct Rekordbox hot cue colours, match Rekordbox green for cues
 
 ## 0.3.3 (2019-08-02)
 ### Added

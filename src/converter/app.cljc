@@ -36,10 +36,8 @@
     (try
       (o/correct item (-> url url/url->path mp3/parse))
     ; TODO don't print, conj report with any error from mp3-parser, e.g. file not found
-      #?(:clj (catch Throwable t (do (prn {:url (str url)
-                                           :error (ex-message t)}) item))
-         :cljs (catch :default e (do (prn {:url (str url)
-                                           :error (ex-message e)}) item))))))
+      #?(:clj (catch Throwable t (do (println (ex-message t)) item))
+         :cljs (catch :default e (do (println (ex-message e)) item))))))
 
 (s/fdef convert
   :args (s/cat :config #{{:converter traktor->rekordbox}}

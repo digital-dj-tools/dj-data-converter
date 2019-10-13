@@ -9,8 +9,11 @@
 
 (defprotocol TraktorRekordboxConverter
   (input-spec [this])
+  (input-string-transformer [this])
+  (input-xml-transformer [this])
   (library-spec [this])
-  (output-spec [this config]))
+  (output-spec [this progress])
+  (output-xml-transformer [this]))
 
 (def traktor->rekordbox
   (reify
@@ -18,12 +21,21 @@
     (input-spec
       [this]
       (t/nml-spec))
+    (input-string-transformer
+      [this]
+      t/string-transformer)
+    (input-xml-transformer
+      [this]
+      t/xml-transformer)
     (library-spec
       [this]
       t/library-spec)
     (output-spec
       [this progress]
-      (r/dj-playlists-spec progress))))
+      (r/dj-playlists-spec progress))
+    (output-xml-transformer
+     [this]
+     r/xml-transformer)))
 
 (defn doto-prn
   [obj f]
@@ -31,16 +43,17 @@
 
 (s/fdef convert
   :args (s/cat :config #{{:converter traktor->rekordbox}}
-               :xml (spec/value-encoded-spec (t/nml-spec) spec/string-transformer))
-  :ret (spec/value-encoded-spec r/dj-playlists-spec spec/string-transformer))
+               :xml (spec/value-encoded-spec (t/nml-spec) t/string-transformer))
+  :ret (spec/value-encoded-spec r/dj-playlists-spec r/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert
   [config xml]
-  (let [input-spec (input-spec (:converter config))
-        library-spec (library-spec (:converter config))
-        output-spec (output-spec (:converter config) (:progress config))]
+  (let [converter (:converter config)
+        input-spec (input-spec converter)
+        library-spec (library-spec converter)
+        output-spec (output-spec converter (:progress config))]
     (as-> xml $
-      (spec/decode! input-spec $ spec/string-transformer)
-      (spec/decode! library-spec $ spec/xml-transformer)
-      (st/encode output-spec $ spec/xml-transformer))))
+      (spec/decode! input-spec $ (input-string-transformer converter))
+      (spec/decode! library-spec $ (input-xml-transformer converter))
+      (st/encode output-spec $ (output-xml-transformer converter)))))

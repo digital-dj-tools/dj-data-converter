@@ -38,6 +38,20 @@
                        {:type :date
                         :gen #(gen/fmap t/date (instant-gen))}))
 
+(defn date-str?
+ [format x]
+ (try (do
+        (jtld/parse x (jtf/of-pattern format))
+        true)
+      #?(:clj (catch Throwable t false)
+         :cljs (catch :default e false))))
+
+(defn date-str-spec
+  [format]
+  (st/spec (partial date-str? format)
+           {:type :string
+            :gen #(gen/fmap (comp (partial t/format (tf/formatter format)) t/date) (instant-gen))}))
+
 (defn clock-gen
   []
   (gen/fmap #(t/clock %) (instant-gen)))
@@ -49,12 +63,14 @@
 (s/def ::clock (s/with-gen clock? #(clock-gen)))
 
 (defn date->string
-  [format _ date]
-  (t/format (tf/formatter format) date))
+  [format _ x]
+  (if (date? x)
+    (t/format (tf/formatter format) x)
+    x))
 
 (defn string->date
-  [format _ str]
-  (if (string? str)
-    (-> str
+  [format _ x]
+  (if (string? x)
+    (-> x
         (jtld/parse (jtf/of-pattern format)))
-    str))
+    x))

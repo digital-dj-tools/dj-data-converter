@@ -8,6 +8,7 @@
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.str :as str]
+   [converter.time :as time]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
    [converter.universal.core :as u]
@@ -20,17 +21,23 @@
    [spec-tools.spec :as sts]
    [utils.map :as map]))
 
+(def nml-date-format "yyyy/M/d")
+
+(def xml-transformer
+  (spec/xml-transformer nml-date-format))
+
+(def string-transformer
+  (spec/string-transformer nml-date-format))
+
 (defn import-date->date-added
   [import-date]
-  ; FIXME horrible hack, will replace with string->date fn using a suitable clj(s) datetime parsing/formatting lib
-  (if (string? import-date)
-    (clojure.string/replace import-date "/" "-")
-    import-date))
+  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
+  (time/string->date nml-date-format nil import-date))
 
 (defn date-added->import-date
   [date-added]
-  ; FIXME horrible hack, will replace with date->string fn using a suitable clj(s) datetime parsing/formatting lib
-  (clojure.string/replace date-added "-" "/"))
+  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
+  (time/date->string nml-date-format nil date-added))
 
 (def nml-path-sep
   "/:")
@@ -102,7 +109,7 @@
   (location-z-file-is-not-blank? (zip/xml-zip location)))
 
 (s/fdef location->url
-  :args (s/cat :location-z (spec/xml-zip-spec (spec/such-that-spec location-spec location-file-is-not-blank? 10)))
+  :args (s/cat :location-z (spec/xml-zip-spec (spec/such-that-spec location-spec location-file-is-not-blank? 100)))
   :ret ::url/url)
 
 (defn location->url
@@ -131,7 +138,9 @@
                                         :spec {:tag (s/spec #{:INFO})
                                                :attrs {(std/opt :COMMENT) string?
                                                        (std/opt :GENRE) string?
-                                                       (std/opt :IMPORT_DATE) string?
+                                                       ; FIXME encoding to ::time/date won't work until this issue is fixed: 
+                                                       ; https://github.com/metosin/spec-tools/issues/183
+                                                       (std/opt :IMPORT_DATE) (time/date-str-spec nml-date-format)
                                                        (std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
@@ -245,7 +254,7 @@
   (location-z (zip/xml-zip entry)))
 
 (s/fdef entry->item
-  :args (s/cat :entry (spec/xml-zip-spec (spec/such-that-spec entry-spec entry-has-location? 10)))
+  :args (s/cat :entry (spec/xml-zip-spec (spec/such-that-spec entry-spec entry-has-location? 100)))
   :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
         (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
               info-z (zx/xml1-> entry-z :INFO)
@@ -255,7 +264,7 @@
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
            (= (and info-z (zx/attr info-z :COMMENT)) (::u/comments item))
            (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
-           (= (import-date->date-added (and info-z (zx/attr info-z :IMPORT_DATE))) (::u/date-added item))
+           (= (and info-z (zx/attr info-z :IMPORT_DATE)) (time/date->string nml-date-format nil (::u/date-added item)))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
            (equiv-tempo? entry-z item))))

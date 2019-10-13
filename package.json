@@ -18,6 +18,9 @@
     "scripts": "out/**/*.js"
   },
   "dependencies": {
+    "js-joda": "1.10.1",
+    "@js-joda/locale_en-us": "2.0.0",
+    "js-joda-timezone": "2.0.1",
     "file-uri-to-path": "^1.0.0",
     "source-map-support": "^0.5.9",
     "xmldom": "^0.1.27"

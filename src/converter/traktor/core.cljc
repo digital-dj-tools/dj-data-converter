@@ -10,6 +10,8 @@
    [converter.config :as config]
    [converter.time :as time]
    [converter.spec :as spec]
+   [converter.str :as str]
+   [converter.time :as time]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
    [converter.traktor.location :as tl]
@@ -26,17 +28,23 @@
    #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
       :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
 
+(def nml-date-format "yyyy/M/d")
+
+(def xml-transformer
+  (spec/xml-transformer nml-date-format))
+
+(def string-transformer
+  (spec/string-transformer nml-date-format))
+
 (defn import-date->date-added
   [import-date]
-  ; FIXME horrible hack, will replace with string->date fn using a suitable clj(s) datetime parsing/formatting lib
-  (if (string? import-date)
-    (string/replace import-date "/" "-")
-    import-date))
+  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
+  (time/string->date nml-date-format nil import-date))
 
 (defn date-added->import-date
   [date-added]
-  ; FIXME horrible hack, will replace with date->string fn using a suitable clj(s) datetime parsing/formatting lib
-  (string/replace date-added "-" "/"))
+  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
+  (time/date->string nml-date-format nil date-added))
 
 (def entry
   {:tag (s/spec #{:ENTRY})
@@ -45,7 +53,7 @@
            (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
-                  :location tl/location-spec
+                  :location (s/? tl/location-spec)
                   :album (s/? (std/spec {:name ::album
                                          :spec {:tag (s/spec #{:ALBUM})
                                                 :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
@@ -55,7 +63,9 @@
                                         :spec {:tag (s/spec #{:INFO})
                                                :attrs {(std/opt :COMMENT) string?
                                                        (std/opt :GENRE) string?
-                                                       (std/opt :IMPORT_DATE) string?
+                                                       ; FIXME encoding to ::time/date won't work until this issue is fixed: 
+                                                       ; https://github.com/metosin/spec-tools/issues/183
+                                                       (std/opt :IMPORT_DATE) (time/date-str-spec nml-date-format)
                                                        (std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
@@ -66,7 +76,9 @@
                                                :spec {:tag (s/spec #{:MUSICAL_KEY})}}))
                   :loopinfo (s/? (std/spec {:name ::loopinfo
                                             :spec {:tag (s/spec #{:LOOPINFO})}}))
-                  :cue (s/* tc/cue-spec))})
+                  :cue (s/* tc/cue-spec)
+                  :stems (s/* (std/spec {:name ::stems
+                                         :spec {:tag (s/spec #{:STEMS})}})))})
 
 (def entry-spec
   (std/spec
@@ -148,8 +160,19 @@
                   cues-z
                   markers)))))
 
+; returns the entry location, or nil if it doesn't have a location
+(defn location-z
+  [entry-z]
+  (zx/xml1-> entry-z :LOCATION))
+
+; TODO would rather use data.zip.xml api all the way down, 
+; but spec/such-that-spec can't currently be wrapped around spec/xml-zip-spec
+(defn entry-has-location?
+  [entry]
+  (location-z (zip/xml-zip entry)))
+
 (s/fdef entry->item
-  :args (s/cat :entry (spec/xml-zip-spec entry-spec))
+  :args (s/cat :entry (spec/xml-zip-spec (spec/such-that-spec entry-spec entry-has-location? 100)))
   :fn (fn equiv-item? [{{conformed-entry :entry} :args conformed-item :ret}]
         (let [entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
               info-z (zx/xml1-> entry-z :INFO)
@@ -159,7 +182,7 @@
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
            (= (and info-z (zx/attr info-z :COMMENT)) (::u/comments item))
            (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
-           (= (import-date->date-added (and info-z (zx/attr info-z :IMPORT_DATE))) (::u/date-added item))
+           (= (and info-z (zx/attr info-z :IMPORT_DATE)) (time/date->string nml-date-format nil (::u/date-added item)))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
            (equiv-tempos? entry-z item))))
@@ -204,12 +227,27 @@
                          (map (if progress (progress (partial item->entry process-instant)) (partial item->entry process-instant))
                               collection))}]})
 
+(defn nth-entry
+  [nml index]
+  (-> nml
+      zip/xml-zip
+      (zx/xml1-> :COLLECTION)
+      (zx/xml-> :ENTRY)
+      (nth index)
+      zip/node))
+
+(defn entries-z
+  [collection-z]
+  (filter #(and (location-z %)
+                (tl/location-z-file-is-not-blank? (location-z %)))
+          (zx/xml-> collection-z :ENTRY)))
+
 (defn nml->library
   [_ nml]
   (if (xml/xml? nml)
     (let [nml-z (zip/xml-zip nml)
           collection-z (zx/xml1-> nml-z :COLLECTION)]
-      {::u/collection (map entry->item (zx/xml-> collection-z :ENTRY))})
+      {::u/collection (map entry->item (entries-z collection-z))})
     nml))
 
 (def nml

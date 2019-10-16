@@ -77,17 +77,17 @@
 (defn traktor-round-trip
   [config library]
   (as-> library $
-    (st/encode (t/nml-spec config) $ spec/xml-transformer)
+    (st/encode (t/nml-spec config) $ t/xml-transformer)
     (xml/encode $)
     (xml/decode $)
-    (spec/decode! (t/nml-spec config) $ spec/string-transformer)
-    (spec/decode! t/library-spec $ spec/xml-transformer)))
+    (spec/decode! (t/nml-spec config) $ t/string-transformer)
+    (spec/decode! t/library-spec $ t/xml-transformer)))
 
 (defn rekordbox-round-trip
   [config library]
   (as-> library $
-    (st/encode (r/dj-playlists-spec config) $ spec/xml-transformer)
+    (st/encode (r/dj-playlists-spec config) $ r/xml-transformer)
     (xml/encode $)
     (xml/decode $)
-    (spec/decode! (r/dj-playlists-spec config) $ spec/string-transformer)
-    (spec/decode! r/library-spec $ spec/xml-transformer)))
+    (spec/decode! (r/dj-playlists-spec config) $ r/string-transformer)
+    (spec/decode! r/library-spec $ r/xml-transformer)))

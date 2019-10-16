@@ -12,8 +12,11 @@
 
 (defprotocol Converter
   (input-spec [this config])
+  (input-string-transformer [this])
+  (input-xml-transformer [this])
   (library-spec [this])
-  (output-spec [this config]))
+  (output-spec [this config])
+  (output-xml-transformer [this]))
 
 (def traktor->rekordbox
   (reify
@@ -21,12 +24,21 @@
     (input-spec
       [this config]
       (t/nml-spec config))
+    (input-string-transformer
+      [this]
+      t/string-transformer)
+    (input-xml-transformer
+      [this]
+      t/xml-transformer)
     (library-spec
       [this]
       t/library-spec)
     (output-spec
       [this config]
-      (r/dj-playlists-spec config))))
+      (r/dj-playlists-spec config))
+    (output-xml-transformer
+     [this]
+     r/xml-transformer)))
 
 (def rekordbox->traktor
   (reify
@@ -34,12 +46,21 @@
     (input-spec
       [this config]
       (r/dj-playlists-spec config))
+    (input-string-transformer
+      [this]
+      r/string-transformer)
+    (input-xml-transformer
+      [this]
+      r/xml-transformer)
     (library-spec
       [this]
       r/library-spec)
     (output-spec
       [this config]
-      (t/nml-spec config))))
+      (t/nml-spec config))
+    (output-xml-transformer
+     [this]
+     t/xml-transformer)))
 
 (defprotocol Edition
   (converter [this config]))
@@ -58,8 +79,8 @@
   :args (s/cat
          :converter #{traktor->rekordbox}
          :config (spec/such-that-spec config/config-spec #(= :traktor (:input %)))
-         :xml (spec/value-encoded-spec (t/nml-spec {}) spec/string-transformer))
-  :ret (spec/value-encoded-spec (r/dj-playlists-spec {}) spec/string-transformer))
+         :xml (spec/value-encoded-spec (t/nml-spec {}) t/string-transformer))
+  :ret (spec/value-encoded-spec (r/dj-playlists-spec {}) r/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert
@@ -68,6 +89,6 @@
         library-spec (library-spec converter)
         output-spec (output-spec converter config)]
     (as-> xml $
-      (p ::decode-1 (spec/decode! input-spec $ spec/string-transformer))
-      (p ::decode-2 (spec/decode! library-spec $ spec/xml-transformer))
-      (p ::encode (st/encode output-spec $ spec/xml-transformer)))))
+      (p ::decode-1 (spec/decode! input-spec $ (input-string-transformer converter)))
+      (p ::decode-2 (spec/decode! library-spec $ (input-xml-transformer converter)))
+      (p ::encode (st/encode output-spec $ (output-xml-transformer converter))))))

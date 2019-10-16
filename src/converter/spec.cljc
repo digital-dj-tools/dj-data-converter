@@ -23,23 +23,31 @@
   (let [conformed (st/conform! spec value transformer)]
     (s/unform spec conformed)))
 
-(def xml-transformer
-  (st/type-transformer
-   {:name :xml
-    :decoders (merge stt/string-type-decoders {:url url/string->url
-                                               :date (partial time/string->date "yyyy/M/d")})
-    :encoders (merge stt/string-type-encoders {:url stt/any->string
-                                               :date (partial time/date->string "yyyy/M/d")})
-    :default-encoder stt/any->any}))
+(defn xml-transformer
+  ([]
+   (xml-transformer "yyyy-MM-dd"))
+  ([date-format]
+   (st/type-transformer
+    {:name :xml
+     :decoders (merge stt/string-type-decoders {:url url/string->url
+                                                :date (partial time/string->date date-format)})
+     :encoders (merge stt/string-type-encoders {:url stt/any->string
+                                                :date (partial time/date->string date-format)})
+     :default-encoder stt/any->any})))
 
-(def string-transformer
-  (st/type-transformer
+(defn string-transformer
+  ([]
+   (string-transformer "yyyy-MM-dd"))
+  ([date-format]
+   (st/type-transformer
    {:name :string
     :decoders (merge stt/string-type-decoders {:url url/string->url
-                                               :date (partial time/string->date "yyyy/M/d")})
+                                               :date (partial time/string->date date-format)
+                                               })
     :encoders (merge stt/string-type-encoders {:url stt/any->string
-                                               :date (partial time/date->string "yyyy/M/d")})
-    :default-encoder stt/any->any}))
+                                               :date (partial time/date->string date-format)
+                                               })
+    :default-encoder stt/any->any})))
 
 ; this only works as long as it's not nested inside other data specs
 (defrecord XmlZipSpec [spec]

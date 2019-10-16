@@ -89,6 +89,6 @@
                 config (s/gen config/config-spec)]
                (as-> library $
                  (test/traktor-round-trip config $)
-                 (st/encode (t/nml-spec config) $ spec/xml-transformer)
-                 (is (= (st/encode (t/nml-spec config) library spec/xml-transformer)
+                 (st/encode (t/nml-spec config) $ t/xml-transformer)
+                 (is (= (st/encode (t/nml-spec config) library t/xml-transformer)
                         $)))))

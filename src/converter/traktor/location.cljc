@@ -15,10 +15,10 @@
 (def location
   {:tag (s/spec #{:LOCATION})
    :attrs {:DIR ::nml/nml-dir
-           :FILE ::str/not-blank-string
+           :FILE string?
            (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter
-                                      :not-drive-letter ::str/not-blank-string})
-           (std/opt :VOLUMEID) ::str/not-blank-string}})
+                                      :named string?})
+           (std/opt :VOLUMEID) string?}})
 
 (def location-spec
   (spec/such-that-spec
@@ -46,8 +46,18 @@
                      :FILE (url-decode file)}
               volume (assoc :VOLUME volume))}))
 
+(defn location-z-file-is-not-blank?
+  [location-z]
+  (not (string/blank? (zx/attr location-z :FILE))))
+
+; TODO would rather use data.zip.xml api all the way down, 
+; but spec/such-that-spec can't currently be wrapped around spec/xml-zip-spec
+(defn location-file-is-not-blank?
+  [location]
+  (location-z-file-is-not-blank? (zip/xml-zip location)))
+
 (s/fdef location->url
-  :args (s/cat :location-z (spec/xml-zip-spec location-spec))
+  :args (s/cat :location-z (spec/xml-zip-spec (spec/such-that-spec location-spec location-file-is-not-blank? 100)))
   :ret ::url/url)
 
 (defn location->url

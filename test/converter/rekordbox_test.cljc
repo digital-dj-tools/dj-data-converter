@@ -98,6 +98,6 @@
                (as-> library $
                  (test/rekordbox-round-trip config $)
                  (test/library-equiv-rekordbox $)
-                 (st/encode (r/dj-playlists-spec config) $ spec/xml-transformer)
-                 (is (= (st/encode (r/dj-playlists-spec config) (test/library-equiv-rekordbox library) spec/xml-transformer)
+                 (st/encode (r/dj-playlists-spec config) $ r/xml-transformer)
+                 (is (= (st/encode (r/dj-playlists-spec config) (test/library-equiv-rekordbox library) r/xml-transformer)
                         $)))))

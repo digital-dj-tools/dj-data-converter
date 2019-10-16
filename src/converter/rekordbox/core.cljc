@@ -10,6 +10,7 @@
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
    [converter.spec :as spec]
+   [converter.time :as time]
    [converter.url :as url]
    [converter.xml :as xml]
    [spec-tools.core :as st]
@@ -18,6 +19,12 @@
    [utils.map :as map]
    #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
       :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
+
+(def xml-transformer
+  (spec/xml-transformer))
+
+(def string-transformer
+  (spec/string-transformer))
 
 (def track-spec
   (std/spec
@@ -31,7 +38,7 @@
                    (std/opt :Album) string?
                    (std/opt :Genre) string?
                    (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)
-                   (std/opt :DateAdded) string?
+                   (std/opt :DateAdded) ::time/date
                    (std/opt :Comments) string?}
            :content (s/cat
                      :tempos (s/* (std/spec {:name ::tempo

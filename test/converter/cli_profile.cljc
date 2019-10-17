@@ -9,9 +9,17 @@
    [converter.config :as config]
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
+   [converter.str :as str]
    [converter.traktor.core :as t]
    [converter.universal.core :as u]
+   #?(:cljs [os :as os])
    [spec-tools.core :as st]))
+
+(defn tmpdir
+  []
+  (let [tmp #?(:clj (System/getProperty "java.io.tmpdir")
+               :cljs (.tmpdir os))]
+    (io/file tmp (gen/generate (str/not-blank-string-gen)))))
 
 (defn- collection
   [item-spec]
@@ -20,29 +28,29 @@
 
 #?(:clj
    (defn setup
-     [dir file spec item-spec n]
+     [dir file spec item-spec xml-transformer n]
      (.mkdir (io/file dir))
-     (with-open [writer (io/writer (str dir "/" file))]
+     (with-open [writer (io/writer (io/file dir file))]
        ; TODO make a library spec that doesn't have a collection
        (as-> u/library-spec $
          (s/gen $)
          (gen/generate $)
          (assoc $ ::u/collection (take n (collection item-spec)))
-         (st/encode spec $ spec/xml-transformer)
+         (st/encode spec $ xml-transformer)
          (xml/emit $ writer)))))
 
 #?(:cljs
    (defn setup
-     [dir file spec item-spec n]
+     [dir file spec item-spec xml-transformer n]
      (.mkdir (io/file dir))
      ; TODO make a library spec that doesn't have a collection
      (as-> u/library-spec $
        (s/gen $)
        (gen/generate $)
        (assoc $ ::u/collection (take n (collection item-spec)))
-       (st/encode spec $ spec/xml-transformer)
+       (st/encode spec $ xml-transformer)
        (xml/emit-str $)
-       (io/spit (str dir "/" file) $))))
+       (io/spit (io/file dir file) $))))
 
 (defn teardown
   [dir]

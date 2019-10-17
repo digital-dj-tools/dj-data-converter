@@ -13,15 +13,14 @@
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
    [converter.str :as str]
-   [converter.universal.core :as u]
-   [spec-tools.core :as st]))
+   [converter.universal.core :as u]))
 
-(def dir (str "/tmp/" (gen/generate (str/not-blank-string-gen))))
+(def dir (profile/tmpdir))
 
 (def input-file "cli-profile-rekordbox.xml")
 
-(def arguments {:input-file (str dir "/" input-file)
-                :output-file (str dir "/" "cli-profile-traktor.nml")})
+(def arguments {:input-file (str (io/file dir input-file))
+                :output-file (str (io/file dir "cli-profile-traktor.nml"))})
 
 (def config (config/arguments->config arguments))
 
@@ -32,6 +31,7 @@
                  (r/dj-playlists-spec config)
                  (spec/such-that-spec u/item-from-rekordbox-spec
                                       u/item-contains-total-time? 100)
+                 r/xml-transformer
                  100)
   (f)
   (profile/teardown dir))

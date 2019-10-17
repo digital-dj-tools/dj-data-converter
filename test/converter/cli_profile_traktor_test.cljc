@@ -15,12 +15,12 @@
    [converter.traktor.core :as t]
    [converter.universal.core :as u]))
 
-(def dir (str "/tmp/" (gen/generate (str/not-blank-string-gen))))
+(def dir (profile/tmpdir))
 
 (def input-file "cli-profile-traktor.nml")
 
-(def arguments {:input-file (str dir "/" input-file)
-                :output-file (str dir "/" "cli-profile-rekordbox.xml")})
+(def arguments {:input-file (str (io/file dir input-file))
+                :output-file (str (io/file dir "cli-profile-rekordbox.xml"))})
 
 (def config (config/arguments->config arguments))
 
@@ -31,6 +31,7 @@
                  (t/nml-spec config)
                  (spec/such-that-spec u/item-from-traktor-spec
                                       u/item-contains-total-time? 100)
+                 t/xml-transformer
                  100)
   (f)
   (profile/teardown dir))

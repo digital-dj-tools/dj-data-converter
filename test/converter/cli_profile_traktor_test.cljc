@@ -12,10 +12,11 @@
    [converter.config :as config]
    [converter.spec :as spec]
    [converter.str :as str]
+   [converter.test-utils :as test]
    [converter.traktor.core :as t]
    [converter.universal.core :as u]))
 
-(def dir (profile/tmpdir))
+(def dir (test/tmpdir))
 
 (def input-file "cli-profile-traktor.nml")
 

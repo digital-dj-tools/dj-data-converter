@@ -34,6 +34,17 @@
   [keyfn coll]
   (map first (vals (group-by keyfn coll))))
 
+(defn match-tempo-distribution-stats
+  [item]
+  (if (::tempos item)
+    ((comp
+      ; occassionally multiply number of tempos by 10
+      ; we do it this way because spec tools data spec [] uses coll-of which is capped at 20, 
+      ; and spec tools doesn't give a way to override
+      #(if (= 0 (rand-int 10)) (update % ::tempos (fn [tempos] (flatten (map (partial repeat 10) tempos)))) %)
+      #(update % ::tempos (partial take 5))) item)
+    item))
+
 (defn sorted-markers
   "Returns an item with markers sorted by start."
   [item]
@@ -142,7 +153,8 @@
     #(if (empty? (::tempos %)) (dissoc % ::bpm) %)
     sorted-markers
     distinct-markers
-    #(filter-markers % ::um/type-cue ::um/type-loop))
+    #(filter-markers % ::um/type-cue ::um/type-loop)
+    match-tempo-distribution-stats)
    item))
 
 (def item-from-traktor-spec

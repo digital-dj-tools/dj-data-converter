@@ -9,6 +9,7 @@
    [converter.config :as config]
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
+   [converter.stats :as stats]
    [converter.str :as str]
    [converter.test-utils :as test]
    [converter.traktor.core :as t]
@@ -22,6 +23,10 @@
      (with-open [writer (io/writer (io/file dir file))]
        ; TODO make a library spec that doesn't have a collection
        (as-> (test/library item-spec n) $
+         (do 
+           (println "Mean tempo count" (stats/mean-tempos $))
+           (println "Mean marker count" (stats/mean-markers $))
+           $)
          (st/encode spec $ xml-transformer)
          (xml/emit $ writer)))))
 
@@ -31,6 +36,10 @@
      (.mkdir (io/file dir))
      ; TODO make a library spec that doesn't have a collection
      (as-> (test/library item-spec n) $
+       (do
+         (println "Mean tempo count" (stats/mean-tempos $))
+         (println "Mean marker count" (stats/mean-markers $))
+         $)
        (st/encode spec $ xml-transformer)
        (xml/emit-str $)
        (io/spit (io/file dir file) $))))

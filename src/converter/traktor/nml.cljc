@@ -2,6 +2,7 @@
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
+   [converter.time :as time]
    [converter.str :as str]))
 
 (def nml-path-sep
@@ -41,3 +42,17 @@
                       (nml-dir-gen)
                       ; filename
                       (str/not-blank-string-with-whitespace-gen))))))
+
+(def nml-date-format "yyyy/M/d")
+
+; FIXME conversion functions to be used where ::time/date-str is being used instead of ::time/date
+; either due to https://github.com/metosin/spec-tools/issues/183, or due to spec-tools encode being
+; skipped for performance reasons
+
+(defn string->date
+  [str]
+  (time/string->date nml-date-format nil str))
+
+(defn date->string
+  [date]
+  (time/date->string nml-date-format nil date))

@@ -15,6 +15,7 @@
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
    [converter.traktor.location :as tl]
+   [converter.traktor.nml :as nml]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
@@ -28,27 +29,15 @@
    #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
       :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
 
-(def nml-date-format "yyyy/M/d")
-
 (def xml-transformer
-  (spec/xml-transformer nml-date-format))
+  (spec/xml-transformer nml/nml-date-format))
 
 (def string-transformer
-  (spec/string-transformer nml-date-format))
-
-(defn import-date->date-added
-  [import-date]
-  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
-  (time/string->date nml-date-format nil import-date))
-
-(defn date-added->import-date
-  [date-added]
-  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
-  (time/date->string nml-date-format nil date-added))
+  (spec/string-transformer nml/nml-date-format))
 
 (def entry
   {:tag (s/spec #{:ENTRY})
-   :attrs {(std/opt :MODIFIED_DATE) (time/date-str-spec nml-date-format)
+   :attrs {(std/opt :MODIFIED_DATE) (time/date-str-spec nml/nml-date-format)
            (std/opt :MODIFIED_TIME) (s/int-in 0 86400)
            (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
@@ -65,7 +54,7 @@
                                                        (std/opt :GENRE) string?
                                                        ; FIXME encoding to ::time/date won't work until this issue is fixed: 
                                                        ; https://github.com/metosin/spec-tools/issues/183
-                                                       (std/opt :IMPORT_DATE) (time/date-str-spec nml-date-format)
+                                                       (std/opt :IMPORT_DATE) (time/date-str-spec nml/nml-date-format)
                                                        (std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
@@ -104,7 +93,7 @@
            (= (::u/total-time item) (and info-z (zx/attr info-z :PLAYTIME)))
            (= (::u/comments item) (and info-z (zx/attr info-z :COMMENT)))
            (= (::u/genre item) (and info-z (zx/attr info-z :GENRE)))
-           (= (::u/date-added item) (import-date->date-added (and info-z (zx/attr info-z :IMPORT_DATE))))
+           (= (::u/date-added item) (nml/string->date (and info-z (zx/attr info-z :IMPORT_DATE))))
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
@@ -117,7 +106,7 @@
    ; naive solution for now - just use process-instant for all items
    ; slightly less naive solution - calc hash of items on both sides, then filter 
    ; using hash1 != hash2, and then use process-instant for those items only
-    :attrs (cond-> {:MODIFIED_DATE (time/date->string nml-date-format nil (tick/date process-instant))
+    :attrs (cond-> {:MODIFIED_DATE (nml/date->string (tick/date process-instant))
                     :MODIFIED_TIME (tick/seconds (tick/between (tick/truncate process-instant :days) process-instant))}
              title (assoc :TITLE title)
              artist (assoc :ARTIST artist))
@@ -129,7 +118,7 @@
                                                        album (assoc :TITLE album))})
                (or date-added comments genre total-time) (conj {:tag :INFO
                                                                 :attrs (cond-> {}
-                                                                         date-added (assoc :IMPORT_DATE (date-added->import-date date-added))
+                                                                         date-added (assoc :IMPORT_DATE (nml/date->string date-added))
                                                                          comments (assoc :COMMENT comments)
                                                                          genre (assoc :GENRE genre)
                                                                          total-time (assoc :PLAYTIME total-time))})
@@ -182,7 +171,7 @@
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
            (= (and info-z (zx/attr info-z :COMMENT)) (::u/comments item))
            (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
-           (= (and info-z (zx/attr info-z :IMPORT_DATE)) (time/date->string nml-date-format nil (::u/date-added item)))
+           (= (and info-z (zx/attr info-z :IMPORT_DATE)) (nml/date->string (::u/date-added item)))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
            (equiv-tempos? entry-z item))))
@@ -210,7 +199,7 @@
        artist (assoc ::u/artist artist)
        track (assoc ::u/track-number track)
        album-title (assoc ::u/album album-title)
-       import-date (assoc ::u/date-added (import-date->date-added import-date))
+       import-date (assoc ::u/date-added (nml/string->date import-date))
        comment (assoc ::u/comments comment)
        genre (assoc ::u/genre genre)
        playtime (assoc ::u/total-time playtime)

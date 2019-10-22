@@ -213,7 +213,7 @@
    :attrs {:VERSION 19}
    :content [{:tag :COLLECTION
               :content (let [process-instant (tick/with-clock clock (tick/instant))]
-                         (map (if progress (progress (partial item->entry process-instant)) (partial item->entry process-instant))
+                         (map (progress (partial item->entry process-instant))
                               collection))}]})
 
 (defn nth-entry

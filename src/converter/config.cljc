@@ -14,16 +14,20 @@
 (s/def ::outputs
   #{:rekordbox :traktor})
 
+(s/fdef ::progress
+  :args (s/cat :function any?))
+
 (def config-spec
-  (spec/with-gen-fmap-spec 
+  (spec/with-gen-fmap-spec
     (std/spec
      {:name ::config
-      :spec {:input ::inputs
+      :spec {:clock ::time/clock
+             :input ::inputs
              :output ::outputs
-             :clock ::time/clock}})
-    #(if (= :traktor (:input %)) 
-       (assoc % :output :rekordbox)
-       (assoc % :output :traktor))))
+             :progress ::progress}})
+    #(if (= :traktor (:input %))
+       (assoc % :output :rekordbox :progress identity)
+       (assoc % :output :traktor :progress identity))))
 
 (defn print-progress
   [f]

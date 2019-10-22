@@ -4,6 +4,7 @@
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [clojure.data.zip.xml :as zx]
    [clojure.zip :as zip]
+   [converter.config :as config]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
@@ -142,7 +143,7 @@
   {:tag :DJ_PLAYLISTS
    :attrs {:Version "1.0.0"}
    :content [{:tag :COLLECTION
-              :content (map (if progress (progress item->track) item->track)
+              :content (map (progress item->track)
                             ; Rekordbox xml tracks must have a total time
                             ; TODO summarize what was done (i.e. items without total time filtered out) in a report
                             (filter u/item-contains-total-time? collection))}]})
@@ -192,7 +193,7 @@
            (count (::u/collection library))))))
 
 (s/fdef library->dj-playlists
-  :args (s/cat :config map? :library-spec any? :library u/library-spec)
+  :args (s/cat :config config/config-spec :library-spec any? :library u/library-spec)
   :ret (dj-playlists-spec {})
   :fn (fn equiv-collection-counts?
         [{{conformed-library :library} :args conformed-dj-playlists :ret}]

@@ -19,7 +19,7 @@
                      cljsjs/js-joda-locale-en-us]}}
  :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {net.mikera/core.matrix {:mvn/version "0.62.0"}
-                              org.clojure/test.check {:mvn/version "0.9.0"}
+                              org.clojure/test.check {:mvn/version "0.10.0"}
                               plumula/mimolette {:mvn/version "0.2.1"}
                               org.clojure/tools.namespace {:mvn/version "0.3.1"}}}
            :test {:extra-deps {com.cognitect/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"

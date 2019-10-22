@@ -3,7 +3,9 @@
    #?(:clj [clojure.java.io :as io] :cljs [cljs-node-io.core :as io :refer [file-seq slurp spit]])
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
+   [clojure.test.check]
    [clojure.test.check.generators]
+   [clojure.test.check.properties]
    [converter.app :as app]
    [converter.config :as config]
    [converter.time :as time]

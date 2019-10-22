@@ -42,7 +42,6 @@
 (deftest ^:profile traktor->rekordbox
   (let [result (cli/process app/basic-edition
                             arguments
-                            {:profile-min-level 0}
-                            config)]
+                            {:profile-min-level 0})]
     (is (= 0 (first result)))))
 

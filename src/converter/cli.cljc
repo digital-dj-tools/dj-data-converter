@@ -76,50 +76,48 @@
 
 #?(:clj
    (defn process
-     ([edition arguments options]
-      (process edition arguments options (config/arguments->config arguments)))
-     ([edition arguments options config]
-      (tufte/add-basic-println-handler! {})
-      (tufte/set-min-level! (or (:profile-min-level options) 6))
-      (try
-        (with-open [reader (io/reader (:input-file arguments))
-                    writer (io/writer (output-file arguments config))]
-          (profile {}
-                   (as-> reader $
-                     (p ::parse (xml/parse $ :skip-whitespace true))
-                     (p ::convert (app/convert (app/converter edition config) config $))
-                     (p ::emit (xml/emit $ writer)))))
-        [0 "Conversion completed"]
-        (catch Throwable t (do
-                             (-> t
-                                 Throwable->map
-                                 (err/create-report arguments options)
-                                 (err/write-report (output-dir (output-file arguments))))
-                             [2 "Problems converting, please provide error-report.edn file..."]))))))
+     [edition arguments options]
+     (tufte/add-basic-println-handler! {})
+     (tufte/set-min-level! (or (:profile-min-level options) 6))
+     (try
+       (let [config (config/arguments->config arguments)]
+         (with-open [reader (io/reader (:input-file arguments))
+                     writer (io/writer (output-file arguments config))]
+           (profile {}
+                    (as-> reader $
+                      (p ::parse (xml/parse $ :skip-whitespace true))
+                      (p ::convert (app/convert (app/converter edition config) config $))
+                      (p ::emit (xml/emit $ writer))))))
+       [0 "Conversion completed"]
+       (catch Throwable t (do
+                            (-> t
+                                Throwable->map
+                                (err/create-report arguments options)
+                                (err/write-report (output-dir (output-file arguments))))
+                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
 #?(:cljs
    (defn process
-     ([edition arguments options]
-      (process edition arguments options (config/arguments->config arguments)))
-     ([edition arguments options config]
-      (tufte/add-basic-println-handler! {})
-      (tufte/set-min-level! (or (:profile-min-level options) 6))
-      (try
-        (profile {}
-                 (as-> (:input-file arguments) $
-                   (p ::slurp (io/slurp $))
-                   (p ::parse (xml/parse-str $))
-                   (p ::strip-whitespace (converter.xml/strip-whitespace $))
-                   (p ::convert (app/convert (app/converter edition config) config $))
-                   (p ::emit (xml/emit-str $))
-                   (p ::spit (io/spit (output-file arguments config) $))))
-        [0 "Conversion completed"]
-        (catch :default e (do
-                            (-> e
-                                err/Error->map
-                                (err/create-report arguments options)
-                                (err/write-report (output-dir (output-file arguments))))
-                            [2 "Problems converting, please provide error-report.edn file..."]))))))
+     [edition arguments options]
+     (tufte/add-basic-println-handler! {})
+     (tufte/set-min-level! (or (:profile-min-level options) 6))
+     (try
+       (let [config (config/arguments->config arguments)]
+         (profile {}
+                  (as-> (:input-file arguments) $
+                    (p ::slurp (io/slurp $))
+                    (p ::parse (xml/parse-str $))
+                    (p ::strip-whitespace (converter.xml/strip-whitespace $))
+                    (p ::convert (app/convert (app/converter edition config) config $))
+                    (p ::emit (xml/emit-str $))
+                    (p ::spit (io/spit (output-file arguments config) $)))))
+       [0 "Conversion completed"]
+       (catch :default e (do
+                           (-> e
+                               err/Error->map
+                               (err/create-report arguments options)
+                               (err/write-report (output-dir (output-file arguments))))
+                           [2 "Problems converting, please provide error-report.edn file..."])))))
 
 (defn -main
   [& args]

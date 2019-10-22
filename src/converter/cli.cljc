@@ -8,6 +8,7 @@
    [clojure.tools.cli :as cli]
    [converter.app :as app]
    [converter.error :as err]
+   [converter.progress :as progress]
    [converter.xml])
   #?(:clj (:gen-class)))
 
@@ -101,19 +102,9 @@
                                (err/write-report (output-dir arguments)))
                            [2 "Problems converting, please provide error-report.edn file..."])))))
 
-(defn print-progress
-  [f]
-  (let [item-count (atom 1)]
-    (fn [item]
-      (when (= 0 (mod @item-count 1000))
-        (println ".")
-        #?(:clj (flush)))
-      (swap! item-count inc)
-      (f item))))
-
 (def config
   {:converter app/traktor->rekordbox
-   :progress print-progress})
+   :progress (partial progress/dots-println 1000)})
 
 (defn -main
   [& args]

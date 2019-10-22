@@ -58,6 +58,12 @@
     (update item ::u/tempos (fn [tempos] (mapv #(dissoc % ::ut/bpm ::ut/metro ::ut/battito) tempos)))
     item))
 
+(defn- item-tempos-cap
+  [item]
+  (if (::u/tempos item)
+    (update item ::u/tempos t/cap-tempos)
+    item))
+
 (defn library-equiv-traktor
   "Returns a library that is expected to be equivalent with the given library, after it has been converted to Traktor data and back again"
   [library]
@@ -65,6 +71,7 @@
   ((comp
     #(library-items-map % u/sorted-tempos)
     #(library-items-map % item-tempos-dissoc-bpm-metro-battito)
+    #(library-items-map % item-tempos-cap)
     #(library-items-map % u/sorted-markers)
     #(library-items-map % item-markers-remove-hidden-markers-with-matching-non-hidden-marker))
    library))

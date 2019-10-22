@@ -108,6 +108,13 @@
            (equiv-bpm? item entry-z))))
   :ret entry-spec)
 
+(defn cap-tempos
+  [tempos]
+  (let [battito-1-tempos (filter #(= "1" (::ut/battito %)) tempos)]
+    (if (empty? battito-1-tempos)
+      (take 3 tempos)
+      (take 3 battito-1-tempos))))
+
 (defn item->entry
   [process-instant {:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album
                            ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
@@ -136,7 +143,7 @@
                bpm (conj {:tag :TEMPO
                           :attrs {:BPM bpm}})
                markers (concat (map tc/marker->cue (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers))))
-               tempos (concat (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))}))
+               tempos (concat (map tc/tempo->cue-tagged (u/tempos-without-matching-markers (cap-tempos tempos) markers))))}))
 
 (defn equiv-tempos?
   [entry-z item]

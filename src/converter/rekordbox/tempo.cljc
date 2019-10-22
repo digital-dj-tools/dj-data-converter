@@ -15,8 +15,8 @@
     :spec {:tag (s/spec #{:TEMPO})
            :attrs {:Inizio (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
                    :Bpm (s/double-in :min 0 :NaN? false :infinite? false)
-                   :Metro string?
-                   :Battito string?}}}))
+                   :Metro (s/spec #{"4/4"})
+                   :Battito (s/spec #{"1" "2" "3" "4"})}}}))
 
 (s/fdef tempo->item-tempo
   :args (s/cat :tempo (spec/xml-zip-spec tempo-spec))

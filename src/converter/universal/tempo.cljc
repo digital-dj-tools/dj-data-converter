@@ -9,5 +9,5 @@
    {:name ::tempo
     :spec {::inizio (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) ; seconds
            ::bpm (s/double-in :min 0 :NaN? false :infinite? false)
-           ::metro string?
-           ::battito string?}}))
+           ::metro (s/spec #{"4/4"})
+           ::battito (s/spec #{"1" "2" "3" "4"})}}))

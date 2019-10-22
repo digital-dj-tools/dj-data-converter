@@ -82,7 +82,10 @@
 
 ; TODO equiv-cues, which needs to cover tc/marker->cue and tc/marker->cue-tagged
 (s/fdef item->entry
-  :args (s/cat :process-instant ::time/instant :item u/item-spec)
+  :args (s/cat :nml-date (time/date-str-spec nml/nml-date-format) 
+               :nml-time (s/int-in 0 86400)
+               :item u/item-spec)
+  :ret entry-spec
   :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
         (let [item (s/unform u/item-spec conformed-item)
               entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
@@ -94,20 +97,17 @@
            (= (::u/comments item) (and info-z (zx/attr info-z :COMMENT)))
            (= (::u/genre item) (and info-z (zx/attr info-z :GENRE)))
            (= (::u/date-added item) (nml/string->date (and info-z (zx/attr info-z :IMPORT_DATE))))
-           (equiv-bpm? item entry-z))))
-  :ret entry-spec)
+           (equiv-bpm? item entry-z)))))
 
 (defn item->entry
-  [process-instant {:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album
-                           ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
-                           ::u/tempos ::u/markers]}]
+  [nml-date nml-time {:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album
+                             ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
+                             ::u/tempos ::u/markers]}]
   (p ::item->entry
    {:tag :ENTRY
-   ; naive solution for now - just use process-instant for all items
-   ; slightly less naive solution - calc hash of items on both sides, then filter 
-   ; using hash1 != hash2, and then use process-instant for those items only
-    :attrs (cond-> {:MODIFIED_DATE (nml/date->string (tick/date process-instant))
-                    :MODIFIED_TIME (tick/seconds (tick/between (tick/truncate process-instant :days) process-instant))}
+    :attrs (cond-> {}
+             true (assoc :MODIFIED_DATE nml-date
+                         :MODIFIED_TIME nml-time)
              title (assoc :TITLE title)
              artist (assoc :ARTIST artist))
     :content (cond-> []
@@ -212,8 +212,10 @@
   {:tag :NML
    :attrs {:VERSION 19}
    :content [{:tag :COLLECTION
-              :content (let [process-instant (tick/with-clock clock (tick/instant))]
-                         (map (progress (partial item->entry process-instant))
+              :content (let [instant (tick/with-clock clock (tick/instant))
+                             nml-date (nml/date->string (tick/date instant))
+                             nml-time (tick/seconds (tick/between (tick/truncate instant :days) instant))]
+                         (map (progress (partial item->entry nml-date nml-time))
                               collection))}]})
 
 (defn nth-entry

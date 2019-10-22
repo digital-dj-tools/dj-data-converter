@@ -91,4 +91,7 @@
     (as-> xml $
       (p ::decode-1 (spec/decode! input-spec $ (input-string-transformer converter)))
       (p ::decode-2 (spec/decode! library-spec $ (input-xml-transformer converter)))
-      (p ::encode (st/encode output-spec $ (output-xml-transformer converter))))))
+      ; experiment to skip spec tools encode for traktor output
+      (if (= (:output config) :traktor)
+        (p ::encode-nml (t/library->nml config nil $))
+        (p ::encode (st/encode output-spec $ (output-xml-transformer converter)))))))

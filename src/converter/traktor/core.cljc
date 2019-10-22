@@ -48,7 +48,7 @@
 
 (def entry
   {:tag (s/spec #{:ENTRY})
-   :attrs {(std/opt :MODIFIED_DATE) ::time/date
+   :attrs {(std/opt :MODIFIED_DATE) (time/date-str-spec nml-date-format)
            (std/opt :MODIFIED_TIME) (s/int-in 0 86400)
            (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
@@ -117,7 +117,7 @@
    ; naive solution for now - just use process-instant for all items
    ; slightly less naive solution - calc hash of items on both sides, then filter 
    ; using hash1 != hash2, and then use process-instant for those items only
-    :attrs (cond-> {:MODIFIED_DATE (tick/date process-instant)
+    :attrs (cond-> {:MODIFIED_DATE (time/date->string nml-date-format nil (tick/date process-instant))
                     :MODIFIED_TIME (tick/seconds (tick/between (tick/truncate process-instant :days) process-instant))}
              title (assoc :TITLE title)
              artist (assoc :ARTIST artist))

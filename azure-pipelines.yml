@@ -60,8 +60,9 @@ jobs:
       artifactName: dj-data-converter
       downloadPath: $(System.DefaultWorkingDirectory)
   - script: |
-      chmod +x dj-data-converter/dj-data-converter-macos
-      dj-data-converter/dj-data-converter-macos -h
+      tar -xzvf dj-data-converter/dj-data-converter-macos.tar.gz
+      ls -ltr .
+      dj-data-converter-macos -h
     displayName: Smoke Test
 - job: Release
   dependsOn:

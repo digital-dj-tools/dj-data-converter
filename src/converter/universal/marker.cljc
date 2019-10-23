@@ -64,18 +64,13 @@
     (= (select-keys m1 keys)
        (select-keys m2 keys))))
 
-(defn- matching-visible-marker?
-  "Returns true if there is at least one visible marker matching the hidden marker."
-  [markers hidden-marker]
-  (some #(matching-markers? % hidden-marker) (visible-markers markers)))
-
-(defn hidden-markers-without-matching-visible-marker
-  "Returns the hidden markers that don't have a matching non-hidden marker."
-  [markers]
-  (remove (partial matching-visible-marker? markers)
-          (hidden-markers markers)))
-
 (defn matching-marker?
   "Returns true if markers has at least one marker matching the marker."
   [markers marker]
   (some #(matching-markers? % marker) markers))
+
+(defn hidden-markers-without-matching-visible-marker
+  "Returns the hidden markers that don't have a matching visible marker."
+  [markers]
+  (remove (partial matching-marker? (visible-markers markers))
+          (hidden-markers markers)))

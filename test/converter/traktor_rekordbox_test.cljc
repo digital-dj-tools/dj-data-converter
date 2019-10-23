@@ -14,7 +14,7 @@
 (defspec traktor-rekordbox-round-trip-library-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)
-                config (s/gen config/config-spec)]
+                config (s/gen ::config/config)]
                (as-> library $
                  (test/traktor-round-trip config $)
                  (test/rekordbox-round-trip config $)
@@ -24,7 +24,7 @@
 (defspec rekordbox-traktor-round-trip-library-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)
-                config (s/gen config/config-spec)]
+                config (s/gen ::config/config)]
                (as-> library $
                  (test/rekordbox-round-trip config $)
                  (test/traktor-round-trip config $)

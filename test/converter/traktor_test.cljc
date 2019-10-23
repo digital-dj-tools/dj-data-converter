@@ -77,7 +77,7 @@
 (defspec library-spec-round-trip-library-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)
-                config (s/gen config/config-spec)]
+                config (s/gen ::config/config)]
                (as-> library $
                  (test/traktor-round-trip config $)
                  (is (= (test/library-equiv-traktor library)
@@ -86,7 +86,7 @@
 (defspec library-spec-round-trip-xml-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)
-                config (s/gen config/config-spec)]
+                config (s/gen ::config/config)]
                (as-> library $
                  (test/traktor-round-trip config $)
                  (st/encode (t/nml-spec config) $ t/xml-transformer)

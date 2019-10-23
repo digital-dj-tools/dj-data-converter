@@ -78,7 +78,7 @@
 (s/fdef convert
   :args (s/cat
          :converter #{traktor->rekordbox}
-         :config (spec/such-that-spec config/config-spec #(= :traktor (:input %)))
+         :config (spec/such-that ::config/config #(= :traktor (:input %)))
          :xml (spec/value-encoded-spec (t/nml-spec {}) t/string-transformer))
   :ret (spec/value-encoded-spec (r/dj-playlists-spec {}) r/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings

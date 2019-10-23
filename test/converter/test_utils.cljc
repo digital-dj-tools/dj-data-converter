@@ -92,7 +92,7 @@
    library))
 
 (def config
-  (gen/generate (s/gen config/config-spec)))
+  (gen/generate (s/gen ::config/config)))
 
 (defn traktor-round-trip
   [config library]

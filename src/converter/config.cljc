@@ -17,17 +17,20 @@
 (s/fdef ::progress
   :args (s/cat :function any?))
 
-(def config-spec
-  (spec/with-gen-fmap-spec
-    (std/spec
-     {:name ::config
-      :spec {:clock ::time/clock
-             :input ::inputs
-             :output ::outputs
-             :progress ::progress}})
-    #(if (= :traktor (:input %))
-       (assoc % :output :rekordbox :progress identity)
-       (assoc % :output :traktor :progress identity))))
+(def config-base-spec
+  (std/spec
+   {:name ::config-base
+    :spec {:clock ::time/clock
+           :input ::inputs
+           :output ::outputs
+           :progress ::progress}}))
+
+(s/def ::config
+  (s/with-gen (s/and config-base-spec #(not= (:input %) (:output %)))
+    (fn [] (gen/fmap #(if (= :traktor (:input %))
+                        (assoc % :output :rekordbox :progress identity)
+                        (assoc % :output :traktor :progress identity))
+                     (s/gen config-base-spec)))))
 
 (defn print-progress
   [f]
@@ -45,6 +48,7 @@
    (cond
      (string/ends-with? input-file ".nml") {:input :traktor :output :rekordbox}
      (string/ends-with? input-file ".xml") {:input :rekordbox :output :traktor}
-     :else (throw (ex-info "Could not determine config for provided arguments" {:arguments arguments})))
+     :else (throw (ex-info "Could not determine input format for provided arguments" 
+                           {:arguments arguments})))
    {:progress print-progress
     :clock (tick/clock)}))

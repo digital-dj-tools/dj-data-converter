@@ -62,6 +62,11 @@
 (defn xml-zip-spec [spec]
   (->XmlZipSpec spec))
 
+(defn such-that
+  [spec pred]
+  (s/with-gen spec 
+    (fn [] (gen/such-that pred (s/gen spec)))))
+
 ; TODO spec is assumed to be a spec-tools record
 (defn such-that-spec
   ([spec pred]

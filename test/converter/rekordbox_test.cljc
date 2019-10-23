@@ -85,7 +85,7 @@
 (defspec library-spec-round-trip-library-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)
-                config (s/gen config/config-spec)]
+                config (s/gen ::config/config)]
                (as-> library $
                  (test/rekordbox-round-trip config $)
                  (is (= (test/library-equiv-rekordbox library)
@@ -94,7 +94,7 @@
 (defspec library-spec-round-trip-xml-equality
   10
   (tcp/for-all [library (s/gen u/library-spec)
-                config (s/gen config/config-spec)]
+                config (s/gen ::config/config)]
                (as-> library $
                  (test/rekordbox-round-trip config $)
                  (test/library-equiv-rekordbox $)

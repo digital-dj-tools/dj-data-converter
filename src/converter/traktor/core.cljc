@@ -271,7 +271,7 @@
    (assoc :encode/xml (partial library->nml config))))
 
 (s/fdef library->nml
-  :args (s/cat :config config/config-spec :library-spec any? :library u/library-spec)
+  :args (s/cat :config ::config/config :library-spec any? :library u/library-spec)
   :ret (nml-spec {})
   :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-nml :ret}]
         (let [library (s/unform u/library-spec conformed-library)

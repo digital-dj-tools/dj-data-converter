@@ -195,7 +195,7 @@
            (count (::u/collection library))))))
 
 (s/fdef library->dj-playlists
-  :args (s/cat :config config/config-spec :library-spec any? :library u/library-spec)
+  :args (s/cat :config ::config/config :library-spec any? :library u/library-spec)
   :ret (dj-playlists-spec {})
   :fn (fn equiv-collection-counts?
         [{{conformed-library :library} :args conformed-dj-playlists :ret}]

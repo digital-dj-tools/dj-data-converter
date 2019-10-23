@@ -89,15 +89,14 @@
 (defn item->track
   [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
   (p ::item->track
-   {:tag :TRACK
-    :attrs
-    (cond-> item
-      true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
-      title (assoc :Name title)
-      bpm (assoc :AverageBpm bpm))
-    :content (cond-> []
-               tempos (concat (map rt/item-tempo->tempo tempos))
-               markers (concat (reduce #(concat %1 (marker->position-marks (um/hidden-markers markers) %2)) [] markers)))}))
+     {:tag :TRACK
+      :attrs (cond-> item
+               true (-> (dissoc ::u/title ::u/bpm ::u/markers ::u/tempos) (map/transform-keys csk/->PascalCaseKeyword))
+               title (assoc :Name title)
+               bpm (assoc :AverageBpm bpm))
+      :content (cond-> []
+                 tempos (concat (map rt/item-tempo->tempo tempos))
+                 markers (concat (reduce #(concat %1 (marker->position-marks (um/hidden-markers markers) %2)) [] markers)))}))
 
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]
@@ -127,16 +126,19 @@
 (defn track->item
   [track-z]
   (p ::track->item
-   (let [tempos-z (zx/xml-> track-z :TEMPO)
-         position-marks-z (remove (comp rp/position-mark-tagged? zip/node) (zx/xml-> track-z :POSITION_MARK))
-         Name (zx/attr track-z :Name)
-         AverageBpm (zx/attr track-z :AverageBpm)]
-     (cond-> track-z
-       true (-> zip/node :attrs (dissoc :Name :AverageBpm) (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
-       Name (assoc ::u/title Name)
-       AverageBpm (assoc ::u/bpm AverageBpm)
-       (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
-       (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z))))))
+     (let [tempos-z (zx/xml-> track-z :TEMPO)
+           position-marks-z (remove (comp rp/position-mark-tagged? zip/node) (zx/xml-> track-z :POSITION_MARK))
+           Name (zx/attr track-z :Name)
+           AverageBpm (zx/attr track-z :AverageBpm)]
+       (cond-> track-z
+         true (-> zip/node 
+                  :attrs 
+                  (dissoc :Name :AverageBpm) 
+                  (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
+         Name (assoc ::u/title Name)
+         AverageBpm (assoc ::u/bpm AverageBpm)
+         (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
+         (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z))))))
 
 (defn library->dj-playlists
   [{:keys [progress]} _ {:keys [::u/collection]}]

@@ -40,14 +40,12 @@
    (string-transformer "yyyy-MM-dd"))
   ([date-format]
    (st/type-transformer
-   {:name :string
-    :decoders (merge stt/string-type-decoders {:url url/string->url
-                                               :date (partial time/string->date date-format)
-                                               })
-    :encoders (merge stt/string-type-encoders {:url stt/any->string
-                                               :date (partial time/date->string date-format)
-                                               })
-    :default-encoder stt/any->any})))
+    {:name :string
+     :decoders (merge stt/string-type-decoders {:url url/string->url
+                                                :date (partial time/string->date date-format)})
+     :encoders (merge stt/string-type-encoders {:url stt/any->string
+                                                :date (partial time/date->string date-format)})
+     :default-encoder stt/any->any})))
 
 ; this only works as long as it's not nested inside other data specs
 (defrecord XmlZipSpec [spec]

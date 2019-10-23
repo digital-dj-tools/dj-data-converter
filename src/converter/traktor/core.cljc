@@ -82,7 +82,7 @@
 
 ; TODO equiv-cues, which needs to cover tc/marker->cue and tc/tempo->cue-tagged
 (s/fdef item->entry
-  :args (s/cat :nml-date (time/date-str-spec nml/nml-date-format) 
+  :args (s/cat :nml-date (time/date-str-spec nml/nml-date-format)
                :nml-time ::time/seconds-per-day
                :item u/item-spec)
   :ret entry-spec
@@ -104,28 +104,30 @@
                              ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
                              ::u/tempos ::u/markers]}]
   (p ::item->entry
-   {:tag :ENTRY
-    :attrs (cond-> {}
-             true (assoc :MODIFIED_DATE nml-date
-                         :MODIFIED_TIME nml-time)
-             title (assoc :TITLE title)
-             artist (assoc :ARTIST artist))
-    :content (cond-> []
-               true (conj (tl/url->location location))
-               (or track-number album) (conj {:tag :ALBUM
-                                              :attrs (cond-> {}
-                                                       track-number (assoc :TRACK track-number)
-                                                       album (assoc :TITLE album))})
-               (or date-added comments genre total-time) (conj {:tag :INFO
-                                                                :attrs (cond-> {}
-                                                                         date-added (assoc :IMPORT_DATE (nml/date->string date-added))
-                                                                         comments (assoc :COMMENT comments)
-                                                                         genre (assoc :GENRE genre)
-                                                                         total-time (assoc :PLAYTIME total-time))})
-               bpm (conj {:tag :TEMPO
-                          :attrs {:BPM bpm}})
-               markers (concat (map tc/marker->cue (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers))))
-               tempos (concat (map tc/tempo->cue-tagged (u/tempos-without-matching-markers tempos markers))))}))
+     {:tag :ENTRY
+      :attrs (cond-> {}
+               true (assoc :MODIFIED_DATE nml-date
+                           :MODIFIED_TIME nml-time)
+               title (assoc :TITLE title)
+               artist (assoc :ARTIST artist))
+      :content (cond-> []
+                 true (conj (tl/url->location location))
+                 (or track-number album) (conj {:tag :ALBUM
+                                                :attrs (cond-> {}
+                                                         track-number (assoc :TRACK track-number)
+                                                         album (assoc :TITLE album))})
+                 (or date-added comments genre total-time) (conj {:tag :INFO
+                                                                  :attrs (cond-> {}
+                                                                           date-added (assoc :IMPORT_DATE (nml/date->string date-added))
+                                                                           comments (assoc :COMMENT comments)
+                                                                           genre (assoc :GENRE genre)
+                                                                           total-time (assoc :PLAYTIME total-time))})
+                 bpm (conj {:tag :TEMPO
+                            :attrs {:BPM bpm}})
+                 markers (concat (map tc/marker->cue 
+                                      (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers))))
+                 tempos (concat (map tc/tempo->cue-tagged 
+                                     (u/tempos-without-matching-markers tempos markers))))}))
 
 (defn equiv-tempos?
   [entry-z item]
@@ -180,32 +182,32 @@
 (defn entry->item
   [entry-z]
   (p ::entry->item
-   (let [title (zx/attr entry-z :TITLE)
-         artist (zx/attr entry-z :ARTIST)
-         album-z (zx/xml1-> entry-z :ALBUM)
-         track (and album-z (zx/attr album-z :TRACK))
-         album-title (and album-z (zx/attr album-z :TITLE))
-         info-z (zx/xml1-> entry-z :INFO)
-         import-date (and info-z (zx/attr info-z :IMPORT_DATE))
-         comment (and info-z (zx/attr info-z :COMMENT))
-         genre (and info-z (zx/attr info-z :GENRE))
-         playtime (and info-z (zx/attr info-z :PLAYTIME))
-         tempo-z (zx/xml1-> entry-z :TEMPO)
-         bpm (and tempo-z (zx/attr tempo-z :BPM))
-         cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))
-         grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
-     (cond-> {::u/location (tl/location->url (zx/xml1-> entry-z :LOCATION))}
-       title (assoc ::u/title title)
-       artist (assoc ::u/artist artist)
-       track (assoc ::u/track-number track)
-       album-title (assoc ::u/album album-title)
-       import-date (assoc ::u/date-added (nml/string->date import-date))
-       comment (assoc ::u/comments comment)
-       genre (assoc ::u/genre genre)
-       playtime (assoc ::u/total-time playtime)
-       bpm (assoc ::u/bpm bpm)
-       (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z))
-       (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial tc/cue->tempo bpm) grid-cues-z))))))
+     (let [title (zx/attr entry-z :TITLE)
+           artist (zx/attr entry-z :ARTIST)
+           album-z (zx/xml1-> entry-z :ALBUM)
+           track (and album-z (zx/attr album-z :TRACK))
+           album-title (and album-z (zx/attr album-z :TITLE))
+           info-z (zx/xml1-> entry-z :INFO)
+           import-date (and info-z (zx/attr info-z :IMPORT_DATE))
+           comment (and info-z (zx/attr info-z :COMMENT))
+           genre (and info-z (zx/attr info-z :GENRE))
+           playtime (and info-z (zx/attr info-z :PLAYTIME))
+           tempo-z (zx/xml1-> entry-z :TEMPO)
+           bpm (and tempo-z (zx/attr tempo-z :BPM))
+           cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))
+           grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
+       (cond-> {::u/location (tl/location->url (zx/xml1-> entry-z :LOCATION))}
+         title (assoc ::u/title title)
+         artist (assoc ::u/artist artist)
+         track (assoc ::u/track-number track)
+         album-title (assoc ::u/album album-title)
+         import-date (assoc ::u/date-added (nml/string->date import-date))
+         comment (assoc ::u/comments comment)
+         genre (assoc ::u/genre genre)
+         playtime (assoc ::u/total-time playtime)
+         bpm (assoc ::u/bpm bpm)
+         (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z))
+         (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial tc/cue->tempo bpm) grid-cues-z))))))
 
 (defn library->nml
   [{:keys [progress clock]} _ {:keys [::u/collection]}]

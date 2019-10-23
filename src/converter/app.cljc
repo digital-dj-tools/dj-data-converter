@@ -37,8 +37,8 @@
       [this config]
       (r/dj-playlists-spec config))
     (output-xml-transformer
-     [this]
-     r/xml-transformer)))
+      [this]
+      r/xml-transformer)))
 
 (def rekordbox->traktor
   (reify
@@ -59,8 +59,8 @@
       [this config]
       (t/nml-spec config))
     (output-xml-transformer
-     [this]
-     t/xml-transformer)))
+      [this]
+      t/xml-transformer)))
 
 (defprotocol Edition
   (converter [this config]))
@@ -91,7 +91,7 @@
     (as-> xml $
       (p ::decode-1 (spec/decode! input-spec $ (input-string-transformer converter)))
       (p ::decode-2 (spec/decode! library-spec $ (input-xml-transformer converter)))
-      ; experiment to skip spec tools encode for traktor output
+      ; FIXME skip spec tools encode for traktor output (performance issue)
       (if (= (:output config) :traktor)
         (p ::encode-nml (t/library->nml config nil $))
         (p ::encode (st/encode output-spec $ (output-xml-transformer converter)))))))

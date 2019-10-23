@@ -47,5 +47,5 @@
 
 (defn write-report
   [report output-dir]
-  (spit (str (if output-dir (str output-dir "/")) "error-report.edn") 
+  (spit (str (if output-dir (str output-dir "/")) "error-report.edn")
         (with-out-str (pprint/pprint report))))

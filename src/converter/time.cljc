@@ -39,12 +39,12 @@
                         :gen #(gen/fmap t/date (instant-gen))}))
 
 (defn date-str?
- [format x]
- (try (do
-        (jtld/parse x (jtf/of-pattern format))
-        true)
-      #?(:clj (catch Throwable t false)
-         :cljs (catch :default e false))))
+  [format x]
+  (try (do
+         (jtld/parse x (jtf/of-pattern format))
+         true)
+       #?(:clj (catch Throwable t false)
+          :cljs (catch :default e false))))
 
 (defn date-str-spec
   [format]

@@ -52,6 +52,9 @@
            {:type :string
             :gen #(gen/fmap (comp (partial t/format (tf/formatter format)) t/date) (instant-gen))}))
 
+(s/def ::seconds-per-day
+  (s/int-in 0 86400))
+
 (defn clock-gen
   []
   (gen/fmap #(t/clock %) (instant-gen)))
@@ -71,6 +74,5 @@
 (defn string->date
   [format _ x]
   (if (string? x)
-    (-> x
-        (jtld/parse (jtf/of-pattern format)))
+    (jtld/parse x (jtf/of-pattern format))
     x))

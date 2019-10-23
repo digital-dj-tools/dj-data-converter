@@ -38,7 +38,7 @@
 (def entry
   {:tag (s/spec #{:ENTRY})
    :attrs {(std/opt :MODIFIED_DATE) (time/date-str-spec nml/nml-date-format)
-           (std/opt :MODIFIED_TIME) (s/int-in 0 86400)
+           (std/opt :MODIFIED_TIME) ::time/seconds-per-day
            (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
@@ -83,7 +83,7 @@
 ; TODO equiv-cues, which needs to cover tc/marker->cue and tc/marker->cue-tagged
 (s/fdef item->entry
   :args (s/cat :nml-date (time/date-str-spec nml/nml-date-format) 
-               :nml-time (s/int-in 0 86400)
+               :nml-time ::time/seconds-per-day
                :item u/item-spec)
   :ret entry-spec
   :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]

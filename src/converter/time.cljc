@@ -68,11 +68,11 @@
 (defn date->string
   [format _ x]
   (if (date? x)
-    (t/format (tf/formatter format) x)
+    (t/format ((memoize tf/formatter) format) x)
     x))
 
 (defn string->date
   [format _ x]
   (if (string? x)
-    (jtld/parse x (jtf/of-pattern format))
+    (jtld/parse x ((memoize jtf/of-pattern) format))
     x))

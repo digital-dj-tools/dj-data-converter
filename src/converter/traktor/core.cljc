@@ -80,7 +80,7 @@
         bpm (and tempo-z (zx/attr tempo-z :BPM))]
     (= (::u/bpm item) bpm)))
 
-; TODO equiv-cues, which needs to cover tc/marker->cue and tc/marker->cue-tagged
+; TODO equiv-cues, which needs to cover tc/marker->cue and tc/tempo->cue-tagged
 (s/fdef item->entry
   :args (s/cat :nml-date (time/date-str-spec nml/nml-date-format) 
                :nml-time ::time/seconds-per-day
@@ -125,7 +125,7 @@
                bpm (conj {:tag :TEMPO
                           :attrs {:BPM bpm}})
                markers (concat (map tc/marker->cue (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers))))
-               tempos (concat (map #(tc/marker->cue-tagged (::ut/inizio %1)) (u/tempos-without-matching-markers tempos markers))))}))
+               tempos (concat (map tc/tempo->cue-tagged (u/tempos-without-matching-markers tempos markers))))}))
 
 (defn equiv-tempos?
   [entry-z item]

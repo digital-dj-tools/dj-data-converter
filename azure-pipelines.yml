@@ -62,7 +62,7 @@ jobs:
   - script: |
       tar -xzvf dj-data-converter/dj-data-converter-macos.tar.gz
       ls -ltr .
-      dj-data-converter-macos -h
+      ./dj-data-converter-macos -h
     displayName: Smoke Test
 - job: Release
   dependsOn:

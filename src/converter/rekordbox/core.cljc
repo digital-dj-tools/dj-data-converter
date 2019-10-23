@@ -132,7 +132,7 @@
          Name (zx/attr track-z :Name)
          AverageBpm (zx/attr track-z :AverageBpm)]
      (cond-> track-z
-       true (-> first :attrs (dissoc :Name :AverageBpm) (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
+       true (-> zip/node :attrs (dissoc :Name :AverageBpm) (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
        Name (assoc ::u/title Name)
        AverageBpm (assoc ::u/bpm AverageBpm)
        (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))

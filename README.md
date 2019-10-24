@@ -13,6 +13,7 @@ Convert from Rekordbox to Traktor | Yes | No (1)
 Convert tempo (BPM) and beat grid | Yes | Yes
 Convert cue points and loops | Yes | Yes
 Convert multiple beat grid markers | Yes | Yes
+Correct 26ms grid offset when converting mp3 files | Yes | No (1)
 Convert unsupported Traktor cue types using a colour mapping | Yes | Yes
 Convert playlists | No | Yes
 Runs on Windows | Yes, [download here](https://github.com/digital-dj-tools/dj-data-converter/releases) | Yes
@@ -23,7 +24,17 @@ Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing
 
 ## Motivation
 
-Although there are other tools available for handling this task, none are open source and/or available on multiple platforms, especially Windows.
+Although there are other apps for handling this task, none are **open source** or available on **multiple platforms** such as Windows.
+
+## Why a Command-Line App Instead of a GUI App?
+
+This app is mostly concerned with availability, correctness and transparency, for which a command-line app is more than adequate. 
+
+- Availability: downloads for multiple platforms, including Windows.
+- Correctness: determining the most appropriate conversion rules to follow.
+- Transparency: to build user trust around the claimed feature set.
+
+However, usability is important, and lack of familiarity can be an problem for command-line apps; this will be addressed in good time!
 
 ## Donations
 
@@ -39,6 +50,7 @@ Donations for the Basic Edition are most welcome! This will help me to support m
    - If the cue point is a grid cue, a tempo is created.
 - The cue point names are copied over as-is.
 - Tracks without a playtime are not copied (Rekordbox requires this as total time).
+- Tracks without a location set are not copied.
 - The cue point types are mapped as follows:
 
   Traktor Type | Traktor Colour | Rekordbox Type | Rekordbox Colour
@@ -80,13 +92,6 @@ Play Count | Playcount | Play Count | No
 Track Number | Track | Track Number | Yes
 Track Title | Title | Name | Yes
 Year | Release Date | Year | No
-
-## Current Limitations
-
-- The conversion from Rekordbox to Traktor is currently the simplest possible implementation, it cannot merge with an existing Traktor collection.
-- For reasons unknown, on some tracks Rekordbox likes to create a large number of tempos, even when the bpm is fixed for the whole track. When converting to Traktor, this will currently manifest as (the same) large number of non-indexed grid point cues.
-- Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
-- Performance is not yet optimal, however a ~10,000 track Traktor or Rekordbox collection should convert in under two minutes.
 
 ## Dependencies
 
@@ -164,6 +169,14 @@ If the conversion fails due to an error, an `error-report.edn` file will be crea
 ```
   -h, --help
 ```
+
+## Current Limitations
+
+- The conversion from Rekordbox to Traktor is currently the simplest possible implementation, it cannot merge with an existing Traktor collection.
+- If dynamic analysis has been used for a track in Rekordbox, the result in Traktor will be undesirable, with a large number of non-indexed grid point cues sharing the same BPM; Traktor only allows a single BPM value for the whole track.
+- For reasons unknown, on some tracks Rekordbox likes to create a large number of tempos, even when the BPM is fixed for the whole track and dynamic analysis has **not** been used. When converting to Traktor, this will currently manifest as (the same) large number of non-indexed grid point cues.
+- Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
+- Performance is not yet optimal, however a ~10,000 track Traktor or Rekordbox collection should convert in under two minutes.
 
 ## Bug Reports
 

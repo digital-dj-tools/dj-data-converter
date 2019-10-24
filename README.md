@@ -9,7 +9,7 @@ In addition to an automated test suite comprising specification-driven tests on 
 Feature | Basic Edition | Pro Edition
 -|-|-
 Convert from Traktor to Rekordbox | Yes | Yes
-Convert from Rekordbox to Traktor | No (1) | No (2)
+Convert from Rekordbox to Traktor | Yes | No (1)
 Convert tempo (BPM) and beat grid | Yes | Yes
 Convert cue points and loops | Yes | Yes
 Convert multiple beat grid markers | Yes | Yes
@@ -20,8 +20,6 @@ Runs on Mac | Yes, [download here](https://github.com/digital-dj-tools/dj-data-c
 Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing
 
 (1) Will be released in a new version TBA
-
-(2) Will be released in a new version TBA
 
 ## Motivation
 
@@ -79,7 +77,7 @@ Genre | Genre | Genre | Yes
 Label | Label | Label | No
 Total Time | Playtime | Total Time | Yes
 Play Count | Playcount | Play Count | No
-Track Number | Track | - | No
+Track Number | Track | Track Number | Yes
 Track Title | Title | Name | Yes
 Year | Release Date | Year | No
 
@@ -88,7 +86,7 @@ Year | Release Date | Year | No
 - The conversion from Rekordbox to Traktor is currently the simplest possible implementation, it cannot merge with an existing Traktor collection.
 - For reasons unknown, on some tracks Rekordbox likes to create a large number of tempos, even when the bpm is fixed for the whole track. When converting to Traktor, this will currently manifest as (the same) large number of non-indexed grid point cues.
 - Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
-- Performance is not yet optimal, however a ~10,000 track Traktor or Rekordbox collection should convert in around one minute.
+- Performance is not yet optimal, however a ~10,000 track Traktor or Rekordbox collection should convert in under two minutes.
 
 ## Dependencies
 

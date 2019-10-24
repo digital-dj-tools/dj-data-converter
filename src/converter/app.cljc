@@ -81,10 +81,10 @@
         (= input :rekordbox) rekordbox->traktor))))
 
 (defn correct
-  [options item]
+  [config options item]
   (let [url (-> item ::u/location (url/drive->wsl (:wsl options)))]
     (try
-      (o/correct item (-> url url/url->path mp3/parse))
+      (o/correct config item (-> url url/url->path mp3/parse))
     ; TODO don't print, conj report with any error from mp3-parser, e.g. file not found
       #?(:clj (catch Throwable t (do (println (ex-message t)) item))
          :cljs (catch :default e (do (println (ex-message e)) item))))))
@@ -107,7 +107,7 @@
       (p ::decode-str (spec/decode! input-spec $ (input-string-transformer converter)))
       (p ::decode-xml (spec/decode! library-spec $ (input-xml-transformer converter)))
       ; TODO only correct mp3 files?
-      (update $ ::u/collection #(map (partial correct options) %))
+      (update $ ::u/collection #(map (partial correct config options) %))
       ; FIXME skip spec tools encode for traktor output (performance issue)
       (if (= (:output config) :traktor)
         (p ::encode-nml (t/library->nml config nil $))

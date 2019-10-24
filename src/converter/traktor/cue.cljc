@@ -45,10 +45,6 @@
                             :LEN (s/double-in :min 0 :max 7200000 :NaN? false :infinite? false) ; millis
                             :HOTCUE ::hotcue}}}))
 
-(defn hidden-cue?
-  [cue]
-  (= "-1" (-> cue :attrs :HOTCUE)))
-
 (def cue-spec
   (as->
    (std/spec

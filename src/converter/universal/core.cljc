@@ -67,18 +67,6 @@
                                          (um/non-indexed-markers %))))
     item))
 
-(defn tempos->grid-markers
-  "Returns an item with a non-indexed grid marker created for each tempo."
-  [{:keys [::tempos] :as item}]
-  (reduce #(update %1 ::markers
-                   (fn [markers tempo] (conj markers {::um/name ""
-                                                      ::um/type ::um/type-grid
-                                                      ::um/start (::ut/inizio tempo)
-                                                      ::um/end (::ut/inizio tempo)
-                                                      ::um/num "-1"})) %2)
-          item
-          tempos))
-
 (defn filter-markers
   [item & marker-types]
   (if (::markers item)

@@ -89,8 +89,8 @@
         library-spec (library-spec converter)
         output-spec (output-spec converter config)]
     (as-> xml $
-      (p ::decode-1 (spec/decode! input-spec $ (input-string-transformer converter)))
-      (p ::decode-2 (spec/decode! library-spec $ (input-xml-transformer converter)))
+      (p ::decode-str (spec/decode! input-spec $ (input-string-transformer converter)))
+      (p ::decode-xml (spec/decode! library-spec $ (input-xml-transformer converter)))
       ; FIXME skip spec tools encode for traktor output (performance issue)
       (if (= (:output config) :traktor)
         (p ::encode-nml (t/library->nml config nil $))

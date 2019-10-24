@@ -6,13 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Convert from Rekordbox to Traktor
 - Copy additional tag metadata when converting (e.g. year)
 - Convert color tags
 - Convert from Serato DJ to Rekordbox
 - Convert from Rekordbox to Serato DJ
 - Support the case where an entry has a tempo, but no cues (Traktor to Rekordbox)
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting
+
+## 0.4.0 (2019-10-24)
+### Added
+- Convert from Rekordbox to Traktor [#9](https://github.com/digital-dj-tools/dj-data-converter/issues/9)
+- Offset correction [#3](https://github.com/digital-dj-tools/dj-data-converter/issues/3)
+### Changed
+- Downgrade Nodejs from 10 to 8 for the pkg build, to avoid `"buffer" argument must be one of type Buffer or Uint8Array. Received type object` error (will be investigated)
+### Fixed
+- Correct Rekordbox date format [#26](https://github.com/digital-dj-tools/dj-data-converter/issues/26)
 
 ## 0.3.4 (2019-10-08)
 ### Added

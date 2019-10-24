@@ -6,11 +6,15 @@
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as string]
    [clojure.zip :as zip]
+   [converter.config :as config]
+   [converter.time :as time]
    [converter.spec :as spec]
    [converter.str :as str]
    [converter.time :as time]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
+   [converter.traktor.location :as tl]
+   [converter.traktor.nml :as nml]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
@@ -19,116 +23,25 @@
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]
-   [utils.map :as map]))
-
-(def nml-date-format "yyyy/M/d")
+   [tick.alpha.api :as tick]
+   [utils.map :as map]
+   #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
+      :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
 
 (def xml-transformer
-  (spec/xml-transformer nml-date-format))
+  (spec/xml-transformer nml/nml-date-format))
 
 (def string-transformer
-  (spec/string-transformer nml-date-format))
-
-(defn import-date->date-added
-  [import-date]
-  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
-  (time/string->date nml-date-format nil import-date))
-
-(defn date-added->import-date
-  [date-added]
-  ; FIXME hack to workaround https://github.com/metosin/spec-tools/issues/183
-  (time/date->string nml-date-format nil date-added))
-
-(def nml-path-sep
-  "/:")
-
-(def nml-path-sep-regex
-  #"/:")
-
-(defn nml-dir-gen
-  []
-  (gen/fmap #(->> % (interleave (repeat nml-path-sep)) (apply str)) (gen/vector (str/not-blank-string-with-whitespace-gen))))
-
-(s/def ::nml-dir
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (nml-dir-gen))))
-
-; used in playlists!
-(s/def ::nml-path
-  (s/with-gen
-    string? ; TODO and with cat+regex specs
-    (fn [] (gen/fmap (partial apply str)
-                     (gen/tuple
-                      ; drive letter (optional)
-                      (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
-                      ; dir
-                      (nml-dir-gen)
-                      ; filename
-                      (gen/fmap #(str nml-path-sep %) (str/not-blank-string-with-whitespace-gen)))))))
-
-(def location
-  {:tag (s/spec #{:LOCATION})
-   :attrs {:DIR ::nml-dir
-           :FILE string?
-           (std/opt :VOLUME) (std/or {:drive-letter ::str/drive-letter
-                                      :named string?})
-           (std/opt :VOLUMEID) string?}})
-
-(def location-spec
-  (spec/such-that-spec
-   (std/spec {:name ::location
-              :spec location})
-   #(or (and (-> % :attrs :VOLUME) (-> % :attrs :VOLUMEID))
-        (and (not (-> % :attrs :VOLUME)) (not (-> % :attrs :VOLUMEID))))
-   10))
-
-(s/fdef url->location
-  :args (s/cat :location ::url/url)
-  :ret location-spec)
-
-(defn url->location
-  [{:keys [:path]}]
-  (let [paths (rest (string/split path #"/"))
-        dirs (if (str/drive-letter? (first paths)) (rest (drop-last paths)) (drop-last paths))
-        file (last paths)
-        volume (if (str/drive-letter? (first paths)) (first paths))]
-    {:tag :LOCATION
-     :attrs (cond-> {:DIR (str nml-path-sep (string/join nml-path-sep (map url-decode dirs)))
-                     :FILE (url-decode file)}
-              volume (assoc :VOLUME volume))}))
-
-(defn location-z-file-is-not-blank?
-  [location-z]
-  (not (string/blank? (zx/attr location-z :FILE))))
-
-; TODO would rather use data.zip.xml api all the way down, 
-; but spec/such-that-spec can't currently be wrapped around spec/xml-zip-spec
-(defn location-file-is-not-blank?
-  [location]
-  (location-z-file-is-not-blank? (zip/xml-zip location)))
-
-(s/fdef location->url
-  :args (s/cat :location-z (spec/xml-zip-spec (spec/such-that-spec location-spec location-file-is-not-blank? 100)))
-  :ret ::url/url)
-
-(defn location->url
-  [location-z]
-  (let [dir (zx/attr location-z :DIR)
-        file (zx/attr location-z :FILE)
-        volume (zx/attr location-z :VOLUME)]
-    (apply url (as-> [] $
-                 (conj $ "file://localhost")
-                 (conj $ (if (str/drive-letter? volume) (str "/" volume) ""))
-                 (reduce conj $ (map url/url-encode (string/split dir nml-path-sep-regex)))
-                 (conj $ (url/url-encode file))))))
+  (spec/string-transformer nml/nml-date-format))
 
 (def entry
   {:tag (s/spec #{:ENTRY})
-   :attrs {(std/opt :TITLE) string?
+   :attrs {(std/opt :MODIFIED_DATE) (time/date-str-spec nml/nml-date-format)
+           (std/opt :MODIFIED_TIME) ::time/seconds-per-day
+           (std/opt :TITLE) string?
            (std/opt :ARTIST) string?}
    :content      (s/cat
-                  :location (s/? location-spec)
+                  :location (s/? tl/location-spec)
                   :album (s/? (std/spec {:name ::album
                                          :spec {:tag (s/spec #{:ALBUM})
                                                 :attrs (s/keys :req-un [(or ::ta/TRACK ::ta/TITLE)])}}))
@@ -140,7 +53,7 @@
                                                        (std/opt :GENRE) string?
                                                        ; FIXME encoding to ::time/date won't work until this issue is fixed: 
                                                        ; https://github.com/metosin/spec-tools/issues/183
-                                                       (std/opt :IMPORT_DATE) (time/date-str-spec nml-date-format)
+                                                       (std/opt :IMPORT_DATE) (time/date-str-spec nml/nml-date-format)
                                                        (std/opt :PLAYTIME) string?}}}))
                   :tempo (s/? (std/spec {:name ::tempo
                                          :spec {:tag (s/spec #{:TEMPO})
@@ -161,15 +74,17 @@
     :spec entry}))
 
 (defn equiv-bpm?
-  [{:keys [::u/tempos] :as item} entry-z]
+  [item entry-z]
   (let [tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))]
-    (if (empty? tempos)
-      (= (::u/bpm item) bpm)
-      (= (::ut/bpm (first tempos)) bpm))))
+    (= (::u/bpm item) bpm)))
 
+; TODO equiv-cues, which needs to cover tc/marker->cue and tc/tempo->cue-tagged
 (s/fdef item->entry
-  :args (s/cat :item u/item-spec)
+  :args (s/cat :nml-date (time/date-str-spec nml/nml-date-format)
+               :nml-time ::time/seconds-per-day
+               :item u/item-spec)
+  :ret entry-spec
   :fn (fn equiv-entry? [{{conformed-item :item} :args conformed-entry :ret}]
         (let [item (s/unform u/item-spec conformed-item)
               entry-z (zip/xml-zip (s/unform entry-spec conformed-entry))
@@ -180,49 +95,40 @@
            (= (::u/total-time item) (and info-z (zx/attr info-z :PLAYTIME)))
            (= (::u/comments item) (and info-z (zx/attr info-z :COMMENT)))
            (= (::u/genre item) (and info-z (zx/attr info-z :GENRE)))
-           (= (::u/date-added item) (import-date->date-added (and info-z (zx/attr info-z :IMPORT_DATE))))
-           (equiv-bpm? item entry-z))))
-  :ret entry-spec)
+           (= (::u/date-added item) (nml/string->date (and info-z (zx/attr info-z :IMPORT_DATE))))
+           (equiv-bpm? item entry-z)))))
 
 (defn item->entry
-  [{:keys [::u/location ::u/date-added ::u/title ::u/artist ::u/track-number ::u/album  ::u/total-time ::u/bpm ::u/comments ::u/genre ::u/tempos ::u/markers]}]
-  {:tag :ENTRY
-   :attrs (cond-> {}
-            title (assoc :TITLE title)
-            artist (assoc :ARTIST artist))
-   :content (cond-> []
-              true (conj (url->location location))
-              (or track-number album) (conj {:tag :ALBUM
-                                             :attrs (cond-> {}
-                                                      track-number (assoc :TRACK track-number)
-                                                      album (assoc :TITLE album))})
-              (or date-added comments genre total-time) (conj {:tag :INFO
-                                                               :attrs (cond-> {}
-                                                                        date-added (assoc :IMPORT_DATE (date-added->import-date date-added))
-                                                                        comments (assoc :COMMENT comments)
-                                                                        genre (assoc :GENRE genre)
-                                                                        total-time (assoc :PLAYTIME total-time))})
-              bpm (conj {:tag :TEMPO
-                         :attrs {:BPM (if (empty? tempos) bpm (::ut/bpm (first tempos)))}}) ; if there are tempos take the first tempo as bpm (since item bpm could be an average), otherwise take item bpm
-              markers (concat (map tc/marker->cue markers)))})
+  [nml-date nml-time {:keys [::u/location ::u/title ::u/artist ::u/track-number ::u/album
+                             ::u/total-time ::u/bpm ::u/date-added ::u/comments ::u/genre
+                             ::u/tempos ::u/markers]}]
+  (p ::item->entry
+     {:tag :ENTRY
+      :attrs (cond-> {}
+               true (assoc :MODIFIED_DATE nml-date
+                           :MODIFIED_TIME nml-time)
+               title (assoc :TITLE title)
+               artist (assoc :ARTIST artist))
+      :content (cond-> []
+                 true (conj (tl/url->location location))
+                 (or track-number album) (conj {:tag :ALBUM
+                                                :attrs (cond-> {}
+                                                         track-number (assoc :TRACK track-number)
+                                                         album (assoc :TITLE album))})
+                 (or date-added comments genre total-time) (conj {:tag :INFO
+                                                                  :attrs (cond-> {}
+                                                                           date-added (assoc :IMPORT_DATE (nml/date->string date-added))
+                                                                           comments (assoc :COMMENT comments)
+                                                                           genre (assoc :GENRE genre)
+                                                                           total-time (assoc :PLAYTIME total-time))})
+                 bpm (conj {:tag :TEMPO
+                            :attrs {:BPM bpm}})
+                 markers (concat (map tc/marker->cue 
+                                      (concat (um/indexed-markers markers) (um/non-indexed-markers-without-matching-indexed-marker markers))))
+                 tempos (concat (map tc/tempo->cue-tagged 
+                                     (u/tempos-without-matching-markers tempos markers))))}))
 
-(defn grid-markers->tempos
-  [{:keys [::u/bpm ::u/markers] :as item}]
-  (as-> item $
-    (reduce #(update %1 ::u/tempos
-                     (fn [tempos marker] (if (and
-                                              bpm
-                                              (= ::um/type-grid (::um/type marker)))
-                                           (vec (conj tempos {::ut/inizio (::um/start marker)
-                                                              ::ut/bpm bpm ; only one tempo/bpm value for the whole track, in traktor
-                                                              ::ut/metro "4/4"
-                                                              ::ut/battito "1"}))
-                                           tempos)) %2)
-            $
-            markers)
-    (map/remove-nil $ ::u/tempos)))
-
-(defn equiv-tempo?
+(defn equiv-tempos?
   [entry-z item]
   (let [tempo-z (zx/xml1-> entry-z :TEMPO)
         bpm (and tempo-z (zx/attr tempo-z :BPM))
@@ -235,12 +141,14 @@
                  (::u/tempos item)))))
 
 (defn equiv-markers?
-  [entry-z item]
-  (let [cues-z (zx/xml-> entry-z :CUE_V2)]
-    (every? identity
-            (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
-                 cues-z
-                 (::u/markers item)))))
+  [entry-z {:keys [::u/markers]}]
+  (let [cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))]
+    (and
+     (= (count cues-z) (count markers))
+     (every? identity
+             (map #(= (tc/millis->seconds (zx/attr %1 :START)) (::um/start %2))
+                  cues-z
+                  markers)))))
 
 ; returns the entry location, or nil if it doesn't have a location
 (defn location-z
@@ -264,47 +172,52 @@
            (= (zx/attr entry-z :ARTIST) (::u/artist item))
            (= (and info-z (zx/attr info-z :COMMENT)) (::u/comments item))
            (= (and info-z (zx/attr info-z :GENRE)) (::u/genre item))
-           (= (and info-z (zx/attr info-z :IMPORT_DATE)) (time/date->string nml-date-format nil (::u/date-added item)))
+           (= (and info-z (zx/attr info-z :IMPORT_DATE)) (nml/date->string (::u/date-added item)))
            (= (and info-z (zx/attr info-z :PLAYTIME)) (::u/total-time item))
            (equiv-markers? entry-z item)
-           (equiv-tempo? entry-z item))))
+           (equiv-tempos? entry-z item))))
   :ret u/item-spec)
 
 (defn entry->item
   [entry-z]
-  (let [title (zx/attr entry-z :TITLE)
-        artist (zx/attr entry-z :ARTIST)
-        album-z (zx/xml1-> entry-z :ALBUM)
-        track (and album-z (zx/attr album-z :TRACK))
-        album-title (and album-z (zx/attr album-z :TITLE))
-        info-z (zx/xml1-> entry-z :INFO)
-        import-date (and info-z (zx/attr info-z :IMPORT_DATE))
-        comment (and info-z (zx/attr info-z :COMMENT))
-        genre (and info-z (zx/attr info-z :GENRE))
-        playtime (and info-z (zx/attr info-z :PLAYTIME))
-        tempo-z (zx/xml1-> entry-z :TEMPO)
-        bpm (and tempo-z (zx/attr tempo-z :BPM))
-        cues-z (zx/xml-> entry-z :CUE_V2)]
-    (->
-     (cond-> {::u/location (location->url (zx/xml1-> entry-z :LOCATION))}
-       title (assoc ::u/title title)
-       artist (assoc ::u/artist artist)
-       track (assoc ::u/track-number track)
-       album-title (assoc ::u/album album-title)
-       import-date (assoc ::u/date-added (import-date->date-added import-date))
-       comment (assoc ::u/comments comment)
-       genre (assoc ::u/genre genre)
-       playtime (assoc ::u/total-time playtime)
-       bpm (assoc ::u/bpm bpm)
-       (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z)))
-     grid-markers->tempos)))
+  (p ::entry->item
+     (let [title (zx/attr entry-z :TITLE)
+           artist (zx/attr entry-z :ARTIST)
+           album-z (zx/xml1-> entry-z :ALBUM)
+           track (and album-z (zx/attr album-z :TRACK))
+           album-title (and album-z (zx/attr album-z :TITLE))
+           info-z (zx/xml1-> entry-z :INFO)
+           import-date (and info-z (zx/attr info-z :IMPORT_DATE))
+           comment (and info-z (zx/attr info-z :COMMENT))
+           genre (and info-z (zx/attr info-z :GENRE))
+           playtime (and info-z (zx/attr info-z :PLAYTIME))
+           tempo-z (zx/xml1-> entry-z :TEMPO)
+           bpm (and tempo-z (zx/attr tempo-z :BPM))
+           cues-z (remove (comp tc/cue-tagged? zip/node) (zx/xml-> entry-z :CUE_V2))
+           grid-cues-z (zx/xml-> entry-z :CUE_V2 (zx/attr= :TYPE "4"))]
+       (cond-> {::u/location (tl/location->url (zx/xml1-> entry-z :LOCATION))}
+         title (assoc ::u/title title)
+         artist (assoc ::u/artist artist)
+         track (assoc ::u/track-number track)
+         album-title (assoc ::u/album album-title)
+         import-date (assoc ::u/date-added (nml/string->date import-date))
+         comment (assoc ::u/comments comment)
+         genre (assoc ::u/genre genre)
+         playtime (assoc ::u/total-time playtime)
+         bpm (assoc ::u/bpm bpm)
+         (not-empty cues-z) (assoc ::u/markers (map tc/cue->marker cues-z))
+         (and bpm (not-empty grid-cues-z)) (assoc ::u/tempos (map (partial tc/cue->tempo bpm) grid-cues-z))))))
 
 (defn library->nml
-  [progress _ {:keys [::u/collection]}]
+  [{:keys [progress clock]} _ {:keys [::u/collection]}]
   {:tag :NML
    :attrs {:VERSION 19}
    :content [{:tag :COLLECTION
-              :content (map (if progress (progress item->entry) item->entry) collection)}]})
+              :content (let [instant (tick/with-clock clock (tick/instant))
+                             nml-date (nml/date->string (tick/date instant))
+                             nml-time (tick/seconds (tick/between (tick/truncate instant :days) instant))]
+                         (map (progress (partial item->entry nml-date nml-time))
+                              collection))}]})
 
 (defn nth-entry
   [nml index]
@@ -318,7 +231,7 @@
 (defn entries-z
   [collection-z]
   (filter #(and (location-z %)
-                (location-z-file-is-not-blank? (location-z %)))
+                (tl/location-z-file-is-not-blank? (location-z %)))
           (zx/xml-> collection-z :ENTRY)))
 
 (defn nml->library
@@ -349,21 +262,19 @@
                                             :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
 
 (defn nml-spec
-  ([]
-   (nml-spec nil))
-  ([progress]
-   (->
-    (std/spec
-     {:name ::nml
-      :spec nml})
-    (assoc :encode/xml (partial library->nml progress)))))
+  [config]
+  (->
+   (std/spec
+    {:name ::nml
+     :spec nml})
+   (assoc :encode/xml (partial library->nml config))))
 
 (s/fdef library->nml
-  :args (s/cat :progress nil? :library-spec any? :library u/library-spec)
-  :ret (nml-spec)
+  :args (s/cat :config ::config/config :library-spec any? :library u/library-spec)
+  :ret (nml-spec {})
   :fn (fn equiv-collection-counts? [{{conformed-library :library} :args conformed-nml :ret}]
         (let [library (s/unform u/library-spec conformed-library)
-              nml-z (zip/xml-zip (s/unform (nml-spec) conformed-nml))
+              nml-z (zip/xml-zip (s/unform (nml-spec {}) conformed-nml))
               collection-z (zx/xml1-> nml-z :COLLECTION)]
           (= (count (->> library ::u/collection))
              (count (zx/xml-> collection-z :ENTRY))))))

@@ -24,13 +24,16 @@
       (string/replace "%2C" ",")
       (string/replace "%3F" "?")))
 
+; it is assumed that the string is already url-encoded
 (defn string->url
   [_ str]
   (if (string? str)
     (try
-      (url/url str)
-      (catch #?(:clj Exception
-                :cljs js/Error) _ str))
+      ; on cljs/node, cemerick/url seems to be doing url decoding for whitespace (%20), no idea why..
+      ; so on cljs, whitespace is url encoded again
+      #?(:clj (url/url str)
+         :cljs (-> str url/url (update :path #(string/replace % " " "%20"))))
+      (catch #?(:clj Exception, :cljs js/Error) _ str))
     str))
 
 #?(:clj

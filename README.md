@@ -2,21 +2,26 @@
 
 A command-line app for converting data files to and from different DJ software formats, such as [Traktor](https://www.native-instruments.com/en/products/traktor/dj-software/traktor-pro-3/), [Rekordbox](https://rekordbox.com/en/) and [Serato DJ](https://serato.com/dj).
 
-In addition to an automated test suite comprising specification-driven tests on expected input and output data, this app has been manually tested with Traktor Pro 2 and Rekordbox 5.3.0 on Windows 10.
+In addition to an automated test suite comprising specification-driven tests on expected input and output data, this app has been manually tested with Traktor Pro 2 and Rekordbox 5.7.0 on Windows 10.
 
 ## Features
 
 Feature | Basic Edition | Pro Edition
 -|-|-
 Convert from Traktor to Rekordbox | Yes | Yes
+Convert from Rekordbox to Traktor | No (1) | No (2)
 Convert tempo (BPM) and beat grid | Yes | Yes
 Convert cue points and loops | Yes | Yes
 Convert multiple beat grid markers | Yes | Yes
 Convert unsupported Traktor cue types using a colour mapping | Yes | Yes
-Convert playlists | - | Yes
+Convert playlists | No | Yes
 Runs on Windows | Yes, [download here](https://github.com/digital-dj-tools/dj-data-converter/releases) | Yes
 Runs on Mac | Yes, [download here](https://github.com/digital-dj-tools/dj-data-converter/releases) | Yes
-Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing 
+Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing
+
+(1) Will be released in a new version TBA
+
+(2) Will be released in a new version TBA
 
 ## Motivation
 
@@ -30,26 +35,60 @@ Donations for the Basic Edition are most welcome! This will help me to support m
 
 ### From Traktor to Rekordbox
 
-- For each cue point in Traktor, both a memory cue and a hot cue are created.
-- No limit on the number of cue points.
+- For each cue point in Traktor:
+   - An indexed hot cue is created, with the index matching the index in Traktor.
+   - An additional non-indexed memory cue is added for convenience, tagged with the prefix `[djdc]`. These tagged cues will be removed when converting from Rekordbox back to Traktor.
+   - If the cue point is a grid cue, a tempo is created.
 - The cue point names are copied over as-is.
-- The default cue point colours are used where possible, except when there is a conflict between Traktor and Rekordbox:
+- Tracks without a playtime are not copied (Rekordbox requires this as total time).
+- The cue point types are mapped as follows:
 
-    Traktor | Traktor Colour | Rekordbox | Rekordbox Colour
-    -|-|-|-
-    Cue | Blue | Cue | Green (default)
-    Fade-in | Orange | Cue | Pink
-    Fade-out | Orange | Cue | Pink
-    Load | Yellow | Cue | Yellow (unchanged)
-    Grid | White | Cue | White (unchanged)
-    Loop | Green | Loop | Orange (default)
+  Traktor Type | Traktor Colour | Rekordbox Type | Rekordbox Colour
+  -|-|-|-
+  Cue | Blue | Cue | Green (default)
+  Fade-in | Orange | Cue | Pink
+  Fade-out | Orange | Cue | Pink
+  Load | Yellow | Cue | Yellow (unchanged)
+  Grid | White | Cue | White (unchanged)
+  Loop | Green | Loop | Orange (default)
+
+### From Rekordbox to Traktor
+
+- For each indexed hot cue in Rekordbox, a cue point is created, with the index matching the index in Rekordbox.
+- For each non-indexed memory cue in Rekordbox, a non-indexed cue point is created, but only if there is no matching indexed hot cue by type and position. This is to avoid unnecessary additional cue point "noise" in Traktor.
+- For each tempo in Rekordbox, a non-indexed grid cue point is created, tagged with the prefix `[djdc]`. These tagged cues will be removed and re-created as tempos, when converting from Traktor back to Rekordbox.
+- Note that unlike Rekordbox, Traktor grids only allow a single BPM value for the whole track, so if there are multiple tempos with different BPM values in Rekordbox, the result in Traktor will have the same BPM for all grid cue points.
+- The hot cue and memory cue names are copied over as-is.
+- The hot cue and memory cue types are mapped as follows:
+
+  Rekordbox Type | Traktor Type
+  -|-
+  Cue | Cue
+  Loop | Loop
+
+## Field Mapping
+
+Field | Traktor | Rekordbox | Copied?
+-|-|-|-
+Album Title | Title | Album | Yes
+Artist | Artist | Artist | Yes
+Bpm | Bpm | AverageBpm | Yes
+Comments | Comment | Comments | Yes
+Date Added | Import Date | Date Added | Yes
+Genre | Genre | Genre | Yes
+Label | Label | Label | No
+Total Time | Playtime | Total Time | Yes
+Play Count | Playcount | Play Count | No
+Track Number | Track | - | No
+Track Title | Title | Name | Yes
+Year | Release Date | Year | No
 
 ## Current Limitations
 
-- Conversion is only possible from Traktor to Rekordbox.
-- Only track name, track number, track artist, album title and playtime metadata are copied over.
+- The conversion from Rekordbox to Traktor is currently the simplest possible implementation, it cannot merge with an existing Traktor collection.
+- For reasons unknown, on some tracks Rekordbox likes to create a large number of tempos, even when the bpm is fixed for the whole track. When converting to Traktor, this will currently manifest as (the same) large number of non-indexed grid point cues.
 - Disabling the "Store Beatmarker as Hotcue" Traktor setting is not supported.
-- Performance is limited, however a ~10,000 track Traktor collection should convert in under one minute.
+- Performance is not yet optimal, however a ~10,000 track Traktor or Rekordbox collection should convert in around one minute.
 
 ## Dependencies
 
@@ -68,42 +107,38 @@ Open a command prompt and change to the directory where the archive was extracte
 ```
 cd <download-dir>
 ```
-Now execute the app, providing the location of the Traktor collection file:
+Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
 ```
-dj-data-converter-win.exe [options] <traktor-collection-file>
+dj-data-converter-win.exe [options] <traktor-or-rekordbox-collection-file>
 ```
 For example, assuming Traktor is installed in the default location on Windows:
 ```
 dj-data-converter-win.exe "C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml"
 ```
-A converted `rekordbox.xml` file will be created in the current directory.
+A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
 
-If the conversion fails due to an error, an `error-report.edn` file will be created (also in the current directory).
+If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
 
 ### Mac
 Open a terminal and change to the directory where the archive was extracted:
 ```
 cd <download-dir>
 ```
-Now execute the app, providing the location of the Traktor collection file:
+Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
 ```
-dj-data-converter-macos [options] <traktor-collection-file>
+./dj-data-converter-macos [options] <traktor-or-rekordbox-collection-file>
 ```
-For example, assuming Traktor is installed in the default location on Mac OS X:
+For example, assuming Traktor is installed in the default location on Mac OS:
 ```
-dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
+./dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
 ```
-A converted `rekordbox.xml` file will be created in the current directory.
+A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
 
-If the conversion fails due to an error, an `error-report.edn` file will be created (also in the current directory).
+If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
 
-### Options
-```
-  -h, --help
-```
 ### Importing to Rekordbox
 
-- In the Rekordbox preferences, 
+- In the Rekordbox preferences:
   - Go to `View` and under `Layout` enable `rekordbox xml`
   - Go to `Advanced` `Database` and under `rekordbox xml` change `Imported Library` to the location of the generated `rekordbox.xml` file
 - The `rekordbox xml` entry should now be visible in the tree lower-left.
@@ -111,6 +146,26 @@ If the conversion fails due to an error, an `error-report.edn` file will be crea
 - Expand the `rekordbox xml` icon in the tree and select the `All Tracks` entry
 - The converted tracks should now be listed in the track list.
 - Right-click and select `Import to Collection` as normal.
+- Now load the converted tracks and check the converted data. Report any problems as GitHub issues in this project.
+
+### Importing to Traktor
+
+- Back up any existing `collection.nml` file. The location of this file will depend on whether the app is being used on Windows or Mac:
+
+  OS | File Location
+  -|-
+  Windows | `C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml`
+  Mac | `/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml`
+- When the backup is complete, copy the created `collection.nml` file to the above location, overwriting the existing file.
+- Open Traktor. Care must be taken to ensure that Traktor doesn't overwrite grid data converted from Rekordbox, otherwise any cue points or loops may not align with the grid. Before loading tracks converted from Rekordbox, it is recommended to either:
+  - Enable analysis lock for the tracks, or
+  - Right-click the tracks, select `Analyze (Async)`, and tick `Special`, `Key` and `Gain`, and untick `BPM`.
+- Now load the converted tracks and check the converted data. Report any problems as GitHub issues in this project.
+
+### Options
+```
+  -h, --help
+```
 
 ## Bug Reports
 
@@ -132,7 +187,7 @@ Developers will need to install Java, NodeJS and the Clojure [command line tools
 ### Running the Tests
 
 ```
-clj -Adev:test
+clj -Adev:test-cljs
 ```
 
 ### Starting a CIDER-compatible NREPL Server

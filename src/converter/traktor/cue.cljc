@@ -1,16 +1,19 @@
 (ns converter.traktor.cue
   (:require
+   [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.set :as set]
-   [clojure.string :as str]
+   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
+   [converter.universal.tempo :as ut]
    [spec-tools.data-spec :as std]
    [spec-tools.spec :as sts]
    [utils.map :as map]))
 
+; TODO rename to marker-type->cue-type
 (def type-kw->type-num {::um/type-cue "0"
                         ::um/type-fade-in "1"
                         ::um/type-fade-out "2"
@@ -48,7 +51,9 @@
     {:name ::cue
      :spec cue})
    $
-    (assoc $ :gen (fn [] (gen/fmap #(start-plus-len-not-greater-than-max %) (s/gen $)))))) ; TODO set len to zero unless loop
+    (assoc $ :gen (fn [] (->>
+                          (s/gen $)
+                          (gen/fmap #(start-plus-len-not-greater-than-max %))))))) ; TODO set len to zero unless loop
 
 (defn cue->marker-type
   [{:keys [:TYPE]} marker _]
@@ -72,7 +77,7 @@
 
 (defn marker-end->cue
   [{:keys [::um/start ::um/end] :as marker} cue _]
-   (assoc cue :LEN (seconds->millis (- end start))))
+  (assoc cue :LEN (seconds->millis (- end start))))
 
 (s/fdef cue->marker
   :args (s/cat :cue (spec/xml-zip-spec cue-spec))
@@ -87,14 +92,21 @@
 (defn cue->marker
   [cue-z]
   (-> cue-z
-   zip/node 
-   :attrs
-   (dissoc :DISPL_ORDER :REPEATS)
-   (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
-                  {:TYPE cue->marker-type
-                   :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
-                   :LEN cue->marker-end
-                   :HOTCUE ::um/num})))
+      zip/node
+      :attrs
+      (dissoc :DISPL_ORDER :REPEATS)
+      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) string/lower-case name))
+                     {:TYPE cue->marker-type
+                      :START #(assoc %2 ::um/start (millis->seconds (%3 %1)))
+                      :LEN cue->marker-end
+                      :HOTCUE ::um/num})))
+
+(defn cue->tempo
+  [bpm cue-z]
+  {::ut/inizio (millis->seconds (zx/attr cue-z :START))
+   ::ut/bpm bpm
+   ::ut/metro "4/4"
+   ::ut/battito "1"})
 
 (s/fdef marker->cue
   :args (s/cat :marker um/marker-spec)
@@ -104,8 +116,21 @@
   [marker]
   {:tag :CUE_V2
    :attrs (map/transform marker
-           (partial map/transform-key (comp keyword str/upper-case name))
-           {::um/type marker-type->cue
-            ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
-            ::um/end marker-end->cue
-            ::um/num :HOTCUE})})
+                         (partial map/transform-key (comp keyword string/upper-case name))
+                         {::um/type marker-type->cue
+                          ::um/start #(assoc %2 :START (seconds->millis (%3 %1)))
+                          ::um/end marker-end->cue
+                          ::um/num :HOTCUE})})
+
+(defn tempo->cue-tagged
+  [tempo]
+  {:tag :CUE_V2
+   :attrs {:NAME "[djdc]"
+           :TYPE (type-kw->type-num ::um/type-grid)
+           :START (seconds->millis (::ut/inizio tempo))
+           :LEN 0.0
+           :HOTCUE "-1"}})
+
+(defn cue-tagged?
+  [cue]
+  (= (-> cue :attrs :NAME) "[djdc]"))

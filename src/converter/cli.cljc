@@ -6,13 +6,13 @@
    [clojure.data.xml :as xml]
    [clojure.string :as string]
    [clojure.tools.cli :as cli]
+   [converter.config :as config]
    [converter.app :as app]
    [converter.error :as err]
-   [converter.xml])
+   [converter.xml]
+   #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
+      :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)]))
   #?(:clj (:gen-class)))
-
-(def default-arguments
-  {:output-file "rekordbox.xml"})
 
 (def option-specs
   [["-h" "--help"]
@@ -39,7 +39,7 @@
     (cond
       (:help options) {:exit-message (usage-message summary) :help? true}
       errors {:exit-message (error-message errors)}
-      (= 1 (count arguments)) {:arguments (merge default-arguments {:input-file (first arguments)})
+      (= 1 (count arguments)) {:arguments {:input-file (first arguments)}
                                :options options}
       :else {:exit-message (usage-message summary)})))
 
@@ -61,66 +61,70 @@
      :cljs (.exit nodejs/process status)))
 
 (defn output-dir
-  [{:keys [:output-file]}]
-  (or (.getParent (io/file output-file))
-      ""))
+  [output-file]
+  (when output-file (.getParent (io/file output-file))))
+
+(defn output-file
+  ([arguments]
+   (output-file arguments nil))
+  ([{:keys [output-file] :as arguments} {:keys [output]}]
+   (or output-file
+       (cond
+        ; TODO either throw exception if output is anything else
+        ; or guarantee it isn't by spec conform etc
+         (= output :traktor) "collection.nml"
+         (= output :rekordbox) "rekordbox.xml"))))
 
 #?(:clj
    (defn process
-     [config options arguments]
+     [edition arguments options]
+     (tufte/add-basic-println-handler! {})
+     (tufte/set-min-level! (or (:profile-min-level options) 6))
      (try
-       (with-open [reader (io/reader (:input-file arguments))
-                   writer (io/writer (:output-file arguments))]
-         (as-> reader $
-           (xml/parse $ :skip-whitespace true)
-           (app/convert config options $)
-           (xml/emit $ writer)))
+       (let [config (config/arguments->config arguments)]
+         (with-open [reader (io/reader (:input-file arguments))
+                     writer (io/writer (output-file arguments config))]
+           (profile {}
+                    (as-> reader $
+                      (p ::parse (xml/parse $ :skip-whitespace true))
+                      (p ::convert (app/convert (app/converter edition config) config options $))
+                      (p ::emit (xml/emit $ writer))))))
        [0 "Conversion completed"]
        (catch Throwable t (do
                             (-> t
                                 Throwable->map
                                 (err/create-report arguments options)
-                                (err/write-report (output-dir arguments)))
+                                (err/write-report (output-dir (output-file arguments))))
                             [2 "Problems converting, please provide error-report.edn file..."])))))
 
 #?(:cljs
    (defn process
-     [config options arguments]
+     [edition arguments options]
+     (tufte/add-basic-println-handler! {})
+     (tufte/set-min-level! (or (:profile-min-level options) 6))
      (try
-       (as-> (:input-file arguments) $
-         (io/slurp $)
-         (xml/parse-str $)
-         (converter.xml/strip-whitespace $)
-         (app/convert config options $)
-         (xml/emit-str $)
-         (io/spit (:output-file arguments) $))
+       (let [config (config/arguments->config arguments)]
+         (profile {}
+                  (as-> (:input-file arguments) $
+                    (p ::slurp (io/slurp $))
+                    (p ::parse (xml/parse-str $))
+                    (p ::strip-whitespace (converter.xml/strip-whitespace $))
+                    (p ::convert (app/convert (app/converter edition config) config options $))
+                    (p ::emit (xml/emit-str $))
+                    (p ::spit (io/spit (output-file arguments config) $)))))
        [0 "Conversion completed"]
        (catch :default e (do
                            (-> e
                                err/Error->map
-                               (err/create-report options arguments)
-                               (err/write-report (output-dir arguments)))
+                               (err/create-report arguments options)
+                               (err/write-report (output-dir (output-file arguments))))
                            [2 "Problems converting, please provide error-report.edn file..."])))))
-
-(defn print-progress
-  [f]
-  (let [item-count (atom 1)]
-    (fn [item]
-      (when (= 0 (mod @item-count 1000))
-        (println ".")
-        #?(:clj (flush)))
-      (swap! item-count inc)
-      (f item))))
-
-(def config
-  {:converter app/traktor->rekordbox
-   :progress print-progress})
 
 (defn -main
   [& args]
   (let [{:keys [options arguments exit-message help?]} (parse-args args)]
     (if exit-message
       (exit (if help? 0 1) exit-message)
-      (apply exit (process config options arguments)))))
+      (apply exit (process app/basic-edition arguments options)))))
 
 #?(:cljs (set! *main-cli-fn* -main))

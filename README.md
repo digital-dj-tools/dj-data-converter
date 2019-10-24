@@ -126,11 +126,11 @@ cd <download-dir>
 ```
 Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
 ```
-dj-data-converter-macos [options] <traktor-or-rekordbox-collection-file>
+./dj-data-converter-macos [options] <traktor-or-rekordbox-collection-file>
 ```
-For example, assuming Traktor is installed in the default location on Mac OS X:
+For example, assuming Traktor is installed in the default location on Mac OS:
 ```
-dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
+./dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
 ```
 A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
 

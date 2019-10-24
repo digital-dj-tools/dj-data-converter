@@ -40,14 +40,12 @@
    (string-transformer "yyyy-MM-dd"))
   ([date-format]
    (st/type-transformer
-   {:name :string
-    :decoders (merge stt/string-type-decoders {:url url/string->url
-                                               :date (partial time/string->date date-format)
-                                               })
-    :encoders (merge stt/string-type-encoders {:url stt/any->string
-                                               :date (partial time/date->string date-format)
-                                               })
-    :default-encoder stt/any->any})))
+    {:name :string
+     :decoders (merge stt/string-type-decoders {:url url/string->url
+                                                :date (partial time/string->date date-format)})
+     :encoders (merge stt/string-type-encoders {:url stt/any->string
+                                                :date (partial time/date->string date-format)})
+     :default-encoder stt/any->any})))
 
 ; this only works as long as it's not nested inside other data specs
 (defrecord XmlZipSpec [spec]
@@ -64,15 +62,22 @@
 (defn xml-zip-spec [spec]
   (->XmlZipSpec spec))
 
-; TODO spec is assumed to be a spec-tools record
-(defn remove-empty-spec
-  [spec & ks]
-  (assoc spec :gen (fn [] (gen/fmap #(apply map/remove-empty % ks) (s/gen spec)))))
+(defn such-that
+  [spec pred]
+  (s/with-gen spec 
+    (fn [] (gen/such-that pred (s/gen spec)))))
 
 ; TODO spec is assumed to be a spec-tools record
 (defn such-that-spec
-  [spec pred max-tries]
-  (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec) max-tries))))
+  ([spec pred]
+   (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec)))))
+  ([spec pred max-tries]
+   (assoc spec :gen (fn [] (gen/such-that pred (s/gen spec) max-tries)))))
+
+; TODO spec is assumed to be a spec-tools record
+(defn with-gen-fmap-spec
+  [spec f]
+  (assoc spec :gen (fn [] (gen/fmap f (s/gen spec)))))
 
 (defrecord ValueEncodedSpec [spec transformer]
   s/Spec

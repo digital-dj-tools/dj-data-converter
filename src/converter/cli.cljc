@@ -15,7 +15,8 @@
   #?(:clj (:gen-class)))
 
 (def option-specs
-  [["-h" "--help"]])
+  [["-h" "--help"]
+   ["-w" "--wsl"]])
 
 (defn usage-message
   [summary]
@@ -86,7 +87,7 @@
            (profile {}
                     (as-> reader $
                       (p ::parse (xml/parse $ :skip-whitespace true))
-                      (p ::convert (app/convert (app/converter edition config) config $))
+                      (p ::convert (app/convert (app/converter edition config) config options $))
                       (p ::emit (xml/emit $ writer))))))
        [0 "Conversion completed"]
        (catch Throwable t (do
@@ -108,7 +109,7 @@
                     (p ::slurp (io/slurp $))
                     (p ::parse (xml/parse-str $))
                     (p ::strip-whitespace (converter.xml/strip-whitespace $))
-                    (p ::convert (app/convert (app/converter edition config) config $))
+                    (p ::convert (app/convert (app/converter edition config) config options $))
                     (p ::emit (xml/emit-str $))
                     (p ::spit (io/spit (output-file arguments config) $)))))
        [0 "Conversion completed"]
@@ -121,7 +122,7 @@
 
 (defn -main
   [& args]
-  (let [{:keys [arguments options exit-message help?]} (parse-args args)]
+  (let [{:keys [options arguments exit-message help?]} (parse-args args)]
     (if exit-message
       (exit (if help? 0 1) exit-message)
       (apply exit (process app/basic-edition arguments options)))))

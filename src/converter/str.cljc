@@ -8,6 +8,11 @@
   []
   (gen/such-that #(not (str/blank? %)) (gen/string-alphanumeric)))
 
+(s/def ::not-blank-string
+  (s/with-gen
+    (s/and string? #(not (str/blank? %)))
+    (fn [] (not-blank-string-gen))))
+
 (defn not-blank-string-with-whitespace-gen
   []
   (->> (gen/string-alphanumeric)
@@ -18,10 +23,10 @@
                                                 (identity %2))
                                              s))))))
 
-(s/def ::not-blank-string
+(s/def ::not-blank-string-with-whitespace
   (s/with-gen
     (s/and string? #(not (str/blank? %)))
-    (fn [] (not-blank-string-gen))))
+    (fn [] (not-blank-string-with-whitespace-gen))))
 
 (def drive-letter-regex #"[A-Z]:")
 

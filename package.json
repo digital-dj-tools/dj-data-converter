@@ -4,9 +4,10 @@
   "bin": "out/cli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build-win": "pkg . --targets node10-win-x64 --output pkg/dj-data-converter-win.exe",
-    "build-mac": "pkg . --targets node10-macos-x64 --output pkg/dj-data-converter-macos",
-    "build": "npm run build-win && npm run build-mac"
+    "build-win": "pkg . --targets node8-win-x64 --output pkg/dj-data-converter-win.exe",
+    "build-mac": "pkg . --targets node8-macos-x64 --output pkg/dj-data-converter-macos",
+    "build-linux": "pkg . --targets node8-linux-x64 --output pkg/dj-data-converter-linux",
+    "build": "npm run build-win && npm run build-mac && npm run build-linux"
   },
   "keywords": [],
   "author": "",
@@ -17,10 +18,11 @@
     "scripts": "out/**/*.js"
   },
   "dependencies": {
-    "xmldom": "^0.1.27",
     "js-joda": "1.10.1",
     "@js-joda/locale_en-us": "2.0.0",
     "js-joda-timezone": "2.0.1",
-    "source-map-support": "^0.5.9"
+    "file-uri-to-path": "^1.0.0",
+    "source-map-support": "^0.5.9",
+    "xmldom": "^0.1.27"
   }
 }

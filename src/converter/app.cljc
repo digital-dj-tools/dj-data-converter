@@ -1,11 +1,16 @@
 (ns converter.app
   (:require
+   [cemerick.url :refer [url-decode]]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [converter.config :as config]
+   [converter.offset :as o]
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
    [converter.traktor.core :as t]
+   [converter.universal.core :as u]
+   [converter.url :as url]
    [converter.xml :as xml]
+   [mp3-parser.app :as mp3]
    [spec-tools.core :as st]
    #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
       :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
@@ -75,22 +80,34 @@
         (= input :traktor) traktor->rekordbox
         (= input :rekordbox) rekordbox->traktor))))
 
+(defn correct
+  [config options item]
+  (let [url (-> item ::u/location (url/drive->wsl (:wsl options)))]
+    (try
+      (o/correct config item (-> url url/url->path mp3/parse))
+    ; TODO don't print, conj report with any error from mp3-parser, e.g. file not found
+      #?(:clj (catch Throwable t (do (println (ex-message t)) item))
+         :cljs (catch :default e (do (println (ex-message e)) item))))))
+
 (s/fdef convert
   :args (s/cat
          :converter #{traktor->rekordbox}
          :config (spec/such-that ::config/config #(= :traktor (:input %)))
+         :options map?
          :xml (spec/value-encoded-spec (t/nml-spec {}) t/string-transformer))
   :ret (spec/value-encoded-spec (r/dj-playlists-spec {}) r/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert
-  [converter config xml]
+  [converter config options xml]
   (let [input-spec (input-spec converter config)
         library-spec (library-spec converter)
         output-spec (output-spec converter config)]
     (as-> xml $
       (p ::decode-str (spec/decode! input-spec $ (input-string-transformer converter)))
       (p ::decode-xml (spec/decode! library-spec $ (input-xml-transformer converter)))
+      ; TODO only correct mp3 files?
+      (update $ ::u/collection #(map (partial correct config options) %))
       ; FIXME skip spec tools encode for traktor output (performance issue)
       (if (= (:output config) :traktor)
         (p ::encode-nml (t/library->nml config nil $))

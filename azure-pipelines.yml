@@ -26,6 +26,8 @@ jobs:
       zip -j pkg/dj-data-converter-win.zip pkg/dj-data-converter-win.exe
       chmod +x pkg/dj-data-converter-macos
       tar -czvf pkg/dj-data-converter-macos.tar.gz -C pkg dj-data-converter-macos
+      chmod +x pkg/dj-data-converter-linux
+      tar -czvf pkg/dj-data-converter-linux.tar.gz -C pkg dj-data-converter-linux
     displayName: Package
   - task: CopyFiles@2
     inputs:
@@ -64,6 +66,21 @@ jobs:
   - script: |
       chmod +x dj-data-converter/dj-data-converter-macos
       dj-data-converter/dj-data-converter-macos -h
+    displayName: Smoke Test
+- job: Test_Linux
+  dependsOn: Build
+  pool:
+    vmImage: ubuntu-16.04
+  steps:
+  - task: DownloadBuildArtifacts@0
+    inputs:
+      buildType: current
+      downloadType: single
+      artifactName: dj-data-converter
+      downloadPath: $(System.DefaultWorkingDirectory)
+  - script: |
+      chmod +x dj-data-converter/dj-data-converter-linux
+      dj-data-converter/dj-data-converter-linux -h
     displayName: Smoke Test
 - job: Release
   dependsOn:

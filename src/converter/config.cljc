@@ -15,6 +15,10 @@
 (s/def ::outputs
   #{:rekordbox :traktor})
 
+(defn traktor->rekordbox?
+  [{:keys [input output]}]
+  (and (= input :traktor) (= output :rekordbox)))
+
 (s/fdef ::progress
   :args (s/cat :function any?))
 

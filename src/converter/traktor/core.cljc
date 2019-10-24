@@ -1,7 +1,6 @@
 (ns converter.traktor.core
   (:require
-   [cemerick.url :refer [url url-encode url-decode]]
-   #?(:clj [clojure.core.async :as async] :cljs [cljs.core.async :as async])
+   [cemerick.url :refer [url url-decode]]
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])

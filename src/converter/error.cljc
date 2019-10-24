@@ -38,7 +38,7 @@
                  (update-in [:data :problems] (fn [problem] (map #(dissoc % :val) problem))))))
 
 (defn create-report
-  [error options arguments]
+  [error arguments options]
   {:args arguments
    :opts options
    :error (if (data-error? error)

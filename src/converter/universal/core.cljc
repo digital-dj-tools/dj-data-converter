@@ -117,24 +117,31 @@
     (assoc item ::bpm (::ut/bpm (first tempos)))
     item))
 
-(defn assert-tempo-and-grid-marker-counts
+(defn marker-at-first-tempo-inizio
+  "Returns an item with a non-indexed marker at the first tempo inizio.
+   As such, the item tempos are assumed to be ordered by inizio."
   [{:keys [::tempos ::markers] :as item}]
-  (assert (= (count tempos)
-             (count (filter #(um/marker-of-type? % ::um/type-grid) markers))))
-  item)
+  (let [first-tempo-inizio (::ut/inizio (first tempos))]
+    (if (and (not-empty tempos)
+             (empty? (filter #(= first-tempo-inizio (::um/start %)) markers)))
+      (update item ::markers conj {::um/name "at-first-tempo-inizio"
+                                   ::um/type ::um/type-cue
+                                   ::um/start first-tempo-inizio
+                                   ::um/end first-tempo-inizio
+                                   ::um/num "-1"})
+      item)))
 
 (defn item-from-traktor
   [item]
   ((comp
     #(assoc % ::comments "from-traktor")
-    assert-tempo-and-grid-marker-counts
     ; TODO map/remove-empty is not working for some reason, tests fail..
     ; #(map/remove-empty % ::markers)
     #(if (empty? (::markers %)) (dissoc % ::markers) %)
+    sorted-markers
     sorted-tempos
     grid-markers->tempos
     #(dissoc % ::tempos)
-    sorted-markers
     distinct-markers
     #(if-not (::bpm item) (remove-markers % ::um/type-grid) %))
    item))
@@ -147,11 +154,11 @@
     ; #(map/remove-empty % ::markers ::tempos)
     #(if (empty? (::tempos %)) (dissoc % ::tempos) %)
     #(if (empty? (::markers %)) (dissoc % ::markers) %)
-    ; TODO add a non-indexed marker of type cue at first tempo inizio, this is typical
-    bpm-from-tempos
-    sorted-tempos
-    #(if (empty? (::tempos %)) (dissoc % ::bpm) %)
     sorted-markers
+    #(if (= 0 (rand-int 1)) (marker-at-first-tempo-inizio %) %)
+    sorted-tempos
+    bpm-from-tempos
+    #(if (empty? (::tempos %)) (dissoc % ::bpm) %)
     distinct-markers
     #(filter-markers % ::um/type-cue ::um/type-loop)
     match-tempo-distribution-stats)

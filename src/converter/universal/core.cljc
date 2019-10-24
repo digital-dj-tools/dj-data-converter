@@ -52,6 +52,13 @@
     (update item ::markers #(vec (sort-by ::um/start %)))
     item))
 
+(defn distinct-tempos
+  "Returns an item with tempos distinct by inizio."
+  [item]
+  (if (::tempos item)
+    (update item ::tempos #(vec (distinct-by ::ut/inizio %)))
+    item))
+
 (defn distinct-markers
   "Returns an item with markers distinct by num, except for non-indexed markers."
   [item]
@@ -160,6 +167,7 @@
     bpm-from-tempos
     #(if (empty? (::tempos %)) (dissoc % ::bpm) %)
     distinct-markers
+    distinct-tempos
     #(filter-markers % ::um/type-cue ::um/type-loop)
     match-tempo-distribution-stats)
    item))

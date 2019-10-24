@@ -75,3 +75,10 @@
                        #(= "file" (:protocol %)))
                       {:type :url
                        :gen #(url-gen)}))
+
+(defn file-ext
+  [url]
+  (->> url
+      :path
+      (re-find #"\.([^\.]+)$")
+      second))

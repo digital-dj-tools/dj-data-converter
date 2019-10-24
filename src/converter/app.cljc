@@ -1,26 +1,29 @@
 (ns converter.app
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
+   [converter.config :as config]
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
    [converter.traktor.core :as t]
    [converter.xml :as xml]
-   [spec-tools.core :as st]))
+   [spec-tools.core :as st]
+   #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
+      :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
 
-(defprotocol TraktorRekordboxConverter
-  (input-spec [this])
+(defprotocol Converter
+  (input-spec [this config])
   (input-string-transformer [this])
   (input-xml-transformer [this])
   (library-spec [this])
-  (output-spec [this progress])
+  (output-spec [this config])
   (output-xml-transformer [this]))
 
 (def traktor->rekordbox
   (reify
-    TraktorRekordboxConverter
+    Converter
     (input-spec
-      [this]
-      (t/nml-spec))
+      [this config]
+      (t/nml-spec config))
     (input-string-transformer
       [this]
       t/string-transformer)
@@ -31,29 +34,64 @@
       [this]
       t/library-spec)
     (output-spec
-      [this progress]
-      (r/dj-playlists-spec progress))
+      [this config]
+      (r/dj-playlists-spec config))
     (output-xml-transformer
-     [this]
-     r/xml-transformer)))
+      [this]
+      r/xml-transformer)))
 
-(defn doto-prn
-  [obj f]
-  (prn (f obj)))
+(def rekordbox->traktor
+  (reify
+    Converter
+    (input-spec
+      [this config]
+      (r/dj-playlists-spec config))
+    (input-string-transformer
+      [this]
+      r/string-transformer)
+    (input-xml-transformer
+      [this]
+      r/xml-transformer)
+    (library-spec
+      [this]
+      r/library-spec)
+    (output-spec
+      [this config]
+      (t/nml-spec config))
+    (output-xml-transformer
+      [this]
+      t/xml-transformer)))
+
+(defprotocol Edition
+  (converter [this config]))
+
+(def basic-edition
+  (reify
+    Edition
+    (converter [this {:keys [input]}]
+      (cond
+        ; TODO either throw exception if input is anything else
+        ; or guarantee it isn't by spec conform etc
+        (= input :traktor) traktor->rekordbox
+        (= input :rekordbox) rekordbox->traktor))))
 
 (s/fdef convert
-  :args (s/cat :config #{{:converter traktor->rekordbox}}
-               :xml (spec/value-encoded-spec (t/nml-spec) t/string-transformer))
-  :ret (spec/value-encoded-spec r/dj-playlists-spec r/string-transformer))
+  :args (s/cat
+         :converter #{traktor->rekordbox}
+         :config (spec/such-that ::config/config #(= :traktor (:input %)))
+         :xml (spec/value-encoded-spec (t/nml-spec {}) t/string-transformer))
+  :ret (spec/value-encoded-spec (r/dj-playlists-spec {}) r/string-transformer))
 ; TODO :ret spec should OR with some spec that checks all leafs are strings
 
 (defn convert
-  [config xml]
-  (let [converter (:converter config)
-        input-spec (input-spec converter)
+  [converter config xml]
+  (let [input-spec (input-spec converter config)
         library-spec (library-spec converter)
-        output-spec (output-spec converter (:progress config))]
+        output-spec (output-spec converter config)]
     (as-> xml $
-      (spec/decode! input-spec $ (input-string-transformer converter))
-      (spec/decode! library-spec $ (input-xml-transformer converter))
-      (st/encode output-spec $ (output-xml-transformer converter)))))
+      (p ::decode-str (spec/decode! input-spec $ (input-string-transformer converter)))
+      (p ::decode-xml (spec/decode! library-spec $ (input-xml-transformer converter)))
+      ; FIXME skip spec tools encode for traktor output (performance issue)
+      (if (= (:output config) :traktor)
+        (p ::encode-nml (t/library->nml config nil $))
+        (p ::encode (st/encode output-spec $ (output-xml-transformer converter)))))))

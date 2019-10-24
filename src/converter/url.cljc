@@ -2,14 +2,19 @@
   (:require [cemerick.url :refer [url url-encode]]
             #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
             #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
+            [clojure.string :as string]
             [converter.str :as str]
             [spec-tools.core :as st]))
 
+; it is assumed that the string is already url-encoded
 (defn string->url
   [_ str]
   (if (string? str)
     (try
-      (url str)
+      ; on cljs/node, cemerick/url seems to be doing url decoding for whitespace (%20), no idea why..
+      ; so on cljs, whitespace is url encoded again
+      #?(:clj (url str)
+         :cljs (-> str url (update :path #(string/replace % " " "%20"))))
       (catch #?(:clj Exception, :cljs js/Error) _ str))
     str))
 

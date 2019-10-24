@@ -18,6 +18,8 @@ jobs:
     displayName: Install Node Dependencies
   - script: clojure -Adev:test-cljs
     displayName: ClojureScript Tests
+  - script: clojure -Adev:profile-cljs
+    displayName: ClojureScript Profiling
   - script: |
       clojure -A:dev:compile-cljs
       npm run build

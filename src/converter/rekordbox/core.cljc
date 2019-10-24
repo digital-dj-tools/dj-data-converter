@@ -38,6 +38,7 @@
                    (std/opt :Artist) string?
                    (std/opt :Album) string?
                    (std/opt :Genre) string?
+                   (std/opt :TrackNumber) string?
                    (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)
                    (std/opt :DateAdded) ::time/date
                    (std/opt :Comments) string?}

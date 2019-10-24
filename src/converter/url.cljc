@@ -11,19 +11,6 @@
 
 ; TODO only accept file:// urls
 
-; this doesn't encode certain characters
-; since nodejs file-uri-to-path doesn't decode them (no idea why)
-(defn url-encode
-  [str]
-  (-> str
-      url/url-encode
-      (string/replace "%23" "#")
-      (string/replace "%24" "$")
-      (string/replace "%26" "&")
-      (string/replace "%2B" "+")
-      (string/replace "%2C" ",")
-      (string/replace "%3F" "?")))
-
 ; it is assumed that the string is already url-encoded
 (defn string->url
   [_ str]
@@ -50,7 +37,14 @@
      [url]
      (-> url
          str
-         file-uri-to-path)))
+         file-uri-to-path
+         ; FIXME why is file-uri-to-path not url decoding certain chars?
+         (string/replace "%23" "#")
+         (string/replace "%24" "$")
+         (string/replace "%26" "&")
+         (string/replace "%2B" "+")
+         (string/replace "%2C" ",")
+         (string/replace "%3F" "?"))))
 
 (defn drive->wsl
   [url wsl?]
@@ -70,7 +64,7 @@
         (gen/one-of [(str/drive-letter-gen) (gen/elements #{""})])
       ;; path
         (->> (str/not-blank-string-with-whitespace-gen)
-             (gen/fmap url-encode)
+             (gen/fmap url/url-encode)
              (gen/vector)
              (gen/not-empty)))
        (gen/fmap

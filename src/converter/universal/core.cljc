@@ -53,15 +53,15 @@
     item))
 
 (defn distinct-markers
-  "Returns an item with markers distinct by num, except for hidden markers."
+  "Returns an item with markers distinct by num, except for non-indexed markers."
   [item]
   (if (::markers item)
-    (update item ::markers #(vec (concat (distinct-by ::um/num (um/visible-markers %))
-                                         (um/hidden-markers %))))
+    (update item ::markers #(vec (concat (distinct-by ::um/num (um/indexed-markers %))
+                                         (um/non-indexed-markers %))))
     item))
 
 (defn tempos->grid-markers
-  "Returns an item with a hidden grid marker created for each tempo."
+  "Returns an item with a non-indexed grid marker created for each tempo."
   [{:keys [::tempos] :as item}]
   (reduce #(update %1 ::markers
                    (fn [markers tempo] (conj markers {::um/name ""
@@ -147,7 +147,7 @@
     ; #(map/remove-empty % ::markers ::tempos)
     #(if (empty? (::tempos %)) (dissoc % ::tempos) %)
     #(if (empty? (::markers %)) (dissoc % ::markers) %)
-    ; TODO add a hidden marker of type cue at first tempo inizio, this is typical
+    ; TODO add a non-indexed marker of type cue at first tempo inizio, this is typical
     bpm-from-tempos
     sorted-tempos
     #(if (empty? (::tempos %)) (dissoc % ::bpm) %)

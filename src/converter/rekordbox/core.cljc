@@ -49,19 +49,19 @@
 
 (defn equiv-position-marks?
   [{:keys [::u/markers]} track-z]
-  (let [visible-markers (um/visible-markers markers)
-        hidden-markers (um/hidden-markers markers)
+  (let [indexed-markers (um/indexed-markers markers)
+        non-indexed-markers (um/non-indexed-markers markers)
         position-marks-z (zx/xml-> track-z :POSITION_MARK)
         position-marks-hot-cue-z (remove (comp rp/memory-cue? zip/node) position-marks-z)
         position-marks-memory-cue-z (filter (comp rp/memory-cue? zip/node) position-marks-z)
         position-marks-tagged-z (filter (comp rp/position-mark-tagged? zip/node) position-marks-z)]
     (and
-     (= (count visible-markers) (count position-marks-hot-cue-z))
-     (= (count hidden-markers) (- (count position-marks-memory-cue-z) (count position-marks-tagged-z)))
+     (= (count indexed-markers) (count position-marks-hot-cue-z))
+     (= (count non-indexed-markers) (- (count position-marks-memory-cue-z) (count position-marks-tagged-z)))
      (every? identity
              (map
               #(= (::um/num %1) (zx/attr %2 :Num))
-              visible-markers
+              indexed-markers
               position-marks-hot-cue-z)))))
 
 (s/fdef item->track
@@ -80,11 +80,11 @@
 
 ; TODO move to position-mark ns?
 (defn marker->position-marks
-  [hidden-markers marker]
+  [non-indexed-markers marker]
   (cond-> []
-    true (conj (rp/marker->position-mark marker (um/hidden-marker? marker)))
-    (and (not (um/hidden-marker? marker))
-         (not (um/matching-marker? hidden-markers marker))) (conj (rp/marker->position-mark-tagged marker true))))
+    true (conj (rp/marker->position-mark marker (um/non-indexed-marker? marker)))
+    (and (not (um/non-indexed-marker? marker))
+         (not (um/matching-marker? non-indexed-markers marker))) (conj (rp/marker->position-mark-tagged marker true))))
 
 (defn item->track
   [{:keys [::u/title ::u/bpm ::u/markers ::u/tempos] :as item}]
@@ -96,7 +96,7 @@
                bpm (assoc :AverageBpm bpm))
       :content (cond-> []
                  tempos (concat (map rt/item-tempo->tempo tempos))
-                 markers (concat (reduce #(concat %1 (marker->position-marks (um/hidden-markers markers) %2)) [] markers)))}))
+                 markers (concat (reduce #(concat %1 (marker->position-marks (um/non-indexed-markers markers) %2)) [] markers)))}))
 
 (defn equiv-markers?
   [track-z {:keys [::u/markers]}]

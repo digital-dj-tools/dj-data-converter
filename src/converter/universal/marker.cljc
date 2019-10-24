@@ -44,18 +44,17 @@
   [marker & marker-types]
   (contains? (set marker-types) (::type marker)))
 
-; TODO think of a better name
-(defn hidden-marker?
+(defn non-indexed-marker?
   [marker]
   (= "-1" (::num marker)))
 
-(defn hidden-markers
+(defn non-indexed-markers
   [markers]
-  (filter hidden-marker? markers))
+  (filter non-indexed-marker? markers))
 
-(defn visible-markers
+(defn indexed-markers
   [markers]
-  (remove hidden-marker? markers))
+  (remove non-indexed-marker? markers))
 
 (defn- matching-markers?
   "Returns true if the markers are matching (on type, start and end)."
@@ -69,8 +68,8 @@
   [markers marker]
   (some #(matching-markers? % marker) markers))
 
-(defn hidden-markers-without-matching-visible-marker
-  "Returns the hidden markers that don't have a matching visible marker."
+(defn non-indexed-markers-without-matching-indexed-marker
+  "Returns the non-indexed markers that don't have a matching indexed marker."
   [markers]
-  (remove (partial matching-marker? (visible-markers markers))
-          (hidden-markers markers)))
+  (remove (partial matching-marker? (indexed-markers markers))
+          (non-indexed-markers markers)))

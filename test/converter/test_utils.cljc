@@ -48,10 +48,10 @@
   (if (::u/collection library)
     (update library ::u/collection #(filter item-filter-fn %))))
 
-(defn- item-markers-remove-hidden-markers-with-matching-non-hidden-marker
+(defn- item-markers-remove-non-indexed-markers-with-matching-indexed-marker
   [item]
   (if (::u/markers item)
-    (update item ::u/markers #(concat (um/visible-markers %) (um/hidden-markers-without-matching-visible-marker %)))
+    (update item ::u/markers #(concat (um/indexed-markers %) (um/non-indexed-markers-without-matching-indexed-marker %)))
     item))
 
 (defn- item-tempos-dissoc-bpm-metro-battito
@@ -68,7 +68,7 @@
     #(library-items-map % u/sorted-tempos)
     #(library-items-map % item-tempos-dissoc-bpm-metro-battito)
     #(library-items-map % u/sorted-markers)
-    #(library-items-map % item-markers-remove-hidden-markers-with-matching-non-hidden-marker))
+    #(library-items-map % item-markers-remove-non-indexed-markers-with-matching-indexed-marker))
    library))
 
 (defn- marker-type-supported?

@@ -125,7 +125,7 @@
                  bpm (conj {:tag :TEMPO
                             :attrs {:BPM bpm}})
                  markers (concat (map tc/marker->cue 
-                                      (concat (um/visible-markers markers) (um/hidden-markers-without-matching-visible-marker markers))))
+                                      (concat (um/indexed-markers markers) (um/non-indexed-markers-without-matching-indexed-marker markers))))
                  tempos (concat (map tc/tempo->cue-tagged 
                                      (u/tempos-without-matching-markers tempos markers))))}))
 

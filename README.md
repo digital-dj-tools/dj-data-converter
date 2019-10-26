@@ -13,7 +13,7 @@ Convert from Rekordbox to Traktor | Yes | No (1)
 Convert tempo (BPM) and beat grid | Yes | Yes
 Convert cue points and loops | Yes | Yes
 Convert multiple beat grid markers | Yes | Yes
-Correct 26ms grid offset when converting mp3 files | Yes | No (1)
+Correct 26ms grid offset when converting mp3 files | Yes | Yes
 Convert unsupported Traktor cue types using a colour mapping | Yes | Yes
 Convert playlists | No | Yes
 Runs on Windows | Yes, [download here](https://github.com/digital-dj-tools/dj-data-converter/releases) | Yes

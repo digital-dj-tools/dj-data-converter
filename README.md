@@ -24,7 +24,7 @@ Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing
 
 ## Motivation
 
-Although there are other apps for handling this task, none are **open source** or available on **multiple platforms** such as Windows.
+Unlike other apps for handling this task, this app is **open source** and available on **Windows**, in addition to **Mac OS**.
 
 ## Install
 

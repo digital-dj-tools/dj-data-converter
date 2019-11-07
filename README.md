@@ -65,7 +65,7 @@ To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for p
     ```
     cd <download-dir>
     ```
-    Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
+2. Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
     ```
     ./dj-data-converter-macos [options] <traktor-or-rekordbox-collection-file>
     ```

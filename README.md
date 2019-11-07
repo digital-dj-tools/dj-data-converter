@@ -24,7 +24,80 @@ Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing
 
 ## Motivation
 
-Although there are other apps for handling this task, none are **open source** or available on **multiple platforms** such as Windows.
+Unlike other apps for handling this task, this app is **open source** and available on **Windows**, in addition to **Mac OS**.
+
+## Install
+
+Download the Basic Edition from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page as a zip or tar.gz archive, and then extract the archive into a directory.
+
+To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for pricing.
+
+## Usage
+
+### Windows
+1. Open a command prompt and change to the directory where the archive was extracted:
+    ```
+    cd <download-dir>
+    ```
+2. Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
+    ```
+    dj-data-converter-win.exe [options] <traktor-or-rekordbox-collection-file>
+    ```
+    For example, assuming Traktor is installed in the default location on Windows:
+    ```
+    dj-data-converter-win.exe "C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml"
+    ```
+    A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
+
+    If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
+
+### Mac
+1. Open a terminal and change to the directory where the archive was extracted:
+    ```
+    cd <download-dir>
+    ```
+2. Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
+    ```
+    ./dj-data-converter-macos [options] <traktor-or-rekordbox-collection-file>
+    ```
+    For example, assuming Traktor is installed in the default location on Mac OS:
+    ```
+    ./dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
+    ```
+    A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
+
+    If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
+
+### Options
+```
+  -h, --help
+```
+
+### Importing to Rekordbox
+
+- In the Rekordbox preferences:
+  - Go to `View` and under `Layout` enable `rekordbox xml`
+  - Go to `Advanced` `Database` and under `rekordbox xml` change `Imported Library` to the location of the generated `rekordbox.xml` file
+- The `rekordbox xml` entry should now be visible in the tree lower-left.
+- Click the refresh icon to load the file.
+- Expand the `rekordbox xml` icon in the tree and select the `All Tracks` entry
+- The converted tracks should now be listed in the track list.
+- Right-click and select `Import to Collection` as normal.
+- Now load the converted tracks and check the converted data. Report any problems as GitHub issues in this project.
+
+### Importing to Traktor
+
+- Back up any existing `collection.nml` file. The location of this file will depend on whether the app is being used on Windows or Mac:
+
+  OS | File Location
+  -|-
+  Windows | `C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml`
+  Mac | `/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml`
+- When the backup is complete, copy the created `collection.nml` file to the above location, overwriting the existing file.
+- Open Traktor. Care must be taken to ensure that Traktor doesn't overwrite grid data converted from Rekordbox, otherwise any cue points or loops may not align with the grid. Before loading tracks converted from Rekordbox, it is recommended to either:
+  - Enable analysis lock for the tracks, or
+  - Right-click the tracks, select `Analyze (Async)`, and tick `Special`, `Key` and `Gain`, and untick `BPM`.
+- Now load the converted tracks and check the converted data. Report any problems as GitHub issues in this project.
 
 ## Why a Command-Line App Instead of a GUI App?
 
@@ -92,83 +165,6 @@ Play Count | Playcount | Play Count | No
 Track Number | Track | Track Number | Yes
 Track Title | Title | Name | Yes
 Year | Release Date | Year | No
-
-## Dependencies
-
-None
-
-## Install
-
-Download the Basic Edition from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page as a zip or tar.gz archive, and then extract the archive into a directory.
-
-To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for pricing.
-
-## Usage
-
-### Windows
-Open a command prompt and change to the directory where the archive was extracted:
-```
-cd <download-dir>
-```
-Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
-```
-dj-data-converter-win.exe [options] <traktor-or-rekordbox-collection-file>
-```
-For example, assuming Traktor is installed in the default location on Windows:
-```
-dj-data-converter-win.exe "C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml"
-```
-A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
-
-If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
-
-### Mac
-Open a terminal and change to the directory where the archive was extracted:
-```
-cd <download-dir>
-```
-Now execute the app, providing the location of the Traktor collection file, or an exported Rekordbox collection file:
-```
-./dj-data-converter-macos [options] <traktor-or-rekordbox-collection-file>
-```
-For example, assuming Traktor is installed in the default location on Mac OS:
-```
-./dj-data-converter-macos "/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml"
-```
-A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
-
-If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
-
-### Importing to Rekordbox
-
-- In the Rekordbox preferences:
-  - Go to `View` and under `Layout` enable `rekordbox xml`
-  - Go to `Advanced` `Database` and under `rekordbox xml` change `Imported Library` to the location of the generated `rekordbox.xml` file
-- The `rekordbox xml` entry should now be visible in the tree lower-left.
-- Click the refresh icon to load the file.
-- Expand the `rekordbox xml` icon in the tree and select the `All Tracks` entry
-- The converted tracks should now be listed in the track list.
-- Right-click and select `Import to Collection` as normal.
-- Now load the converted tracks and check the converted data. Report any problems as GitHub issues in this project.
-
-### Importing to Traktor
-
-- Back up any existing `collection.nml` file. The location of this file will depend on whether the app is being used on Windows or Mac:
-
-  OS | File Location
-  -|-
-  Windows | `C:\Users\<your-user-name>\Documents\Native Instruments\Traktor <version-number>\collection.nml`
-  Mac | `/Users/<your-user-name>/Documents/Native Instruments/Traktor <version-number>/collection.nml`
-- When the backup is complete, copy the created `collection.nml` file to the above location, overwriting the existing file.
-- Open Traktor. Care must be taken to ensure that Traktor doesn't overwrite grid data converted from Rekordbox, otherwise any cue points or loops may not align with the grid. Before loading tracks converted from Rekordbox, it is recommended to either:
-  - Enable analysis lock for the tracks, or
-  - Right-click the tracks, select `Analyze (Async)`, and tick `Special`, `Key` and `Gain`, and untick `BPM`.
-- Now load the converted tracks and check the converted data. Report any problems as GitHub issues in this project.
-
-### Options
-```
-  -h, --help
-```
 
 ## Current Limitations
 

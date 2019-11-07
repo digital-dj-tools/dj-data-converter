@@ -26,10 +26,6 @@ Price | FREE! | [Contact me](mailto:abcoyle@gmail.com) for pricing
 
 Although there are other apps for handling this task, none are **open source** or available on **multiple platforms** such as Windows.
 
-## Dependencies
-
-None
-
 ## Install
 
 Download the Basic Edition from the [releases](https://github.com/digital-dj-tools/dj-data-converter/releases) page as a zip or tar.gz archive, and then extract the archive into a directory.
@@ -37,11 +33,6 @@ Download the Basic Edition from the [releases](https://github.com/digital-dj-too
 To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for pricing.
 
 ## Usage
-
-### Options
-```
-  -h, --help
-```
 
 ### Windows
 1. Open a command prompt and change to the directory where the archive was extracted:
@@ -76,6 +67,11 @@ To download the Pro Edition, please [contact me](mailto:abcoyle@gmail.com) for p
     A converted `rekordbox.xml` or `collection.nml` file will be created in the current directory.
 
     If the conversion fails due to an error, an `error-report.edn` file will be created, also in the current directory.
+
+### Options
+```
+  -h, --help
+```
 
 ### Importing to Rekordbox
 

@@ -111,7 +111,7 @@ However, usability is important, and lack of familiarity can be an problem for c
 
 ## Donations
 
-Donations for the Basic Edition are most welcome! This will help me to support more DJ software formats, add new features, improve performance and fix bugs.
+Donations for the Basic Edition are most welcome! Becoming a [sponsor](https://github.com/sponsors/alzadude) will help to support more DJ software formats, add new features, improve performance and fix bugs.
 
 ## Conversion Rules
 

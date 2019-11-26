@@ -18,9 +18,8 @@
 
 #?(:clj
    (defn setup
-     [dir file spec item-spec xml-transformer n]
-     (.mkdir (io/file dir))
-     (with-open [writer (io/writer (io/file dir file))]
+     [file spec item-spec xml-transformer n]
+     (with-open [writer (io/writer file)]
        ; TODO make a library spec that doesn't have a collection
        (as-> (test/library item-spec n) $
          (do 
@@ -32,8 +31,7 @@
 
 #?(:cljs
    (defn setup
-     [dir file spec item-spec xml-transformer n]
-     (.mkdir (io/file dir))
+     [file spec item-spec xml-transformer n]
      ; TODO make a library spec that doesn't have a collection
      (as-> (test/library item-spec n) $
        (do
@@ -42,8 +40,4 @@
          $)
        (st/encode spec $ xml-transformer)
        (xml/emit-str $)
-       (io/spit (io/file dir file) $))))
-
-(defn teardown
-  [dir]
-  (test/rmdir (io/file dir)))
+       (io/spit file $))))

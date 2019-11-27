@@ -4,7 +4,6 @@
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as string]
    [converter.progress :as progress]
-   [converter.spec :as spec]
    [converter.time :as time]
    [spec-tools.data-spec :as std]
    [tick.alpha.api :as tick]))

@@ -1,15 +1,13 @@
 (ns converter.universal.core
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
    [converter.spec :as spec]
    [converter.time :as time]
    [converter.url :as url]
    [spec-tools.core :as st]
-   [spec-tools.data-spec :as std]
-   [utils.map :as map]))
+   [spec-tools.data-spec :as std]))
 
 (def item
   {::location ::url/url

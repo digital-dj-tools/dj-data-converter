@@ -1,11 +1,9 @@
 (ns converter.rekordbox.position-mark
   (:require
    [camel-snake-kebab.core :as csk]
-   [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.set :as set]
-   [clojure.string :as str]
+   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]
    [converter.universal.marker :as um]
@@ -113,7 +111,7 @@
       zip/node
       :attrs
       (dissoc :Red :Green :Blue)
-      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) str/lower-case name))
+      (map/transform (partial map/transform-key (comp #(keyword (namespace ::um/unused) %) string/lower-case name))
                      {:Type #(assoc %2 ::um/type (position-mark-type->marker-type (%1 %3)))})
       (#(merge {::um/end (::um/start %1)} %1))))
 
@@ -144,8 +142,8 @@
 
 (defn marker->position-mark-tagged
   [marker memory-cue?]
-  (marker->position-mark marker memory-cue? (str/join " " ["[djdc]" (::um/name marker)])))
+  (marker->position-mark marker memory-cue? (string/join " " ["[djdc]" (::um/name marker)])))
 
 (defn position-mark-tagged?
   [position-mark]
-  (str/starts-with? (-> position-mark :attrs :Name) "[djdc]"))
+  (string/starts-with? (-> position-mark :attrs :Name) "[djdc]"))

@@ -1,8 +1,8 @@
 (ns converter.error
   (:require
-   #?(:clj [clojure.java.io :as io] :cljs [cljs-node-io.core :as io :refer [slurp spit]])
+   #?(:cljs [cljs-node-io.core :as io :refer [spit]])
    #?(:clj [clojure.pprint :as pprint] :cljs [cljs.pprint :as pprint])
-   [clojure.string :as str]))
+   #?(:cljs [clojure.string :as string])))
 
 #?(:cljs
    (defn Error->map
@@ -11,7 +11,7 @@
            type (type e)
            message (ex-message e)
            stack (.-stack e)
-           trace (as-> stack $ (str/split $ #"\n") (mapv str/trim $))
+           trace (as-> stack $ (string/split $ #"\n") (mapv string/trim $))
            at (first trace)]
        (cond-> {}
          cause (assoc :cause cause)

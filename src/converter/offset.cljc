@@ -1,7 +1,6 @@
 (ns converter.offset
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [converter.config :as config]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]

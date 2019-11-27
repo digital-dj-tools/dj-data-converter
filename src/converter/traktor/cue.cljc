@@ -10,7 +10,6 @@
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
    [spec-tools.data-spec :as std]
-   [spec-tools.spec :as sts]
    [utils.map :as map]))
 
 ; TODO rename to marker-type->cue-type

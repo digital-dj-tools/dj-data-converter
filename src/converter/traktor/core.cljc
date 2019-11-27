@@ -1,16 +1,11 @@
 (ns converter.traktor.core
   (:require
-   [cemerick.url :refer [url url-decode]]
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.config :as config]
    [converter.time :as time]
    [converter.spec :as spec]
-   [converter.str :as str]
-   [converter.time :as time]
    [converter.traktor.album :as ta]
    [converter.traktor.cue :as tc]
    [converter.traktor.location :as tl]
@@ -18,13 +13,10 @@
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
-   [converter.url :as url]
    [converter.xml :as xml]
    [spec-tools.core :as st]
    [spec-tools.data-spec :as std]
-   [spec-tools.spec :as sts]
    [tick.alpha.api :as tick]
-   [utils.map :as map]
    #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]
       :cljs [taoensso.tufte :as tufte :refer-macros (defnp p profile)])))
 

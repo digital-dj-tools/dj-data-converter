@@ -2,13 +2,11 @@
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.string :as str]
    [clojure.zip :as zip]
    [converter.time :as time]
    [converter.url :as url]
    [spec-tools.core :as st]
-   [spec-tools.transform :as stt]
-   [utils.map :as map]))
+   [spec-tools.transform :as stt]))
 
 ; TODO can't be implemented yet, if encoded value is invalid, 
 ; there's no way to coerce using encoder rather than decoder

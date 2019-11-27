@@ -2,7 +2,6 @@
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [converter.spec :as spec]
    [spec-tools.data-spec :as std]))
 
 (s/def ::type-kw

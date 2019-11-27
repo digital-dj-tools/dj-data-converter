@@ -1,6 +1,5 @@
 (ns converter.app
   (:require
-   [cemerick.url :refer [url-decode]]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    [converter.config :as config]
    [converter.offset :as o]
@@ -9,7 +8,6 @@
    [converter.traktor.core :as t]
    [converter.universal.core :as u]
    [converter.url :as url]
-   [converter.xml :as xml]
    [mp3-parser.app :as mp3]
    [spec-tools.core :as st]
    #?(:clj [taoensso.tufte :as tufte :refer (defnp p profile)]

@@ -3,7 +3,6 @@
    [cemerick.url :refer [url url-encode url-decode]]
    [clojure.data.zip.xml :as zx]
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as string]
    [clojure.zip :as zip]
    [converter.spec :as spec]

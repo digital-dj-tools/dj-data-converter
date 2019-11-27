@@ -1,7 +1,6 @@
 (ns converter.universal.tempo
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
-   [converter.spec :as spec]
    [spec-tools.data-spec :as std]))
 
 (def tempo-spec

@@ -2,21 +2,21 @@
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
-   [clojure.string :as str]))
+   [clojure.string :as string]))
 
 (defn not-blank-string-gen
   []
-  (gen/such-that #(not (str/blank? %)) (gen/string-alphanumeric)))
+  (gen/such-that #(not (string/blank? %)) (gen/string-alphanumeric)))
 
 (s/def ::not-blank-string
   (s/with-gen
-    (s/and string? #(not (str/blank? %)))
+    (s/and string? #(not (string/blank? %)))
     (fn [] (not-blank-string-gen))))
 
 (defn not-blank-string-with-whitespace-gen
   []
   (->> (gen/string-alphanumeric)
-       (gen/such-that #(not (str/blank? %)))
+       (gen/such-that #(not (string/blank? %)))
        (gen/fmap (fn [s] (apply str
                                 (map-indexed #(if (and (< 0 %1) (< %1 (dec (count s))))
                                                 (rand-nth (conj (repeat 9 %2) " "))
@@ -25,7 +25,7 @@
 
 (s/def ::not-blank-string-with-whitespace
   (s/with-gen
-    (s/and string? #(not (str/blank? %)))
+    (s/and string? #(not (string/blank? %)))
     (fn [] (not-blank-string-with-whitespace-gen))))
 
 (def drive-letter-regex #"[A-Z]:")
@@ -38,7 +38,7 @@
 
 (defn drive-letter-gen
   []
-  (gen/fmap #(-> % str/upper-case (str ":")) (gen/char-alpha)))
+  (gen/fmap #(-> % string/upper-case (str ":")) (gen/char-alpha)))
 
 (s/def ::drive-letter
   (s/with-gen

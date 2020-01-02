@@ -37,7 +37,8 @@
                    (std/opt :Genre) string?
                    (std/opt :TrackNumber) string?
                    (std/opt :AverageBpm) (s/double-in :min 0 :NaN? false :infinite? false)
-                   (std/opt :DateAdded) ::time/date
+                   (std/opt :DateAdded) (std/or {:date ::time/date
+                                                 :blank (s/spec #{""})})
                    (std/opt :Comments) string?}
            :content (s/cat
                      :tempos (s/* (std/spec {:name ::tempo
@@ -127,14 +128,16 @@
      (let [tempos-z (zx/xml-> track-z :TEMPO)
            position-marks-z (remove (comp rp/position-mark-tagged? zip/node) (zx/xml-> track-z :POSITION_MARK))
            Name (zx/attr track-z :Name)
-           AverageBpm (zx/attr track-z :AverageBpm)]
+           AverageBpm (zx/attr track-z :AverageBpm)
+           DateAdded (zx/attr track-z :DateAdded)]
        (cond-> track-z
-         true (-> zip/node 
-                  :attrs 
-                  (dissoc :Name :AverageBpm) 
+         true (-> zip/node
+                  :attrs
+                  (dissoc :Name :AverageBpm :DateAdded)
                   (map/transform-keys (comp #(keyword (namespace ::u/unused) %) csk/->kebab-case name)))
          Name (assoc ::u/title Name)
          AverageBpm (assoc ::u/bpm AverageBpm)
+         (and DateAdded (not (string? DateAdded))) (assoc ::u/date-added DateAdded)
          (not-empty tempos-z) (assoc ::u/tempos (map rt/tempo->item-tempo tempos-z))
          (not-empty position-marks-z) (assoc ::u/markers (map rp/position-mark->marker position-marks-z))))))
 

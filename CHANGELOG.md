@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Downgrade Nodejs from 10 to 8 for the pkg build, to avoid `"buffer" argument must be one of type Buffer or Uint8Array. Received type object` error (will be investigated)
 ### Fixed
-- Correct Rekordbox date format [#26](https://github.com/digital-dj-tools/dj-data-converter/issues/26)
+- Correct Rekordbox date format [#26](https://github.com/digital-dj-tools/dj-data-converter/issues/26). Rekordbox xml data written by earlier versions of the converter has malformed date formatting, which Rekordbox will unfortunately accept without validation. This effectively corrupts the Rekordbox database, and so it will need to be deleted and re-created before running this new version of the converter to produce correctly formatted xml data, which can then be imported. The Rekordbox database is located at `C:\Users\youruser name\AppData\Roaming\Pioneer\rekordbox` on Windows, and `/yourharddrivename/Users/yourusername/Library/Pioneer/rekordbox` on a Mac.
 
 ## 0.3.4 (2019-10-08)
 ### Added

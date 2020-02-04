@@ -36,6 +36,12 @@
     (assoc-in position-mark [:attrs :Type] "4")
     (assoc-in position-mark [:attrs :Type] "0")))
 
+(defn all-colours-or-none
+  [{{:keys [:Red :Green :Blue]} :attrs :as position-mark}]
+  (if (not (and Red Green Blue))
+    (update-in position-mark [:attrs] dissoc :Red :Green :Blue)
+    position-mark))
+
 (def position-mark
   {:tag (s/spec #{:POSITION_MARK})
    :attrs {:Name string?
@@ -60,7 +66,8 @@
    $
     (assoc $ :gen (fn [] (->> (s/gen $)
                               (gen/fmap (comp end-not-before-start
-                                              type-loop-if-end-otherwise-type-cue)))))))
+                                              type-loop-if-end-otherwise-type-cue
+                                              all-colours-or-none)))))))
 
 (def rekordbox-colours {::white [255 255 255]
                         ::green [40 226 20]

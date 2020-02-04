@@ -54,24 +54,24 @@
   100
   (tcp/for-all [cue (s/gen tc/cue-spec)]
                (as-> cue $
-                 (st/encode tc/cue-spec $ st/string-transformer)
-                 (st/decode tc/cue-spec $ st/string-transformer)
+                 (st/encode tc/cue-spec $ t/string-transformer)
+                 (st/decode tc/cue-spec $ t/string-transformer)
                  (is (= cue $)))))
 
 (defspec entry-spec-encode-decode-equality
   10
   (tcp/for-all [entry (s/gen t/entry-spec)]
                (as-> entry $
-                 (st/encode t/entry-spec $ st/string-transformer)
-                 (spec/decode! t/entry-spec $ st/string-transformer)
+                 (st/encode t/entry-spec $ t/string-transformer)
+                 (spec/decode! t/entry-spec $ t/string-transformer)
                  (is (= entry $)))))
 
 (defspec nml-spec-encode-decode-equality
   10
   (tcp/for-all [nml (s/gen (t/nml-spec test/config))]
                (as-> nml $
-                 (st/encode (t/nml-spec test/config) $ st/string-transformer)
-                 (spec/decode! (t/nml-spec test/config) $ st/string-transformer)
+                 (st/encode (t/nml-spec test/config) $ t/string-transformer)
+                 (spec/decode! (t/nml-spec test/config) $ t/string-transformer)
                  (is (= nml $)))))
 
 (defspec library-spec-round-trip-library-equality

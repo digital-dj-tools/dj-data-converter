@@ -62,24 +62,24 @@
   100
   (tcp/for-all [position-mark (s/gen rp/position-mark-spec)]
                (as-> position-mark $
-                 (st/encode rp/position-mark-spec $ st/string-transformer)
-                 (st/decode rp/position-mark-spec $ st/string-transformer)
+                 (st/encode rp/position-mark-spec $ r/string-transformer)
+                 (st/decode rp/position-mark-spec $ r/string-transformer)
                  (is (= position-mark $)))))
 
 (defspec track-spec-encode-decode-equality
   10
   (tcp/for-all [track (s/gen r/track-spec)]
                (as-> track $
-                 (st/encode r/track-spec $ st/string-transformer)
-                 (spec/decode! r/track-spec $ st/string-transformer)
+                 (st/encode r/track-spec $ r/string-transformer)
+                 (spec/decode! r/track-spec $ r/string-transformer)
                  (is (= track $)))))
 
 (defspec dj-playlists-spec-encode-decode-equality
   10
   (tcp/for-all [dj-playlists (s/gen (r/dj-playlists-spec test/config))]
                (as-> dj-playlists $
-                 (st/encode (r/dj-playlists-spec test/config) $ st/string-transformer)
-                 (spec/decode! (r/dj-playlists-spec test/config) $ st/string-transformer)
+                 (st/encode (r/dj-playlists-spec test/config) $ r/string-transformer)
+                 (spec/decode! (r/dj-playlists-spec test/config) $ r/string-transformer)
                  (is (= dj-playlists $)))))
 
 (defspec library-spec-round-trip-library-equality

@@ -1,4 +1,4 @@
-(set! *warn-on-reflection* true)
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.offset
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])

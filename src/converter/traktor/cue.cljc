@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.traktor.cue
   (:require
    [clojure.data.zip.xml :as zx]

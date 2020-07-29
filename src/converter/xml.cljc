@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.xml
   (:require
    #?(:cljs [converter.xmldom])

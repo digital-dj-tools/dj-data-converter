@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.traktor.nml
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])

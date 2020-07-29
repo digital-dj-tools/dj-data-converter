@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.rekordbox.tempo
   (:require
    [camel-snake-kebab.core :as csk]

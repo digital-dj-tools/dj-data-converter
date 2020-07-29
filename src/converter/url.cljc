@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.url
   (:require
    [cemerick.url :as url]

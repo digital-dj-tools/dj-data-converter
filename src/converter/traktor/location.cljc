@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.traktor.location
   (:require
    [cemerick.url :refer [url url-encode url-decode]]

@@ -1,3 +1,4 @@
+(set! *warn-on-reflection* true)
 (ns converter.time
   (:require
    [cljc.java-time.local-date :as jtld]

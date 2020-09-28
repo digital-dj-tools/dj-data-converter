@@ -7,7 +7,7 @@ trigger:
 jobs:
 - job: Build
   pool:
-    vmImage: ubuntu-16.04
+    vmImage: ubuntu-latest
   steps:
   - script: |
       curl -O https://download.clojure.org/install/linux-install-1.10.0.411.sh
@@ -42,7 +42,7 @@ jobs:
 - job: Test_Windows
   dependsOn: Build
   pool:
-    vmImage: win1803
+    vmImage: windows-latest
   steps:
   - task: DownloadBuildArtifacts@0
     inputs:
@@ -55,7 +55,7 @@ jobs:
 - job: Test_Mac
   dependsOn: Build
   pool:
-    vmImage: macOS-10.13
+    vmImage: macOS-latest
   steps:
   - task: DownloadBuildArtifacts@0
     inputs:
@@ -70,7 +70,7 @@ jobs:
 - job: Test_Linux
   dependsOn: Build
   pool:
-    vmImage: ubuntu-16.04
+    vmImage: ubuntu-latest
   steps:
   - task: DownloadBuildArtifacts@0
     inputs:

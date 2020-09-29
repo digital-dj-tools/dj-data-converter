@@ -10,12 +10,13 @@
                           :sha "a6e97edb71bdba724779c5118811a3cc56d6c877"}
   digital-dj-tools/mp3-parser {:git/url "https://github.com/digital-dj-tools/mp3-parser.git"
                                :sha "3d20c4ddfbdce7ef250e6b4aa803a8a93b30ae56"}
+  lambdaisland/uri {:mvn/version "1.4.54"}
   org.clojure/data.xml {:mvn/version "0.2.0-alpha6"}
   org.clojure/data.zip {:mvn/version "0.1.3"}
   org.clojure/tools.cli {:mvn/version "0.4.2"}
   metosin/spec-tools {:mvn/version "0.10.0"}
-  com.cemerick/url {:mvn/version "0.1.1" :exclusions [com.cemerick/clojurescript.test]}
-  tick {:mvn/version "0.4.19-alpha"
+  tick {:git/url "https://github.com/digital-dj-tools/tick.git"
+        :sha "bbd50095b822a5c404d0c65bc5c2552dab77e809"
         :exclusions [cljsjs/js-joda
                      cljsjs/js-joda-timezone
                      cljsjs/js-joda-locale-en-us]}}
@@ -40,14 +41,14 @@
                                                               :sha "c8a01477c856fc28c53f34aa3f268f8eaf683869"}}
                           :main-opts ["-m" "cambada.native-image"
                                       "-m" "converter.cli"
-                                      "--graalvm-opt" 
+                                      "--graalvm-opt"
                                       "-verbose"
                                       "--graalvm-opt"
                                       "-allow-incomplete-classpath"
                                       "--graalvm-opt"
                                       "-report-unsupported-elements-at-runtime"
                                       "--graalvm-opt"
-                                      "J-Xmx4g"]
+                                      "J-Xmx8g"]
                           :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.7.0"}}
                        :main-opts ["-m" "cljs-test-runner.main"

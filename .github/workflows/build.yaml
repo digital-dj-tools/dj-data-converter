@@ -55,3 +55,23 @@ jobs:
         with:
           name: 'dj-data-converter-linux'
           path: target/dj-data-converter-linux.tar.gz
+  native-image-windows:
+    needs: [test]
+    runs-on: windows-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Setup Java"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: "Setup Clojure"
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: "1.10.1.697"
+      - name: "Setup GraalVM"
+        uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: "20.2.0.java11"
+      - name: "Install GraalVM Native Image"
+        run: gu install native-image

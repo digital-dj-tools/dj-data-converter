@@ -1,7 +1,7 @@
 name: "Build"
 on: [push, workflow_dispatch]
 jobs:
-  test:
+  uberjar:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
@@ -16,59 +16,50 @@ jobs:
           cli: "1.10.1.697"
       - name: "Clojure Tests"
         run: clojure -A:dev:test
+      - name: "Uberjar"
+        run: clojure -A:uberjar
+      - name: "Upload"
+        uses: actions/upload-artifact@v2
+        with:
+          name: dj-data-converter-standalone
+          path: target/dj-data-converter-SNAPSHOT-standalone.jar
   native-image-linux:
-    needs: [test]
+    needs: [uberjar]
     runs-on: ubuntu-latest
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v2
-      - name: "Setup Java"
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: "Setup Clojure"
-        uses: DeLaGuardo/setup-clojure@master
-        with:
-          cli: "1.10.1.697"
-      - name: "Install GraalVM Native Image Deps"
-        run: |
-          sudo apt -y update
-          sudo apt -y install gcc libc6-dev zlib1g-dev libstdc++-8-dev
       - name: "Setup GraalVM"
         uses: DeLaGuardo/setup-graalvm@3
         with:
           graalvm-version: "20.2.0.java11"
+      - name: "Install GraalVM Native Image Deps"
+        run: |
+          sudo apt -y update
+          sudo apt -y install gcc libc6-dev zlib1g-dev libstdc++-8-dev
       - name: "Install GraalVM Native Image"
         run: gu install native-image
+      - name: "Download"
+        uses: actions/download-artifact@v2
+        with:
+          name: dj-data-converter-standalone
       - name: "Native Image"
-        run: GRAALVM_HOME=/opt/hostedtoolcache/GraalVM/20.2.0-java11/x64 clojure -A:native-image --graalvm-opt H:Name=target/dj-data-converter
+        run: native-image --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime -H:Name=dj-data-converter -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar
       - name: "Smoke Test"
         run: |
-          chmod +x target/dj-data-converter
-          target/dj-data-converter -h
+          chmod +x dj-data-converter
+          dj-data-converter -h
       - name: "Package"
         run: |
-          chmod +x target/dj-data-converter
-          tar -czvf target/dj-data-converter-linux.tar.gz -C target dj-data-converter
+          chmod +x dj-data-converter
+          tar -czvf dj-data-converter-linux.tar.gz -C target dj-data-converter
       - name: "Publish"
         uses: actions/upload-artifact@v2
         with:
           name: 'dj-data-converter-linux'
           path: target/dj-data-converter-linux.tar.gz
   native-image-windows:
-    needs: [test]
+    needs: [uberjar]
     runs-on: windows-latest
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v2
-      - name: "Setup Java"
-        uses: actions/setup-java@v1
-        with:
-          java-version: 11
-      - name: "Setup Clojure"
-        uses: DeLaGuardo/setup-clojure@master
-        with:
-          cli: "1.10.1.697"
       - name: "Setup GraalVM"
         uses: DeLaGuardo/setup-graalvm@3
         with:

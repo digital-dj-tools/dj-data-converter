@@ -36,7 +36,10 @@
            :uberjar {:extra-deps {luchiniatwork/cambada {:git/url "https://github.com/xfthhxk/cambada.git"
                                                          :sha "c8a01477c856fc28c53f34aa3f268f8eaf683869"}}
                      :main-opts ["-m" "cambada.uberjar"
-                                 "-m" "converter.cli"]}
+                                 "-m" "converter.cli"
+                                 "--app-artifact-id" "dj-data-converter"
+                                 "--app-version" "SNAPSHOT"]
+                     :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
            :native-image {:extra-deps {luchiniatwork/cambada {:git/url "https://github.com/xfthhxk/cambada.git"
                                                               :sha "c8a01477c856fc28c53f34aa3f268f8eaf683869"}}
                           :main-opts ["-m" "cambada.native-image"

@@ -32,8 +32,8 @@ jobs:
           cli: "1.10.1.697"
       - name: "Install GraalVM Native Image Deps"
         run: |
-          apt -y update
-          apt -y install gcc libc6-dev zlib1g-dev libstdc++-8-dev
+          sudo apt -y update
+          sudo apt -y install gcc libc6-dev zlib1g-dev libstdc++-8-dev
       - name: "Setup GraalVM"
         uses: DeLaGuardo/setup-graalvm@3
         with:

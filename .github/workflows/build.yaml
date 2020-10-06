@@ -1,7 +1,7 @@
 name: "Build"
 on: [push, workflow_dispatch]
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"
@@ -9,10 +9,49 @@ jobs:
       - name: "Setup Java"
         uses: actions/setup-java@v1
         with:
-          java-version: 8
+          java-version: 11
       - name: "Setup Clojure"
         uses: DeLaGuardo/setup-clojure@master
         with:
           cli: "1.10.1.697"
       - name: "Clojure Tests"
         run: clojure -A:dev:test
+  native-image-linux:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Setup Java"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: "Setup Clojure"
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: "1.10.1.697"
+      - name: "Install GraalVM Native Image Deps"
+        run: |
+          apt -y update
+          apt -y install gcc libc6-dev zlib1g-dev libstdc++-8-dev
+      - name: "Setup GraalVM"
+        uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: "20.2.0.java11"
+      - name: "Install GraalVM Native Image"
+        run: gu install native-image
+      - name: "Native Image"
+        run: GRAALVM_HOME=/opt/hostedtoolcache/GraalVM/20.2.0-java11/x64 clojure -A:native-image --graalvm-opt H:Name=target/dj-data-converter
+      - name: "Smoke Test"
+        run: |
+          chmod +x target/dj-data-converter
+          target/dj-data-converter -h
+      - name: "Package"
+        run: |
+          chmod +x target/dj-data-converter
+          tar -czvf target/dj-data-converter-linux.tar.gz -C target dj-data-converter
+      - name: "Publish"
+        uses: actions/upload-artifact@v2
+        with:
+          name: 'dj-data-converter-linux'
+          path: target/dj-data-converter-linux.tar.gz

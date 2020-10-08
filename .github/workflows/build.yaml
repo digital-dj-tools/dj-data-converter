@@ -45,6 +45,8 @@ jobs:
         run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime -H:Name=dj-data-converter -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar
       - name: "Smoke Test"
         run: |
+          pwd
+          ls -l
           chmod +x dj-data-converter
           dj-data-converter -h
       - name: "Package"

@@ -52,7 +52,7 @@ jobs:
       - name: "Publish"
         uses: actions/upload-artifact@v2
         with:
-          name: 'dj-data-converter-linux'
+          name: dj-data-converter-linux
           path: dj-data-converter-linux.tar.gz
   native-image-windows:
     needs: [uberjar]
@@ -78,3 +78,10 @@ jobs:
       - name: "Smoke Test"
         shell: cmd
         run: dj-data-converter.exe -h
+      - name: "Package"
+        run: 7z a dj-data-converter-win.zip .\dj-data-converter.exe
+      - name: "Publish"
+        uses: actions/upload-artifact@v2
+        with:
+          name: dj-data-converter-win
+          path: dj-data-converter-win.zip

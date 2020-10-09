@@ -45,8 +45,6 @@ jobs:
         run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
       - name: "Smoke Test"
         run: |
-          pwd
-          ls -l
           chmod +x dj-data-converter
           ./dj-data-converter -h
       - name: "Package"
@@ -65,4 +63,12 @@ jobs:
         with:
           graalvm-version: "20.2.0.java11"
       - name: "Install GraalVM Native Image"
-        run: gu install native-image
+        run: C:\hostedtoolcache\windows\GraalVM\20.2.0-java11\x64\bin\gu install native-image
+      - name: "Download"
+        uses: actions/download-artifact@v2
+        with:
+          name: dj-data-converter-standalone
+      - name: "Native Image"
+        run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
+      - name: "Smoke Test"
+        run: dj-data-converter.exe -h

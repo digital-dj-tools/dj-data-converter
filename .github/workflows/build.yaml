@@ -42,13 +42,13 @@ jobs:
         with:
           name: dj-data-converter-standalone
       - name: "Native Image"
-        run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
+        run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
       - name: "Smoke Test"
         run: |
           pwd
           ls -l
           chmod +x dj-data-converter
-          dj-data-converter -h
+          ./dj-data-converter -h
       - name: "Package"
         run: |
           chmod +x dj-data-converter

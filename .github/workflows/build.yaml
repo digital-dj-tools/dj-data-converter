@@ -50,14 +50,12 @@ jobs:
           chmod +x dj-data-converter
           ./dj-data-converter -h
       - name: "Package"
-        run: |
-          chmod +x dj-data-converter
-          tar -czvf dj-data-converter-linux.tar.gz -C target dj-data-converter
+        run: tar -czvf dj-data-converter-linux.tar.gz dj-data-converter
       - name: "Publish"
         uses: actions/upload-artifact@v2
         with:
           name: 'dj-data-converter-linux'
-          path: target/dj-data-converter-linux.tar.gz
+          path: dj-data-converter-linux.tar.gz
   native-image-windows:
     needs: [uberjar]
     runs-on: windows-latest

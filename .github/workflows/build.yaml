@@ -72,7 +72,7 @@ jobs:
           name: dj-data-converter-standalone
       - name: "Native Image"
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
+          & "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
+          C:\hostedtoolcache\windows\GraalVM\20.2.0-java11\x64\bin\native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
       - name: "Smoke Test"
         run: dj-data-converter.exe -h

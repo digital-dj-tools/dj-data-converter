@@ -18,6 +18,11 @@ jobs:
         run: clojure -A:dev:test
       - name: "Uberjar"
         run: clojure -A:uberjar
+      - name: "Smoke Test"
+        run: |
+          java -jar target/dj-data-converter-SNAPSHOT-standalone.jar -h
+          java -jar target/dj-data-converter-SNAPSHOT-standalone.jar test-resources/collection.nml
+          java -jar target/dj-data-converter-SNAPSHOT-standalone.jar test-resources/rekordbox.xml
       - name: "Upload"
         uses: actions/upload-artifact@v2
         with:
@@ -27,6 +32,8 @@ jobs:
     needs: [uberjar]
     runs-on: ubuntu-latest
     steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
       - name: "Setup GraalVM"
         uses: DeLaGuardo/setup-graalvm@3
         with:

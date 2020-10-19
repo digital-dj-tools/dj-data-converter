@@ -92,3 +92,32 @@ jobs:
         with:
           name: dj-data-converter-win
           path: dj-data-converter-win.zip
+  native-image-mac:
+    needs: [uberjar]
+    runs-on: macos-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Setup GraalVM"
+        uses: DeLaGuardo/setup-graalvm@3
+        with:
+          graalvm-version: "20.2.0.java11"
+      - name: "Install GraalVM Native Image"
+        run: gu install native-image
+      - name: "Download"
+        uses: actions/download-artifact@v2
+        with:
+          name: dj-data-converter-standalone
+      - name: "Native Image"
+        run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
+      - name: "Smoke Test"
+        run: |
+          chmod +x dj-data-converter
+          ./dj-data-converter -h
+      - name: "Package"
+        run: tar -czvf dj-data-converter-macos.tar.gz dj-data-converter
+      - name: "Publish"
+        uses: actions/upload-artifact@v2
+        with:
+          name: dj-data-converter-macos
+          path: dj-data-converter-macos.tar.gz

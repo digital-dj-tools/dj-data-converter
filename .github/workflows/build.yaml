@@ -121,3 +121,40 @@ jobs:
         with:
           name: dj-data-converter-macos
           path: dj-data-converter-macos.tar.gz
+  release:
+    needs: [native-image-linux, native-image-windows, native-image-mac]
+    runs-on: ubuntu-latest
+    if: success() && contains(github.ref, 'refs/tags/')
+    steps:
+      - name: "Download"
+        uses: actions/download-artifact@v2
+      - name: "Release"
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+          prerelease: false
+      - name: "Upload"
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dj-data-converter-linux/dj-data-converter-linux.tar.gz
+          asset_name: dj-data-converter-linux.tar.gz
+          asset_content_type: application/gzip
+      - name: "Upload"
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dj-data-converter-win/dj-data-converter-win.zip
+          asset_name: dj-data-converter-win.zip
+          asset_content_type: application/zip
+      - name: "Upload"
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dj-data-converter-macos/dj-data-converter-macos.tar.gz
+          asset_name: dj-data-converter-macos.tar.gz
+          asset_content_type: application/gzip

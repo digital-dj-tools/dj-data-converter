@@ -1,7 +1,28 @@
 name: "Build"
 on: [push, workflow_dispatch]
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && contains(toJson(github.event.commits), '[ci skip]') == false && contains(toJson(github.event.commits), '[skip ci]') == false
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Setup Java"
+        uses: actions/setup-java@v1
+        with:
+          java-version: 11
+      - name: "Setup Clojure"
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: "1.10.1.697"
+      - name: "Clojure Tests"
+        run: clojure -A:dev:test
+      - name: "Install Node Dependencies"
+        run: npm install
+      - name: "ClojureScript Tests"
+        run: clojure -A:dev:test-cljs
   uberjar:
+    needs: [test]
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout"

@@ -6,10 +6,10 @@
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])
    #?(:clj [clojure.spec.gen.alpha :as gen] :cljs [cljs.spec.gen.alpha :as gen])
    [clojure.string :as string]
-   #?(:cljs [converter.js-joda])
    [spec-tools.core :as st]
    [tick.alpha.api :as t]
    [tick.format :as tf]
+   #?(:cljs [tick.locale-en-us])
    #?(:cljs [java.time :refer [Instant Clock LocalDate]]))
   #?(:clj
      (:import

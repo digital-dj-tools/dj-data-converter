@@ -3,7 +3,7 @@
  {org.clojure/clojure {:mvn/version "1.10.2-alpha2"}
   org.clojure/clojurescript {:mvn/version "1.10.773"}
   camel-snake-kebab {:mvn/version "0.4.0"}
-  cljc.java-time {:mvn/version "0.1.6"}
+  cljc.java-time {:mvn/version "0.1.11"}
   cljs-node-io {:mvn/version "1.1.2"}
   com.taoensso/tufte {:mvn/version "2.1.0"}
   digital-dj-tools/utils {:git/url "https://github.com/digital-dj-tools/utils.git"
@@ -15,11 +15,8 @@
   org.clojure/data.zip {:mvn/version "0.1.3"}
   org.clojure/tools.cli {:mvn/version "0.4.2"}
   metosin/spec-tools {:mvn/version "0.10.0"}
-  tick {:git/url "https://github.com/digital-dj-tools/tick.git"
-        :sha "bbd50095b822a5c404d0c65bc5c2552dab77e809"
-        :exclusions [cljsjs/js-joda
-                     cljsjs/js-joda-timezone
-                     cljsjs/js-joda-locale-en-us]}}
+  tick {:git/url "https://github.com/juxt/tick.git"
+        :sha "85aece71140a8a7372fb73f3dfad7cf87cdef9ab"}}
  :aliases {:dev {:extra-paths ["test"]
                  :extra-deps {net.mikera/core.matrix {:mvn/version "0.62.0"}
                               org.clojure/test.check {:mvn/version "0.10.0"}

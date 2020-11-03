@@ -161,6 +161,8 @@ jobs:
           prerelease: false
       - name: "Upload"
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: dj-data-converter-linux/dj-data-converter-linux.tar.gz
@@ -168,6 +170,8 @@ jobs:
           asset_content_type: application/gzip
       - name: "Upload"
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: dj-data-converter-win/dj-data-converter-win.zip
@@ -175,6 +179,8 @@ jobs:
           asset_content_type: application/zip
       - name: "Upload"
         uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: dj-data-converter-macos/dj-data-converter-macos.tar.gz

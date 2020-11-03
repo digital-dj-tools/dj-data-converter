@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support the case where an entry has a tempo, but no cues (Traktor to Rekordbox)
 - Support disabling the "Store Beatmarker as Hotcue" Traktor setting
 
+## 0.5.0 (2020-11-03)
+### Changed
+- Migrated from JavaScript/NodeJS runtime to Java/GraalVM runtime, in order to fix [#33](https://github.com/digital-dj-tools/dj-data-converter/issues/33) and improve performance generally
+
 ## 0.4.1 (2020-02-04)
 ### Fixed
 - Allow DateAdded blank string for Rekordbox tracks [#27](https://github.com/digital-dj-tools/dj-data-converter/issues/27)

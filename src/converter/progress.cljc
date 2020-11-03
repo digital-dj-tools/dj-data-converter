@@ -1,3 +1,4 @@
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.progress)
 
 (defn dots-println

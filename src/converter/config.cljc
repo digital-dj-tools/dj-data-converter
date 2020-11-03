@@ -1,3 +1,4 @@
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.config
   (:require
    #?(:clj [clojure.spec.alpha :as s] :cljs [cljs.spec.alpha :as s])

@@ -1,3 +1,4 @@
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.traktor.core
   (:require
    [clojure.data.zip.xml :as zx]

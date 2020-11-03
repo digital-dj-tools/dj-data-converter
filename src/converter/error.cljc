@@ -1,3 +1,4 @@
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.error
   (:require
    #?(:cljs [cljs-node-io.core :as io :refer [spit]])

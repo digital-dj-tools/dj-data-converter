@@ -1,3 +1,4 @@
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.cli
   (:require
    #?(:cljs [cljs.nodejs :as nodejs])

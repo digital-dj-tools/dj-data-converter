@@ -10,9 +10,11 @@ pom.xml.asc
 .cljs_node_repl
 package-lock.json
 node_modules
-/pkg/
 /out/
 /cljs-test-runner-out/
 .nrepl-port
+.calva/
+.clj-kondo/
+/pkg/
 /*.xml
 /*.nml

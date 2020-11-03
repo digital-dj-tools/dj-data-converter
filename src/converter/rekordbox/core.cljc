@@ -1,3 +1,4 @@
+#?(:clj (set! *warn-on-reflection* true))
 (ns converter.rekordbox.core
   (:require
    [camel-snake-kebab.core :as csk]

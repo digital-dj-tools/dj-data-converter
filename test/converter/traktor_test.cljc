@@ -10,6 +10,7 @@
    [converter.spec :as spec]
    [converter.traktor.core :as t]
    [converter.traktor.cue :as tc]
+   [converter.traktor.location :as tl]
    [converter.test-utils :as test]
    [converter.universal.core :as u]
    [plumula.mimolette.alpha :refer [defspec-test]]
@@ -17,12 +18,12 @@
 
 (defspec-test
   location->url
-  `t/location->url
+  `tl/location->url
   {:opts {:num-tests 100}})
 
 (defspec-test
   url->location
-  `t/url->location
+  `tl/url->location
   {:opts {:num-tests 100}})
 
 (defspec-test

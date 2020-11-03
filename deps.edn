@@ -9,7 +9,7 @@
   digital-dj-tools/utils {:git/url "https://github.com/digital-dj-tools/utils.git"
                           :sha "a6e97edb71bdba724779c5118811a3cc56d6c877"}
   digital-dj-tools/mp3-parser {:git/url "https://github.com/digital-dj-tools/mp3-parser.git"
-                               :sha "d75dbf612334430654c0ecb8f5bb7debd93f663b"}
+                               :sha "207bd9f95b260659e050c20de90b7cbbf4376314"}
   lambdaisland/uri {:mvn/version "1.4.54"}
   org.clojure/data.xml {:mvn/version "0.2.0-alpha6"}
   org.clojure/data.zip {:mvn/version "0.1.3"}

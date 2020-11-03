@@ -1,4 +1,4 @@
-# dj-data-converter ![Build](https://github.com/digital-dj-tools/dj-data-converter/workflows/Build/badge.svg)
+# dj-data-converter [![Build](https://github.com/digital-dj-tools/dj-data-converter/workflows/Build/badge.svg)](https://github.com/digital-dj-tools/dj-data-converter/actions?query=workflow%3ABuild)
 
 A command-line app for converting data files to and from different DJ software formats, such as [Traktor](https://www.native-instruments.com/en/products/traktor/dj-software/traktor-pro-3/), [Rekordbox](https://rekordbox.com/en/) and [Serato DJ](https://serato.com/dj).
 

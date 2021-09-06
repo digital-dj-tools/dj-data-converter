@@ -35,8 +35,7 @@
                                  "-m" "converter.cli"
                                  "--app-artifact-id" "dj-data-converter"
                                  "--app-version" "SNAPSHOT"]}
-           :native-image {:extra-deps {luchiniatwork/cambada {:git/url "https://github.com/xfthhxk/cambada.git"
-                                                              :sha "c8a01477c856fc28c53f34aa3f268f8eaf683869"}}
+           :native-image {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.5"}}
                           :main-opts ["-m" "cambada.native-image"
                                       "-m" "converter.cli"
                                       "--graalvm-opt"

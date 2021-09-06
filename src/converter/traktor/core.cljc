@@ -252,7 +252,10 @@
              :playlists (s/? (std/spec {:name ::playlists
                                         :spec {:tag (s/spec #{:PLAYLISTS})}}))
              :sorting-order (s/* (std/spec {:name ::sorting-order
-                                            :spec {:tag (s/spec #{:SORTING_ORDER})}})))})
+                                            :spec {:tag (s/spec #{:SORTING_ORDER})}}))
+             :indexing (s/? (std/spec {:name ::indexing
+                                       :spec {:tag (s/spec #{:INDEXING})}}))
+             )})
 
 (defn nml-spec
   [config]

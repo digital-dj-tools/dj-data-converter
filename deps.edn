@@ -30,8 +30,7 @@
                                                              :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
                      :main-opts ["-m" "cognitect.test-runner"
                                  "-i" ":profile"]}
-           :uberjar {:extra-deps {luchiniatwork/cambada {:git/url "https://github.com/xfthhxk/cambada.git"
-                                                         :sha "c8a01477c856fc28c53f34aa3f268f8eaf683869"}}
+           :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.5"}}
                      :main-opts ["-m" "cambada.uberjar"
                                  "-m" "converter.cli"
                                  "--app-artifact-id" "dj-data-converter"

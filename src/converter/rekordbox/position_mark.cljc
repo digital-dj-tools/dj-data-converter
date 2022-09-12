@@ -47,8 +47,8 @@
   {:tag (s/spec #{:POSITION_MARK})
    :attrs {:Name string?
            :Type ::position-mark-type
-           :Start (s/double-in :min 0 :NaN? false :infinite? false)
-           (std/opt :End) (s/double-in :min 0 :NaN? false :infinite? false)
+           :Start (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
+           (std/opt :End) (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
            :Num (s/spec #{"-1" "0" "1" "2" "3" "4" "5" "6" "7"})
            (std/opt :Red) (s/int-in 0 256)
            (std/opt :Green) (s/int-in 0 256)

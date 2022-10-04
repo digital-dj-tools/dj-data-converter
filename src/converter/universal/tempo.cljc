@@ -7,7 +7,7 @@
 (def tempo-spec
   (std/spec
    {:name ::tempo
-    :spec {::inizio (s/double-in :min 0 :max 7200 :NaN? false :infinite? false) ; seconds
+    :spec {::inizio (s/double-in :min 0 :max 86400 :NaN? false :infinite? false) ; seconds
            ::bpm (s/double-in :min 0 :NaN? false :infinite? false)
            ::metro string?
            ::battito string?}}))

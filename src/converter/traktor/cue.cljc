@@ -32,7 +32,7 @@
 
 (defn start-plus-len-not-greater-than-max
   [{{:keys [:START :LEN]} :attrs :as cue}]
-  (if (< 7200000 (+ START LEN))
+  (if (< 86400000 (+ START LEN))
     (assoc-in cue [:attrs :LEN] 0)
     cue))
 
@@ -41,8 +41,8 @@
              :spec {:tag (s/spec #{:CUE_V2})
                     :attrs {:NAME string?
                             :TYPE ::type-num
-                            :START (s/double-in :min 0 :max 7200000 :NaN? false :infinite? false) ; millis
-                            :LEN (s/double-in :min 0 :max 7200000 :NaN? false :infinite? false) ; millis
+                            :START (s/double-in :min 0 :max 86400000 :NaN? false :infinite? false) ; millis
+                            :LEN (s/double-in :min 0 :max 86400000 :NaN? false :infinite? false) ; millis
                             :HOTCUE ::hotcue}}}))
 
 (def cue-spec

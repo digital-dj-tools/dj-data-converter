@@ -14,7 +14,7 @@
   (std/spec
    {:name ::tempo
     :spec {:tag (s/spec #{:TEMPO})
-           :attrs {:Inizio (s/double-in :min 0 :max 7200 :NaN? false :infinite? false)
+           :attrs {:Inizio (s/double-in :min 0 :max 86400 :NaN? false :infinite? false)
                    :Bpm (s/double-in :min 0 :NaN? false :infinite? false)
                    :Metro string?
                    :Battito string?}}}))

@@ -1,6 +1,6 @@
 {:paths ["src"]
  :deps
- {org.clojure/clojure {:mvn/version "1.10.2-alpha2"}
+ {org.clojure/clojure {:mvn/version "1.12.0"}
   org.clojure/clojurescript {:mvn/version "1.10.773"}
   camel-snake-kebab {:mvn/version "0.4.0"}
   cljc.java-time {:mvn/version "0.1.11"}
@@ -9,7 +9,7 @@
   digital-dj-tools/utils {:git/url "https://github.com/digital-dj-tools/utils.git"
                           :sha "a6e97edb71bdba724779c5118811a3cc56d6c877"}
   digital-dj-tools/mp3-parser {:git/url "https://github.com/digital-dj-tools/mp3-parser.git"
-                               :sha "207bd9f95b260659e050c20de90b7cbbf4376314"}
+                               :sha "8bb32cd135b910792e8b70b42abdaf75a889f108"}
   lambdaisland/uri {:mvn/version "1.4.54"}
   org.clojure/data.xml {:mvn/version "0.2.0-alpha6"}
   org.clojure/data.zip {:mvn/version "0.1.3"}

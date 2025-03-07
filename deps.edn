@@ -30,22 +30,14 @@
                                                              :sha "cb96e80f6f3d3b307c59cbeb49bb0dcb3a2a780b"}}
                      :main-opts ["-m" "cognitect.test-runner"
                                  "-i" ":profile"]}
-           :uberjar {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.5"}}
-                     :main-opts ["-m" "cambada.uberjar"
-                                 "-m" "converter.cli"
-                                 "--app-artifact-id" "dj-data-converter"
-                                 "--app-version" "SNAPSHOT"]}
-           :native-image {:extra-deps {luchiniatwork/cambada {:mvn/version "1.0.5"}}
-                          :main-opts ["-m" "cambada.native-image"
-                                      "-m" "converter.cli"
-                                      "--graalvm-opt"
-                                      "-verbose"
-                                      "--graalvm-opt"
-                                      "-allow-incomplete-classpath"
-                                      "--graalvm-opt"
-                                      "-report-unsupported-elements-at-runtime"
-                                      "--graalvm-opt"
-                                      "J-Xmx8g"]}
+           :clein {:deps {io.github.noahtheduke/clein {:mvn/version "LATEST"}}
+                   :main-opts ["-m" "noahtheduke.clein"]}
+           :clein/build {:lib io.github.digital-dj-tools/dj-data-converter
+                         :main converter.cli
+                         :url "https://github.com/digital-dj-tools/dj-data-converter"
+                         :version "SNAPSHOT"
+                         :license {:name "MIT"
+                                   :url "https://opensource.org/licenses/MIT"}}
            :test-cljs {:extra-deps {olical/cljs-test-runner {:mvn/version "3.7.0"}}
                        :main-opts ["-m" "cljs-test-runner.main"
                                    "-e" ":profile"]}

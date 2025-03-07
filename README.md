@@ -194,6 +194,10 @@ Developers will need to install Java, NodeJS and the Clojure [command line tools
 ### Running the Tests
 
 ```
+clj -Adev:test
+```
+
+```
 clj -Adev:test-cljs
 ```
 
@@ -210,4 +214,4 @@ clj -Adev:nrepl-server
 
 Copyright © 2018 Digital DJ Tools
 
-Released under the MIT license.
+Released under the [MIT license](https://opensource.org/licenses/MIT).

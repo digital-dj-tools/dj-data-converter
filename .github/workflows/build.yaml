@@ -7,14 +7,19 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
+      - name: "Cache"
+        uses: actions/cache@v3
+        with:
+          key: deps-${{ hashFiles('deps.edn') }}
+          path: ~/.m2/repository
       - name: "Setup Java"
         uses: actions/setup-java@v1
         with:
           java-version: 11
       - name: "Setup Clojure"
-        uses: DeLaGuardo/setup-clojure@master
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
-          cli: "1.10.1.697"
+          cli: "1.12.0.1517"
       - name: "Clojure Tests"
         run: clojure -A:dev:test
       - name: "Install Node Dependencies"
@@ -27,25 +32,28 @@ jobs:
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
+      - name: "Cache" 
+        uses: actions/cache@v3
+        with:
+          key: deps-${{ hashFiles('deps.edn') }}
+          path: ~/.m2/repository
       - name: "Setup Java"
         uses: actions/setup-java@v1
         with:
           java-version: 11
       - name: "Setup Clojure"
-        uses: DeLaGuardo/setup-clojure@master
+        uses: DeLaGuardo/setup-clojure@13.2
         with:
-          cli: "1.10.1.697"
-      - name: "Clojure Tests"
-        run: clojure -A:dev:test
+          cli: "1.12.0.1517"
       - name: "Uberjar"
-        run: clojure -A:uberjar
+        run: clojure -M:clein uberjar
       - name: "Smoke Test"
         run: |
           java -jar target/dj-data-converter-SNAPSHOT-standalone.jar -h
           java -jar target/dj-data-converter-SNAPSHOT-standalone.jar test-resources/collection.nml
           java -jar target/dj-data-converter-SNAPSHOT-standalone.jar test-resources/rekordbox.xml
       - name: "Upload"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dj-data-converter-standalone
           path: target/dj-data-converter-SNAPSHOT-standalone.jar
@@ -62,11 +70,11 @@ jobs:
       - name: "Install GraalVM Native Image Deps"
         run: |
           sudo apt -y update
-          sudo apt -y install gcc libc6-dev zlib1g-dev libstdc++-8-dev
+          sudo apt -y install build-essential zlib1g-dev
       - name: "Install GraalVM Native Image"
         run: gu install native-image
       - name: "Download"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: dj-data-converter-standalone
       - name: "Native Image"
@@ -78,7 +86,7 @@ jobs:
       - name: "Package"
         run: tar -czvf dj-data-converter-linux.tar.gz dj-data-converter
       - name: "Publish"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dj-data-converter-linux
           path: dj-data-converter-linux.tar.gz
@@ -95,7 +103,7 @@ jobs:
       - name: "Install Visual C Build Tools Workload for Visual Studio 2017"
         run: choco install visualstudio2017-workload-vctools
       - name: "Download"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: dj-data-converter-standalone
       - name: "Native Image"
@@ -109,7 +117,7 @@ jobs:
       - name: "Package"
         run: 7z a dj-data-converter-win.zip dj-data-converter.exe
       - name: "Publish"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dj-data-converter-win
           path: dj-data-converter-win.zip
@@ -126,7 +134,7 @@ jobs:
       - name: "Install GraalVM Native Image"
         run: gu install native-image
       - name: "Download"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: dj-data-converter-standalone
       - name: "Native Image"
@@ -138,7 +146,7 @@ jobs:
       - name: "Package"
         run: tar -czvf dj-data-converter-macos.tar.gz dj-data-converter
       - name: "Publish"
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: dj-data-converter-macos
           path: dj-data-converter-macos.tar.gz
@@ -148,7 +156,7 @@ jobs:
     if: success() && contains(github.ref, 'refs/tags/')
     steps:
       - name: "Download"
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: "Release"
         id: create_release
         uses: actions/create-release@v1

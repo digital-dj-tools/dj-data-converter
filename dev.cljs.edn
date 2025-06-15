@@ -1,2 +1,0 @@
-{:main converter.app
- :target :nodejs}

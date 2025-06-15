@@ -1,5 +1,0 @@
-{:output-dir "out"
- :output-to "out/cli.js"
- :target :nodejs
- :optimizations :simple
- :source-map "out/cli.js.map"}

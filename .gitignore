@@ -7,11 +7,7 @@ pom.xml.asc
 /target/
 /checkouts/
 .cpcache/
-.cljs_node_repl
-package-lock.json
-node_modules
 /out/
-/cljs-test-runner-out/
 .nrepl-port
 .calva/
 .clj-kondo/

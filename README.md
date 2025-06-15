@@ -188,17 +188,13 @@ Requests are welcome, please create them as GitHub issues in this project. Howev
 
 ## Developers
 
-Developers will need to install Java, NodeJS and the Clojure [command line tools](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools
+Developers will need to install Java and the Clojure [command line tools](https://clojure.org/guides/getting_started#_clojure_installer_and_cli_tools
 ).
 
 ### Running the Tests
 
 ```
 clj -Adev:test
-```
-
-```
-clj -Adev:test-cljs
 ```
 
 ### Starting a CIDER-compatible NREPL Server

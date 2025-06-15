@@ -1,2 +1,0 @@
-{:watch-dirs ["src" "test"]
- :repl-eval-timeout 60000}

@@ -13,19 +13,16 @@ jobs:
           key: deps-${{ hashFiles('deps.edn') }}
           path: ~/.m2/repository
       - name: "Setup Java"
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 21
+          distribution: graalvm
       - name: "Setup Clojure"
         uses: DeLaGuardo/setup-clojure@13.2
         with:
           cli: "1.12.0.1517"
       - name: "Clojure Tests"
-        run: clojure -A:dev:test
-      - name: "Install Node Dependencies"
-        run: npm install
-      - name: "ClojureScript Tests"
-        run: clojure -A:dev:test-cljs
+        run: clojure -M:dev:test
   uberjar:
     needs: [test]
     runs-on: ubuntu-latest
@@ -38,9 +35,10 @@ jobs:
           key: deps-${{ hashFiles('deps.edn') }}
           path: ~/.m2/repository
       - name: "Setup Java"
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 21
+          distribution: graalvm
       - name: "Setup Clojure"
         uses: DeLaGuardo/setup-clojure@13.2
         with:
@@ -57,22 +55,33 @@ jobs:
         with:
           name: dj-data-converter-standalone
           path: target/dj-data-converter-SNAPSHOT-standalone.jar
-  native-image-linux:
+  native-image:
     needs: [uberjar]
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os_name: linux
+            smoke_test_cmd: chmod +x dj-data-converter && ./dj-data-converter -h
+            package_cmd: tar -czvf dj-data-converter-linux.tar.gz dj-data-converter
+          - os: windows-latest
+            os_name: win
+            smoke_test_cmd: dj-data-converter.exe -h
+            package_cmd: "7z a dj-data-converter-win.zip dj-data-converter.exe"
+          - os: macos-latest
+            os_name: macos
+            smoke_test_cmd: chmod +x dj-data-converter && ./dj-data-converter -h
+            package_cmd: "tar -czvf dj-data-converter-macos.tar.gz dj-data-converter"
     steps:
       - name: "Checkout"
         uses: actions/checkout@v2
       - name: "Setup GraalVM"
-        uses: DeLaGuardo/setup-graalvm@3
+        uses: graalvm/setup-graalvm@v1
         with:
-          graalvm-version: "20.2.0.java11"
-      - name: "Install GraalVM Native Image Deps"
-        run: |
-          sudo apt -y update
-          sudo apt -y install build-essential zlib1g-dev
-      - name: "Install GraalVM Native Image"
-        run: gu install native-image
+          java-version: 21
+          distribution: graalvm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: "Download"
         uses: actions/download-artifact@v4
         with:
@@ -80,78 +89,16 @@ jobs:
       - name: "Native Image"
         run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
       - name: "Smoke Test"
-        run: |
-          chmod +x dj-data-converter
-          ./dj-data-converter -h
+        run: ${{ matrix.smoke_test_cmd }}
       - name: "Package"
-        run: tar -czvf dj-data-converter-linux.tar.gz dj-data-converter
+        run: ${{ matrix.package_cmd }}
       - name: "Publish"
         uses: actions/upload-artifact@v4
         with:
-          name: dj-data-converter-linux
-          path: dj-data-converter-linux.tar.gz
-  native-image-windows:
-    needs: [uberjar]
-    runs-on: windows-latest
-    steps:
-      - name: "Setup GraalVM"
-        uses: DeLaGuardo/setup-graalvm@3
-        with:
-          graalvm-version: "20.2.0.java11"
-      - name: "Install GraalVM Native Image"
-        run: C:\hostedtoolcache\windows\GraalVM\20.2.0-java11\x64\bin\gu install native-image
-      - name: "Install Visual C Build Tools Workload for Visual Studio 2017"
-        run: choco install visualstudio2017-workload-vctools
-      - name: "Download"
-        uses: actions/download-artifact@v4
-        with:
-          name: dj-data-converter-standalone
-      - name: "Native Image"
-        shell: cmd
-        run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
-          C:\hostedtoolcache\windows\GraalVM\20.2.0-java11\x64\bin\native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
-      - name: "Smoke Test"
-        shell: cmd
-        run: dj-data-converter.exe -h
-      - name: "Package"
-        run: 7z a dj-data-converter-win.zip dj-data-converter.exe
-      - name: "Publish"
-        uses: actions/upload-artifact@v4
-        with:
-          name: dj-data-converter-win
-          path: dj-data-converter-win.zip
-  native-image-mac:
-    needs: [uberjar]
-    runs-on: macos-latest
-    steps:
-      - name: "Checkout"
-        uses: actions/checkout@v2
-      - name: "Setup GraalVM"
-        uses: DeLaGuardo/setup-graalvm@3
-        with:
-          graalvm-version: "20.2.0.java11"
-      - name: "Install GraalVM Native Image"
-        run: gu install native-image
-      - name: "Download"
-        uses: actions/download-artifact@v4
-        with:
-          name: dj-data-converter-standalone
-      - name: "Native Image"
-        run: native-image --verbose --no-server --no-fallback --allow-incomplete-classpath --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -H:Name=dj-data-converter
-      - name: "Smoke Test"
-        run: |
-          chmod +x dj-data-converter
-          ./dj-data-converter -h
-      - name: "Package"
-        run: tar -czvf dj-data-converter-macos.tar.gz dj-data-converter
-      - name: "Publish"
-        uses: actions/upload-artifact@v4
-        with:
-          name: dj-data-converter-macos
-          path: dj-data-converter-macos.tar.gz
+          name: dj-data-converter-${{ matrix.os_name }}
+          path: dj-data-converter-${{ matrix.os_name }}.*
   release:
-    needs: [native-image-linux, native-image-windows, native-image-mac]
+    needs: [native-image]
     runs-on: ubuntu-latest
     if: success() && contains(github.ref, 'refs/tags/')
     steps:
@@ -167,7 +114,7 @@ jobs:
           release_name: ${{ github.ref }}
           draft: true
           prerelease: false
-      - name: "Upload"
+      - name: "Upload Linux asset"
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -176,7 +123,7 @@ jobs:
           asset_path: dj-data-converter-linux/dj-data-converter-linux.tar.gz
           asset_name: dj-data-converter-linux.tar.gz
           asset_content_type: application/gzip
-      - name: "Upload"
+      - name: "Upload Windows asset"
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -185,7 +132,7 @@ jobs:
           asset_path: dj-data-converter-win/dj-data-converter-win.zip
           asset_name: dj-data-converter-win.zip
           asset_content_type: application/zip
-      - name: "Upload"
+      - name: "Upload macOS asset"
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

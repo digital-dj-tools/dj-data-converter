@@ -67,7 +67,7 @@ jobs:
             package_cmd: tar -czvf dj-data-converter-linux.tar.gz dj-data-converter
           - os: windows-latest
             os_name: win
-            smoke_test_cmd: dj-data-converter.exe -h
+            smoke_test_cmd: .\dj-data-converter.exe -h
             package_cmd: "7z a dj-data-converter-win.zip dj-data-converter.exe"
           - os: macos-latest
             os_name: macos

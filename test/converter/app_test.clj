@@ -1,10 +1,6 @@
 (ns converter.app-test
   (:require
-   [converter.app :as app]
-   [converter.spec :as spec]
-   [plumula.mimolette.alpha :refer [defspec-test]]))
+   [converter.app :as app] 
+   [converter.test-utils :refer [deftest-check]]))
 
-(defspec-test
-  convert
-  `app/convert
-  {:opts {:num-tests 10}})
+(deftest-check test-convert `app/convert 10)

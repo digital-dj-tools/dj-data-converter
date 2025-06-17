@@ -1,9 +1,6 @@
 (ns converter.url-test
   (:require
-   [converter.url :as url]
-   [plumula.mimolette.alpha :refer [defspec-test]]))
+   [converter.test-utils :refer [deftest-check]]
+   [converter.url :as url]))
 
-(defspec-test
-  drive->wsl
-  `url/drive->wsl
-  {:opts {:num-tests 100}})
+(deftest-check test-drive->wsl `url/drive->wsl 100)

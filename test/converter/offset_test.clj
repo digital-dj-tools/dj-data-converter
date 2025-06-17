@@ -1,10 +1,6 @@
 (ns converter.offset-test
   (:require
    [converter.offset :as o]
-   [converter.spec :as spec]
-   [plumula.mimolette.alpha :refer [defspec-test]]))
+   [converter.test-utils :refer [deftest-check]]))
 
-(defspec-test
-  sign
-  `o/sign
-  {:opts {:num-tests 100}})
+(deftest-check test-signed-value `o/signed-value 100)

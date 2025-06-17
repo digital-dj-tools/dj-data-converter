@@ -3,22 +3,58 @@
    [clojure.java.io :as io]
    [clojure.spec.alpha :as s]
    [clojure.spec.gen.alpha :as gen]
+   [clojure.spec.test.alpha :as stest]
+   [clojure.test :refer [deftest is testing]]
    [clojure.test.check]
    [clojure.test.check.generators]
    [clojure.test.check.properties]
-   [converter.app :as app]
    [converter.config :as config]
-   [converter.time :as time]
    [converter.rekordbox.core :as r]
    [converter.spec :as spec]
+   [converter.str :as str]
    [converter.traktor.core :as t]
    [converter.universal.core :as u]
    [converter.universal.marker :as um]
    [converter.universal.tempo :as ut]
-   [converter.str :as str]
    [converter.xml :as xml]
-   [spec-tools.core :as st]
-   [tick.alpha.api :as tick]))
+   [spec-tools.core :as st]))
+
+(s/fdef test-fn-violates
+  :args (s/cat :x int?)
+  :ret string?)
+
+(defn test-fn-violates
+  "A function that violates its return spec"
+  [_] 1)
+
+(s/fdef test-fn-conforms
+  :args (s/cat :x int?)
+  :ret string?)
+
+(defn test-fn-conforms
+  "A function that conforms its return spec"
+  [_] "1")
+
+(defn check-spec-results
+  "Returns true if all spec test results passed"
+  [results]
+  (doseq [result results]
+    (prn (assoc (:clojure.spec.test.check/ret result) :test-sym (str (:sym result)))))
+  (every? #(-> % :clojure.spec.test.check/ret :pass?) results))
+
+(deftest test-check-spec-results
+  (let [fn-conforms-results (stest/check `test-fn-conforms {:clojure.spec.test.check/opts {:num-tests 5}})
+        fn-violates-results (stest/check `test-fn-violates {:clojure.spec.test.check/opts {:num-tests 5}})]
+    (is (true? (check-spec-results fn-conforms-results)))
+    (is (false? (check-spec-results fn-violates-results)))))
+
+(defmacro deftest-check
+  "Macro to generate a deftest that runs clojure.spec.test.alpha/check on sym and then checks all results passed"
+  ([name sym] `(deftest-check ~name ~sym 100))
+  ([name sym num-tests]
+   `(deftest ~name
+      (let [results# (stest/check ~sym {:clojure.spec.test.check/opts {:num-tests ~num-tests}})]
+        (is (check-spec-results results#))))))
 
 (defn tmpdir
   []
@@ -83,9 +119,9 @@
 (defn library-equiv-rekordbox
   "Returns a library that is expected to be equivalent with the given library, after it has been converted to Rekordbox data and back again"
   [library]
-  ((comp 
+  ((comp
     #(library-items-map % item-markers-unsupported-type->cue-type)
-    #(library-items-filter % u/item-contains-total-time?)) 
+    #(library-items-filter % u/item-contains-total-time?))
    library))
 
 (def config

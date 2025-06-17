@@ -1,3 +1,2 @@
 --artifact-server-path /tmp/act
---secret-file ./.actsecrets
 --env-file ./.actenv

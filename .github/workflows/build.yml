@@ -1,0 +1,142 @@
+name: "Build"
+on: [push, workflow_dispatch]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Cache"
+        uses: actions/cache@v3
+        with:
+          key: deps-${{ hashFiles('deps.edn') }}
+          path: ~/.m2/repository
+      - name: "Setup Java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: graalvm
+      - name: "Setup Clojure"
+        uses: DeLaGuardo/setup-clojure@13.2
+        with:
+          cli: "1.12.0.1517"
+      - name: "Clojure Tests"
+        run: clojure -M:dev:test
+  uberjar:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Cache" 
+        uses: actions/cache@v3
+        with:
+          key: deps-${{ hashFiles('deps.edn') }}
+          path: ~/.m2/repository
+      - name: "Setup Java"
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: graalvm
+      - name: "Setup Clojure"
+        uses: DeLaGuardo/setup-clojure@13.2
+        with:
+          cli: "1.12.0.1517"
+      - name: "Uberjar"
+        run: clojure -M:clein uberjar
+      - name: "Smoke Test"
+        run: |
+          java -jar target/dj-data-converter-SNAPSHOT-standalone.jar -h
+          java -jar target/dj-data-converter-SNAPSHOT-standalone.jar test-resources/collection.nml
+          java -jar target/dj-data-converter-SNAPSHOT-standalone.jar test-resources/rekordbox.xml
+      - name: "Upload"
+        uses: actions/upload-artifact@v4
+        with:
+          name: dj-data-converter-standalone
+          path: target/dj-data-converter-SNAPSHOT-standalone.jar
+  native-image:
+    needs: [uberjar]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os_name: linux
+            smoke_test_cmd: chmod +x dj-data-converter && ./dj-data-converter -h
+            package_cmd: tar -czvf dj-data-converter-linux.tar.gz dj-data-converter
+          - os: windows-latest
+            os_name: win
+            smoke_test_cmd: .\dj-data-converter.exe -h
+            package_cmd: "7z a dj-data-converter-win.zip dj-data-converter.exe"
+          - os: macos-latest
+            os_name: macos
+            smoke_test_cmd: chmod +x dj-data-converter && ./dj-data-converter -h
+            package_cmd: "tar -czvf dj-data-converter-macos.tar.gz dj-data-converter"
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v2
+      - name: "Setup GraalVM"
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: 21
+          distribution: graalvm
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: "Download"
+        uses: actions/download-artifact@v4
+        with:
+          name: dj-data-converter-standalone
+      - name: "Native Image"
+        run: native-image --no-fallback --report-unsupported-elements-at-runtime --initialize-at-build-time -J-Xmx8g -jar dj-data-converter-SNAPSHOT-standalone.jar -o dj-data-converter
+      - name: "Smoke Test"
+        run: ${{ matrix.smoke_test_cmd }}
+      - name: "Package"
+        run: ${{ matrix.package_cmd }}
+      - name: "Publish"
+        uses: actions/upload-artifact@v4
+        with:
+          name: dj-data-converter-${{ matrix.os_name }}
+          path: dj-data-converter-${{ matrix.os_name }}.*
+  release:
+    needs: [native-image]
+    runs-on: ubuntu-latest
+    if: success() && contains(github.ref, 'refs/tags/')
+    steps:
+      - name: "Download"
+        uses: actions/download-artifact@v4
+      - name: "Release"
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+          prerelease: false
+      - name: "Upload Linux asset"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dj-data-converter-linux/dj-data-converter-linux.tar.gz
+          asset_name: dj-data-converter-linux.tar.gz
+          asset_content_type: application/gzip
+      - name: "Upload Windows asset"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dj-data-converter-win/dj-data-converter-win.zip
+          asset_name: dj-data-converter-win.zip
+          asset_content_type: application/zip
+      - name: "Upload macOS asset"
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: dj-data-converter-macos/dj-data-converter-macos.tar.gz
+          asset_name: dj-data-converter-macos.tar.gz
+          asset_content_type: application/gzip

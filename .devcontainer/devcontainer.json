@@ -5,7 +5,7 @@
 	"build": {
 		"dockerfile": "Dockerfile",
 		"args": {
-			"BASE_IMAGE": "temurin-11-tools-deps-jammy",
+			"BASE_IMAGE": "temurin-21-tools-deps-jammy",
 			"USERNAME": "${localEnv:USER:vscode}"
 		}
 	},
@@ -13,18 +13,19 @@
 	"containerUser": "${localEnv:USER}",
 	"features": {
 		"ghcr.io/devcontainers/features/git:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
 			"packages": [
 				"bash-completion"
 			]
-		},
-		"ghcr.io/devcontainers-extra/features/act:1": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+		}
 	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"betterthantomorrow.calva",
+				"betterthantomorrow.calva-backseat-driver",
 				"GitHub.vscode-github-actions"
 			]
 		}

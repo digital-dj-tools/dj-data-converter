@@ -1,7 +1,6 @@
 (ns converter.traktor-test
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [clojure.test :refer [is]]
    [clojure.test.check]
    [clojure.test.check.clojure-test :refer [defspec]]
@@ -11,45 +10,23 @@
    [converter.traktor.core :as t]
    [converter.traktor.cue :as tc]
    [converter.traktor.location :as tl]
-   [converter.test-utils :as test]
+   [converter.test-utils :as test :refer [deftest-check]]
    [converter.universal.core :as u]
-   [plumula.mimolette.alpha :refer [defspec-test]]
    [spec-tools.core :as st]))
 
-(defspec-test
-  location->url
-  `tl/location->url
-  {:opts {:num-tests 100}})
+(deftest-check test-location->url `tl/location->url)
 
-(defspec-test
-  url->location
-  `tl/url->location
-  {:opts {:num-tests 100}})
+(deftest-check test-url->location `tl/url->location)
 
-(defspec-test
-  cue->marker
-  `tc/cue->marker
-  {:opts {:num-tests 100}})
+(deftest-check test-cue->marker `tc/cue->marker)
 
-(defspec-test
-  marker->cue
-  `tc/marker->cue
-  {:opts {:num-tests 100}})
+(deftest-check test-marker->cue `tc/marker->cue)
 
-(defspec-test
-  entry->item
-  `t/entry->item
-  {:opts {:num-tests 100}})
+(deftest-check test-entry->item `t/entry->item)
 
-(defspec-test
-  item->entry
-  `t/item->entry
-  {:opts {:num-tests 100}})
+(deftest-check test-item->entry `t/item->entry)
 
-(defspec-test
-  library->nml
-  `t/library->nml
-  {:opts {:num-tests 10}})
+(deftest-check test-library->nml `t/library->nml 10)
 
 (defspec cue-spec-encode-decode-equality
   100

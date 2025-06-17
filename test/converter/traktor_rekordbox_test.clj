@@ -1,15 +1,13 @@
 (ns converter.traktor-rekordbox-test
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [clojure.test :refer [is]]
    [clojure.test.check]
    [clojure.test.check.clojure-test :refer [defspec]]
    [clojure.test.check.properties :as tcp]
    [converter.config :as config]
    [converter.test-utils :as test]
-   [converter.universal.core :as u]
-   [plumula.mimolette.alpha :refer [defspec-test]]))
+   [converter.universal.core :as u]))
 
 (defspec traktor-rekordbox-round-trip-library-equality
   10

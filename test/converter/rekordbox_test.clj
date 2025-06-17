@@ -1,7 +1,6 @@
 (ns converter.rekordbox-test
   (:require
    [clojure.spec.alpha :as s]
-   [clojure.spec.gen.alpha :as gen]
    [clojure.test :refer [is]]
    [clojure.test.check]
    [clojure.test.check.clojure-test :refer [defspec]]
@@ -11,52 +10,25 @@
    [converter.rekordbox.core :as r]
    [converter.rekordbox.position-mark :as rp]
    [converter.rekordbox.tempo :as rt]
-   [converter.test-utils :as test]
+   [converter.test-utils :as test :refer [deftest-check]]
    [converter.universal.core :as u]
-   [converter.universal.marker :as um]
-   [converter.xml :as xml]
-   [plumula.mimolette.alpha :refer [defspec-test]]
    [spec-tools.core :as st]))
 
-(defspec-test
-  tempo->item-tempo
-  `rt/tempo->item-tempo
-  {:opts {:num-tests 100}})
+(deftest-check test-tempo->item-tempo `rt/tempo->item-tempo 100)
 
-(defspec-test
-  item-tempo->tempo
-  `rt/item-tempo->tempo
-  {:opts {:num-tests 100}})
+(deftest-check test-item-tempo->tempo `rt/item-tempo->tempo 100)
 
-(defspec-test
-  position-mark->marker
-  `rp/position-mark->marker
-  {:opts {:num-tests 100}})
+(deftest-check test-position-mark->marker `rp/position-mark->marker 100)
 
-(defspec-test
-  marker->position-mark
-  `rp/marker->position-mark
-  {:opts {:num-tests 100}})
+(deftest-check test-marker->position-mark `rp/marker->position-mark 100)
 
-(defspec-test
-  track->item
-  `r/track->item
-  {:opts {:num-tests 100}})
+(deftest-check test-track->item `r/track->item 100)
 
-(defspec-test
-  item->track
-  `r/item->track
-  {:opts {:num-tests 100}})
+(deftest-check test-item->track `r/item->track 100)
 
-(defspec-test
-  dj-playlists->library
-  `r/dj-playlists->library
-  {:opts {:num-tests 10}})
+(deftest-check test-dj-playlists->library `r/dj-playlists->library 10)
 
-(defspec-test
-  library->dj-playlists
-  `r/library->dj-playlists
-  {:opts {:num-tests 10}})
+(deftest-check test-library->dj-playlists `r/library->dj-playlists 10)
 
 (defspec position-mark-spec-encode-decode-equality
   100

@@ -1,11 +1,16 @@
 (ns converter.stats
-  (:require [clojure.core.matrix.stats :as stats]
-            [converter.universal.core :as u]
+  (:require [converter.universal.core :as u]
             [converter.universal.tempo :as ut]))
+
+(defn mean
+  "Calculate the arithmetic mean of a collection of numbers."
+  [coll]
+  (when (seq coll)
+    (/ (reduce + coll) (count coll))))
 
 (defn mean-tempos
   [library]
-  (double (stats/mean (map (comp count ::u/tempos) (::u/collection library)))))
+  (double (mean (map (comp count ::u/tempos) (::u/collection library)))))
 
 (defn count-tempos-of-rand-n-items
   [library n]
@@ -21,4 +26,4 @@
 
 (defn mean-markers
   [library]
-  (double (stats/mean (map (comp count ::u/markers) (::u/collection library)))))
+  (double (mean (map (comp count ::u/markers) (::u/collection library)))))

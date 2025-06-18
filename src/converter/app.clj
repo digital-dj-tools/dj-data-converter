@@ -104,7 +104,9 @@
         library-spec (library-spec converter)
         output-spec (output-spec converter config)]
     (as-> xml $
+      ;; The first call to decode skips decoding since input-spec has no :decode/xml, it only conforms & unforms the value using input-spec
       (p ::decode-str (spec/decode! input-spec $ (input-string-transformer converter)))
+      ;; The second call to decode decodes the value using library-spec :decode/xml, then conforms & unforms using library-spec
       (p ::decode-xml (spec/decode! library-spec $ (input-xml-transformer converter)))
       (update $ ::u/collection #(map (partial correct config options) %))
       ; FIXME skip spec tools encode for traktor output (performance issue)

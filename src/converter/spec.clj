@@ -14,6 +14,7 @@
 ; (defn encode!
 ;   [spec value transformer])
 
+;; TODO will upgrading to the latest spec-tools allow st/decode to be used instead of my hand-rolled version here? 
 (defn decode!
   [spec value transformer]
   ; st/conform! is used instead of st/decode, because currently st/coerce 

@@ -72,28 +72,30 @@
 
 (defn process
   [edition arguments options]
-  (tufte/add-basic-println-handler! {})
-  (tufte/set-min-level! (or (:profile-min-level options) 6))
   (try
     (let [config (config/arguments->config arguments)]
       (with-open [reader (io/reader (:input-file arguments))
                   writer (io/writer (output-file arguments config))]
-        (profile {}
-                 (as-> reader $
-                   (p ::parse (xml/parse $ :skip-whitespace true))
-                   (p ::convert (app/convert (app/converter edition config) config options $))
-                   (p ::emit (xml/emit $ writer))))))
+        (profile {:id (:profile-id options)}
+         (as-> reader $
+           (p ::parse (xml/parse $ :skip-whitespace true))
+           (p ::convert (app/convert (app/converter edition config) config options $))
+           (p ::emit (xml/emit $ writer))))))
     [0 "Conversion completed"]
-    (catch Throwable t (do
-                         (-> t
-                             Throwable->map
-                             (err/create-report arguments options)
-                             (err/write-report (output-dir (output-file arguments))))
-                         [2 "Problems converting, please provide error-report.edn file..."]))))
+    (catch Throwable t (if (:profile-min-level options)
+                         (throw t)
+                         (do
+                           (-> t
+                               Throwable->map
+                               (err/create-report arguments options)
+                               (err/write-report (output-dir (output-file arguments))))
+                           [2 "Problems converting, please provide error-report.edn file..."])))))
 
 (defn -main
   [& args]
   (let [{:keys [options arguments exit-message help?]} (parse-args args)]
+    (tufte/add-basic-println-handler! {})
+    (tufte/set-min-level! (or (:profile-min-level options) 6))
     (if exit-message
       (exit (if help? 0 1) exit-message)
       (apply exit (process app/basic-edition arguments options)))))
